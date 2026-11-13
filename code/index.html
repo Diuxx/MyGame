@@ -5,16 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#161b1b" />
     <title>Idle RPG — Playground 3D</title>
+    <style>
+      body { margin: 0; background: #161c1c; }
+      #app[inert] { visibility: hidden; }
+      #loadingOverlay {
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: #161c1c;
+        color: #e9eeea;
+        font: 14px system-ui, sans-serif;
+        text-align: center;
+      }
+      #loadingOverlay[hidden] { display: none; }
+      #loadingOverlay.error { color: #ffb4b4; }
+    </style>
   </head>
   <body>
-    <main id="app" class="app">
+    <div id="loadingOverlay" role="status">Chargement du playground…</div>
+    <main id="app" class="app" inert>
       <section class="stage" aria-label="Aperçu du personnage 3D">
         <canvas id="renderCanvas" aria-label="Personnage 3D en caméra top-down"></canvas>
-        <div class="brand"><span class="brand-mark"></span> IDLE RPG <span class="brand-note">/ PLAYGROUND</span></div>
-        <div id="loadingOverlay" class="loading" role="status" aria-live="polite">Chargement du personnage Meshy…</div>
-        <div class="stage-footnote">Z Q S D · Déplacer le héros | Maj · Courir</div>
+        <div class="brand"><span class="brand-mark"></span> IDLE RPG <span id="modeLabel" class="brand-note"></span></div>
+        <div id="movementHint" class="stage-footnote" hidden>Z Q S D · Déplacer le héros | Maj · Courir</div>
       </section>
-      <aside class="panel" aria-label="Contrôles du playground">
+      <aside id="playgroundPanel" class="panel" aria-label="Contrôles du playground" hidden>
         <header class="panel-header">
           <p class="eyebrow">PROTOTYPE 01</p>
           <h1>Animation Playground</h1>
@@ -29,13 +47,16 @@
         </div>
         <div class="control-section">
           <h2>Caméra</h2>
+          <div class="field-row"><label for="rotation">Rotation de la caméra</label><output id="rotationOutput" for="rotation">65°</output></div>
+          <input id="rotation" type="range" min="-180" max="180" step="1" value="65" />
           <div class="field-row"><label for="tilt">Inclinaison (depuis la verticale)</label><output id="tiltOutput" for="tilt">40°</output></div>
           <input id="tilt" type="range" min="10" max="65" step="1" value="40" />
-          <div class="field-row"><label for="zoom">Champ vertical visible</label><output id="zoomOutput" for="zoom">20.0 u</output></div>
-          <input id="zoom" type="range" min="5" max="40" step="0.5" value="20" />
+          <div class="field-row"><label for="zoom">Champ vertical visible</label><output id="zoomOutput" for="zoom">25.0 u</output></div>
+          <input id="zoom" type="range" min="5" max="40" step="0.5" value="25" />
           <div class="field-row"><label for="facing">Rotation du héros</label><output id="facingOutput" for="facing">0°</output></div>
           <input id="facing" type="range" min="-180" max="180" step="1" value="0" />
           <button id="resetButton" type="button" class="secondary wide">Réinitialiser la vue</button>
+          <label class="grid-toggle"><input id="showGrid" type="checkbox" /> Afficher le quadrillage</label>
         </div>
         <div class="control-section meta">
           <h2>Modèle chargé</h2>

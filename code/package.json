@@ -4,7 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host 0.0.0.0",
+    "dev": "npm run dev-playground",
+    "dev-playground": "vite --mode playground",
+    "dev-gameplay": "vite --mode gameplay",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "node --experimental-strip-types --test src/cameraMath.test.ts src/movement.test.ts"
