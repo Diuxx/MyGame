@@ -160,12 +160,13 @@ export function validateMapDefinition(value: unknown, assets: MapAssets): MapDef
     const spawnId = identifier(spawn.id, "spawn.id");
     if (spawnIds.has(spawnId)) throw new Error("Spawn dupliqué : " + spawnId);
     spawnIds.add(spawnId);
-    if (spawn.type !== "player" && spawn.type !== "enemy") {
+    const spawnType = spawn.type;
+    if (spawnType !== "player" && spawnType !== "enemy") {
       throw new Error("Spawn " + spawnId + " : type invalide.");
     }
     return {
       id: spawnId,
-      type: spawn.type,
+      type: spawnType,
       position: position(spawn.position, spawnId + ".position"),
       rotationY: finite(spawn.rotationY, spawnId + ".rotationY"),
     };
