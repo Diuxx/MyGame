@@ -155,7 +155,7 @@ export function validateMapDefinition(value: unknown, assets: MapAssets): MapDef
 
   const rawSpawns = list(input.spawnPoints, "spawnPoints");
   const spawnIds = new Set<string>();
-  const spawnPoints = rawSpawns.map((raw, index) => {
+  const spawnPoints = rawSpawns.map((raw, index): MapDefinition["spawnPoints"][number] => {
     const spawn = record(raw, "spawnPoints[" + index + "]");
     const spawnId = identifier(spawn.id, "spawn.id");
     if (spawnIds.has(spawnId)) throw new Error("Spawn dupliqué : " + spawnId);
