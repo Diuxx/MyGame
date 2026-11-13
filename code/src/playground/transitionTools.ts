@@ -1,5 +1,5 @@
 import type { AnimationPlayer } from "../character/animations";
-import { createTransitionSettings, type TransitionSettings } from "../character/transitionSettings";
+import { createTransitionSettings } from "../character/transitionSettings";
 import { requireElement } from "../ui/dom";
 
 const STORAGE_KEY = "mygame.playground.animation-transitions.v1";
