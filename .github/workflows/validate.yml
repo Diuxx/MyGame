@@ -21,10 +21,6 @@ jobs:
           cache-dependency-path: code/package-lock.json
       - name: Install dependencies
         run: npm ci
-      - name: Inspect missing Linux Rollup binary
-        run: npm view @rollup/rollup-linux-x64-gnu@4.68.3 dist.integrity
-      - name: Install Linux Rollup binary for verification
-        run: npm install --no-save --package-lock=false @rollup/rollup-linux-x64-gnu@4.68.3
       - name: Test rules and geometry
         run: npm test
       - name: Type-check and build
