@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#161b1b" />
+    <title>Idle RPG — Playground 3D</title>
+  </head>
+  <body>
+    <main id="app" class="app">
+      <section class="stage" aria-label="Aperçu du personnage 3D">
+        <canvas id="renderCanvas" aria-label="Personnage 3D en caméra top-down"></canvas>
+        <div class="brand"><span class="brand-mark"></span> IDLE RPG <span class="brand-note">/ PLAYGROUND</span></div>
+        <div id="loadingOverlay" class="loading" role="status" aria-live="polite">Chargement du personnage Meshy…</div>
+        <div class="stage-footnote">Z Q S D · Déplacer le héros | Maj · Courir</div>
+      </section>
+      <aside class="panel" aria-label="Contrôles du playground">
+        <header class="panel-header">
+          <p class="eyebrow">PROTOTYPE 01</p>
+          <h1>Animation Playground</h1>
+          <p>Test du personnage Meshy dans Babylon.js, sans système de combat.</p>
+        </header>
+        <div class="control-section">
+          <h2>Animations</h2>
+          <div id="animationButtons" class="animation-buttons" aria-label="Choisir une animation"></div>
+          <div class="field-row"><label for="speed">Vitesse de lecture</label><output id="speedOutput" for="speed">1.0×</output></div>
+          <input id="speed" type="range" min="0.25" max="2" step="0.05" value="1" />
+          <button id="pauseButton" type="button" class="secondary wide" disabled>Pause</button>
+        </div>
+        <div class="control-section">
+          <h2>Caméra</h2>
+          <div class="field-row"><label for="tilt">Inclinaison (depuis la verticale)</label><output id="tiltOutput" for="tilt">40°</output></div>
+          <input id="tilt" type="range" min="10" max="65" step="1" value="40" />
+          <div class="field-row"><label for="zoom">Champ vertical visible</label><output id="zoomOutput" for="zoom">20.0 u</output></div>
+          <input id="zoom" type="range" min="5" max="40" step="0.5" value="20" />
+          <div class="field-row"><label for="facing">Rotation du héros</label><output id="facingOutput" for="facing">0°</output></div>
+          <input id="facing" type="range" min="-180" max="180" step="1" value="0" />
+          <button id="resetButton" type="button" class="secondary wide">Réinitialiser la vue</button>
+        </div>
+        <div class="control-section meta">
+          <h2>Modèle chargé</h2>
+          <p id="modelStatus">En attente du chargement…</p>
+          <p id="animationStatus" class="micro"></p>
+        </div>
+      </aside>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

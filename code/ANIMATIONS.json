@@ -1,0 +1,12 @@
+{
+  "source": "Meshy_AI_Rigged_Character_T_Pose_20261113_animated_mixamo_All_animation.glb",
+  "animations": [
+    { "name": "Idle_3", "durationSeconds": 9.9667, "loop": true },
+    { "name": "Walking", "durationSeconds": 1.0333, "loop": true },
+    { "name": "Running", "durationSeconds": 0.6333, "loop": true },
+    { "name": "Right_Hand_Sword_Slash", "durationSeconds": 1.5, "loop": false }
+  ],
+  "skinCount": 1,
+  "meshCount": 1,
+  "armatureRootScale": 0.01
+}
