@@ -17,7 +17,18 @@ export function configureEnemy(enemy: Enemy, settings: EnemySettings): void {
 }
 
 export function createEnemy(id: string, definition: EnemyDefinition, position: Position, settings: EnemySettings): Enemy {
-  const enemy: Enemy = { id, definition, position, ...settings, health: 0, defeated: false, sinceHit: 0 };
+  // Never spread an archetype as settings: it also contains an `id` that can overwrite the instance ID.
+  const enemy: Enemy = {
+    id,
+    definition,
+    position,
+    stats: { ...settings.stats },
+    immortal: settings.immortal,
+    regeneration: { ...settings.regeneration },
+    health: 0,
+    defeated: false,
+    sinceHit: 0,
+  };
   configureEnemy(enemy, settings);
   resetEnemy(enemy);
   return enemy;

@@ -4,7 +4,7 @@ import { createAnimationSettings, createAttackHits, getAnimationDefinition, HERO
 import { clamp } from "../world/cameraMath";
 import { bindHeroInput } from "./heroInput";
 import { HERO_TUNING } from "./heroTuning";
-import { aimYaw, calculateMovementStep, crossesImpactWindow, dodgeDirection, dodgeInvulnerable, mouseRelativeDirection, type GroundVector } from "./movement";
+import { aimYaw, calculateMovementStep, consumeImpactWindow, dodgeDirection, dodgeInvulnerable, mouseRelativeDirection, type GroundVector } from "./movement";
 import type { CameraControls } from "../world/scene";
 import type { CharacterEquipment } from "./equipment";
 
@@ -121,9 +121,8 @@ export function createCharacterController(
       active.progress = progress;
     } else if (active.kind === "attack" && !active.preview) {
       for (const hit of active.hits) {
-        if (!hit.hit && crossesImpactWindow(active.progress, progress, hit.window)) {
-          hit.hit = onAttackImpact();
-          if (hit.hit) refreshCombatCrouch();
+        if (consumeImpactWindow(hit, active.progress, progress) && onAttackImpact()) {
+          refreshCombatCrouch();
         }
       }
       active.progress = progress;

@@ -3,9 +3,10 @@ import {
   type Scene, type ShadowGenerator,
 } from "@babylonjs/core";
 import "@babylonjs/loaders/glTF";
-import { applyDamage, intersectsSwing, regenerate, SWORD_SWING, type Hurtbox, type Position } from "../combat/combat";
+import type { Hurtbox, Position } from "../combat/combat";
 import type { EnemyDefinition, EnemySettings } from "./enemyDefinitions";
 import { createEnemy, type Enemy } from "./enemyState";
+import { createEnemyManager } from "./enemyManager";
 
 function footprint(box: Hurtbox): number {
   const radius = box.shape === "cylinder" ? box.radius : Math.hypot(box.width, box.depth) / 2;
@@ -15,6 +16,7 @@ function footprint(box: Hurtbox): number {
 export function createEnemyScene(scene: Scene, shadows: ShadowGenerator, groundY: number) {
   const entries = new Map<string, { enemy: Enemy; update(): void; select(selected: boolean): void;
     showHurtbox(visible: boolean): void; dispose(): void }>();
+  const manager = createEnemyManager();
   let nextId = 1;
   let debug = false;
 
@@ -102,6 +104,7 @@ export function createEnemyScene(scene: Scene, shadows: ShadowGenerator, groundY
         },
       };
       entries.set(id, entry);
+      manager.add(enemy);
       entry.update();
       return enemy;
     } catch (error) {
@@ -133,10 +136,12 @@ export function createEnemyScene(scene: Scene, shadows: ShadowGenerator, groundY
     remove(id: string) {
       entries.get(id)?.dispose();
       entries.delete(id);
+      manager.remove(id);
     },
     removeAll() {
       for (const entry of entries.values()) entry.dispose();
       entries.clear();
+      manager.clear();
     },
     select(id: string) {
       for (const entry of entries.values()) entry.select(entry.enemy.id === id);
@@ -145,22 +150,15 @@ export function createEnemyScene(scene: Scene, shadows: ShadowGenerator, groundY
       debug = visible;
       for (const entry of entries.values()) entry.showHurtbox(visible);
     },
+    list() {
+      return manager.list();
+    },
     update(delta: number) {
-      for (const entry of entries.values()) {
-        const { enemy } = entry;
-        regenerate(enemy, delta);
-        entry.update();
-      }
+      manager.update(delta);
+      for (const entry of entries.values()) entry.update();
     },
     strike(origin: Position, yaw: number) {
-      let hit = false;
-      for (const { enemy } of entries.values()) {
-        if (intersectsSwing(origin, yaw, enemy.position, enemy.definition.hurtbox) &&
-            applyDamage(enemy, SWORD_SWING.damage)) {
-          hit = true;
-        }
-      }
-      return hit;
+      return manager.strike(origin, yaw);
     },
   };
 }

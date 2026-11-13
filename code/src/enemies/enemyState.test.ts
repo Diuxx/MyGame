@@ -55,3 +55,12 @@ test("JSON validation rejects duplicate IDs and malformed stats, regeneration an
   assert.throws(() => loadEnemyDefinitions([{ ...definition, regeneration: { enabled: true, delay: -1 } }]), /régénération/);
   assert.throws(() => loadEnemyDefinitions([{ ...definition, hurtbox: { ...definition.hurtbox, radius: 0 } }]), /zone de touche/);
 });
+
+
+test("instance ID is not overwritten when settings are an archetype", () => {
+  const enemy = createEnemy("dummy-42", definition, [1, 0, 2], definition);
+  assert.equal(enemy.id, "dummy-42");
+  assert.equal(enemy.definition.id, "dummy");
+  assert.notStrictEqual(enemy.stats, definition.stats);
+  assert.notStrictEqual(enemy.regeneration, definition.regeneration);
+});

@@ -56,3 +56,15 @@ export function dodgeInvulnerable(progress: number, { from, until } = HERO_ANIMA
 export function crossesImpactWindow(previous: number, progress: number, { from, until }: { from: number; until: number }): boolean {
   return progress > previous && progress >= from && (previous < until || (previous === 0 && until === 0));
 }
+
+
+/** Consume a one-shot impact once, regardless of whether it touches an enemy. */
+export function consumeImpactWindow(
+  event: { window: { from: number; until: number }; triggered: boolean },
+  previous: number,
+  progress: number,
+): boolean {
+  if (event.triggered || !crossesImpactWindow(previous, progress, event.window)) return false;
+  event.triggered = true;
+  return true;
+}

@@ -119,6 +119,13 @@
             <button id="enemyRemove" class="secondary" type="button" disabled>Retirer</button>
           </div>
           <button id="enemyRemoveAll" class="secondary wide" type="button">Retirer tous les ennemis</button>
+          <div class="enemy-fields">
+            <button id="enemySave" class="secondary" type="button">Sauvegarder</button>
+            <button id="enemyLoad" class="secondary" type="button">Charger</button>
+            <button id="enemyExport" class="secondary" type="button">Exporter JSON</button>
+            <button id="enemyImport" class="secondary" type="button">Importer JSON</button>
+          </div>
+          <input id="enemyImportFile" type="file" accept=".json,application/json" hidden />
           <button id="simulateHeroHit" class="secondary wide" type="button">Simuler un coup reçu</button>
           <label class="grid-toggle"><input id="showHurtboxes" type="checkbox" /> Afficher les zones de touche</label>
           <p id="enemyStatus" role="status"></p>
