@@ -19,6 +19,9 @@ button { cursor:pointer; }
 .module-launchers button { padding:11px 10px; text-align:left; font-size:13px; }
 .module-launchers button[aria-expanded="true"] { color:#1a281c; background:#c3daba; border-color:#c3daba; }
 .module-launchers button:hover, .module-close:hover { border-color:#a4c49e; }
+.debug-quick-controls { margin-top:18px; padding:12px 10px; border:1px solid #46574d; border-radius:9px; background:#23302a; }
+.debug-quick-controls p { margin:0; color:#b6c6bc; font-size:12px; font-weight:650; }
+.debug-quick-controls .grid-toggle { margin-top:11px; font-size:12px; color:#dce9dd; }
 .module-dock { position:fixed; top:16px; right:calc(var(--sidebar-width) + 12px); z-index:1; width:min(336px, calc(100vw - var(--sidebar-width) - 24px)); max-height:calc(100dvh - 32px); display:grid; align-content:start; gap:10px; overflow:auto; overscroll-behavior:contain; scrollbar-width:thin; }
 .module-dock[hidden] { display:none; }
 .module-window { min-width:0; padding:14px; border:1px solid #647669; border-radius:12px; background:rgba(28,36,35,.9); backdrop-filter:blur(8px); box-shadow:0 5px 18px rgba(0,0,0,.18); }

@@ -75,3 +75,47 @@ Ils ne simulent ni gravité, ni ragdoll, ni la collision polygonale exacte des G
 - Tests purs : `npm test`.
 - TypeScript + bundle : `npm run build`.
 - Inspection visuelle des volumes/animations dans Chromium et sur mobile.
+
+## Portée de l'épée et contrôle du katana dégainé
+
+- **Hitbox d'attaque** (orange) : visualisation en temps réel de la zone
+  mathématique de l'épée (capsule horizontale tronquée derrière le héros).
+  La représentation est activée pendant toute l'animation d'attaque, pour faciliter
+  les tests. Les dégâts, eux, ne sont appliqués qu'aux fenêtres d'impact définies
+  dans **Animations d'action**. Le volume affiché ne suit pas physiquement le
+  katana animé : il suit l'orientation du héros.
+- Le module **Zone d'attaque / Portée** règle la longueur de l'attaque, son rayon
+  latéral, sa hauteur et les dégâts de base. Ces paramètres sont transmis au
+  **même calcul** que celui qui touche les ennemis via `enemyManager.strike`.
+  La zone visible ne sert pas elle-même de source de collisions.
+- Le menu latéral propose deux cases d'affichage rapide :
+  **Hitbox du héros (rouge)** et **Zone d'attaque (orange)**. Chaque case est
+  synchronisée avec son éditeur avancé. Il est possible de laisser la zone
+  orange visible en permanence pour tester la portée à l'arrêt.
+- Dans **Équipement**, la section *Orientation de la lame dégainée* règle les
+  rotations X/Y/Z en degrés. Le katana pivote autour de son attache à la main
+  (un `TransformNode` dédié), sans modifier l'orientation du squelette ou
+  l'attache de la main droite.
+- Les réglages de la lame restent dans la sauvegarde locale
+  `mon-rpg.playground.equipment.v1`, compatible avec les anciennes valeurs
+  `back` et `hand`. L'attaque est enregistrée séparément dans
+  `mygame.playground.attack-hitbox.v1`.
+
+### Vérifications manuelles complémentaires
+
+1. Dégainer le katana depuis le module Équipement. Changer les rotations X/Y/Z
+   et vérifier la position de la lame au repos et pendant l'attaque.
+2. Recharger la page : la rotation de la lame doit être conservée. Cliquer sur
+   « Rétablir l’orientation de la lame » pour revenir à l'alignement initial.
+3. Masquer et réafficher la hitbox rouge du héros depuis la barre de droite,
+   puis vérifier que la case du module Collisions reste synchronisée.
+4. Activer l'affichage de l'attaque, puis attaquer à gauche de l'écran :
+   la forme orange doit se tourner avec le héros, et disparaître à la fin
+   de son animation (sauf si la prévisualisation permanente est activée).
+5. Changer la portée et les dégâts dans **Zone d'attaque / Portée**.
+   Vérifier que la distance de touche et les PV perdus évoluent ensemble.
+
+**Limite :** cette première zone d'attaque est une capsule simplifiée, pas une
+simulation de la trajectoire précise de la lame. Plus tard, une hitbox animée
+pourra suivre les bones ou les points d'attache du katana, tout en conservant
+le même système de dégâts.

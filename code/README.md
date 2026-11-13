@@ -87,3 +87,18 @@ La détection des coups est géométrique et séparée du rendu, avec prise en c
 Dans le module **Collisions et hitbox**, active ou désactive les collisions, affiche les volumes de debug et règle le rayon, la hauteur et le décalage vertical de la hitbox rouge du héros. Les ennemis possèdent un rayon solide configurable individuellement dans **Gestion des ennemis**, enregistré dans les presets JSON.
 
 Les durées de fondu de déplacement, de retour au repos et de ralentissement sont ajustables dans **Animations de déplacement** et sauvegardées localement. Lorsque le héros se heurte à une cible, l'animation de locomotion dépend du déplacement réellement effectué ; il revient au repos s'il est complètement bloqué. Le détail technique et les essais manuels figurent dans [la documentation des collisions](../docs/COLLISIONS_PLAYGROUND.md).
+
+## Hitboxes d'attaque et orientation du katana
+
+Le panneau **Équipement** possède maintenant un réglage indépendant
+**Orientation de la lame dégainée** (rotations X/Y/Z), en complément des
+coordonnées de son attache à la main droite. Les valeurs sont sauvegardées
+dans le navigateur.
+
+Le menu de droite expose des cases rapides pour masquer la hitbox rouge du
+héros et la zone d'attaque orange. Le module **Zone d'attaque / Portée**
+permet de régler la portée, le rayon, la hauteur et les dégâts ; la zone
+orange se dessine pendant toute l'animation d'attaque, avec une option de
+prévisualisation permanente. Les coups restent déclenchés uniquement pendant
+leurs fenêtres d'impact, et leurs calculs utilisent les mêmes paramètres
+que la visualisation.
