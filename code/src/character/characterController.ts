@@ -209,6 +209,7 @@ export function createCharacterController(
       input.clearAim();
     },
     get isActing() { return !!action; },
+    get isAttacking() { return action?.kind === "attack"; },
     get isInvulnerable() { return isInvulnerable(); },
   };
 }

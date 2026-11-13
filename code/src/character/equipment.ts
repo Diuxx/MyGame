@@ -70,7 +70,8 @@ export async function loadEquipment(scene: Scene, character: LoadedCharacter) {
   setTransform("back", EQUIPMENT_DEFAULTS.back);
   setTransform("hand", EQUIPMENT_DEFAULTS.hand);
   const setDrawnKatanaRotation = (rotation: readonly [number, number, number]): void => {
-    katanaPivot.rotation.set(...rotation.map(degreesToRadians) as [number, number, number]);
+    const [x, y, z] = rotation;
+    katanaPivot.rotation.set(degreesToRadians(x), degreesToRadians(y), degreesToRadians(z));
   };
   setDrawnKatanaRotation(DEFAULT_DRAWN_KATANA_ROTATION);
   updateVisibility();
