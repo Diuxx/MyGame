@@ -1,0 +1,193 @@
+{
+  "version": 1,
+  "id": "forest",
+  "name": "Clairière",
+  "tileSize": 2,
+  "terrain": {
+    "origin": [
+      -10,
+      0,
+      -10
+    ],
+    "tiles": [
+      [
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass"
+      ],
+      [
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass"
+      ],
+      [
+        "grass",
+        "grass",
+        "water",
+        "water",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass"
+      ],
+      [
+        "grass",
+        "grass",
+        "water",
+        "water",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass"
+      ],
+      [
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass"
+      ],
+      [
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass"
+      ],
+      [
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass"
+      ],
+      [
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass"
+      ],
+      [
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass"
+      ],
+      [
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass",
+        "grass"
+      ]
+    ],
+    "groundCollider": {
+      "enabled": true,
+      "thickness": 0.2
+    }
+  },
+  "objects": [
+    {
+      "id": "tree-a",
+      "asset": "tree",
+      "position": [
+        -5,
+        0,
+        -1
+      ],
+      "rotationY": 30
+    },
+    {
+      "id": "tree-b",
+      "asset": "tree",
+      "position": [
+        3,
+        0,
+        5
+      ],
+      "rotationY": 0
+    },
+    {
+      "id": "rock-a",
+      "asset": "boulder",
+      "position": [
+        4,
+        0,
+        -3
+      ],
+      "rotationY": 0
+    },
+    {
+      "id": "flowers-a",
+      "asset": "flowers",
+      "position": [
+        -2,
+        0,
+        4
+      ],
+      "rotationY": 0
+    }
+  ],
+  "spawnPoints": [
+    {
+      "id": "player-forest",
+      "type": "player",
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "rotationY": 0
+    }
+  ]
+}
