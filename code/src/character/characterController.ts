@@ -92,14 +92,18 @@ export function createCharacterController(
 
   function move(step: GroundVector): GroundVector {
     const { position } = root;
-    const x = clamp(position.x + step.x, -movementLimit, movementLimit);
-    const z = clamp(position.z + step.z, -movementLimit, movementLimit);
-    const desired = { x: x - position.x, z: z - position.z };
-    const actual = resolveMovement([position.x, position.y, position.z], desired);
+    const desired = {
+      x: clamp(position.x + step.x, -movementLimit, movementLimit) - position.x,
+      z: clamp(position.z + step.z, -movementLimit, movementLimit) - position.z,
+    };
+    const resolved = resolveMovement([position.x, position.y, position.z], desired);
+    const nextX = clamp(position.x + resolved.x, -movementLimit, movementLimit);
+    const nextZ = clamp(position.z + resolved.z, -movementLimit, movementLimit);
+    const actual = { x: nextX - position.x, z: nextZ - position.z };
     if (actual.x || actual.z) {
-      position.x = x;
-      position.z = z;
-      camera.follow(x, z);
+      position.x = nextX;
+      position.z = nextZ;
+      camera.follow(nextX, nextZ);
     }
     return actual;
   }
