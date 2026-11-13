@@ -35,8 +35,9 @@ export function parseHeroCollisionSettings(value: unknown): HeroCollisionSetting
   }
   for (const name of ["radius", "height", "offsetY"] as const) {
     const [min, max] = limits[name];
-    if (typeof input[name] !== "number" || !Number.isFinite(input[name]) ||
-        input[name] < min || input[name] > max) {
+    const numericValue = input[name];
+    if (typeof numericValue !== "number" || !Number.isFinite(numericValue) ||
+        numericValue < min || numericValue > max) {
       throw new Error(`Valeur de ${name} invalide (entre ${min} et ${max}).`);
     }
   }
