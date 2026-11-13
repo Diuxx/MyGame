@@ -1,0 +1,87 @@
+[
+  {
+    "id": "dummy-straw",
+    "name": "Mannequin de paille",
+    "category": "static",
+    "modelPath": "/assets/training/dummy-straw.glb",
+    "stats": {
+      "maxHealth": 100,
+      "defense": 0,
+      "attackDamage": 0,
+      "movementSpeed": 0
+    },
+    "immortal": true,
+    "regeneration": {
+      "enabled": true,
+      "delay": 5,
+      "healthPerSecond": 20
+    },
+    "hurtbox": {
+      "shape": "cylinder",
+      "radius": 0.76,
+      "height": 2.52,
+      "offset": [
+        0,
+        1.26,
+        0
+      ]
+    }
+  },
+  {
+    "id": "dummy-knight",
+    "name": "Mannequin armé",
+    "category": "static",
+    "modelPath": "/assets/training/dummy-knight.glb",
+    "stats": {
+      "maxHealth": 180,
+      "defense": 8,
+      "attackDamage": 0,
+      "movementSpeed": 0
+    },
+    "immortal": true,
+    "regeneration": {
+      "enabled": true,
+      "delay": 5,
+      "healthPerSecond": 20
+    },
+    "hurtbox": {
+      "shape": "cylinder",
+      "radius": 0.92,
+      "height": 2.1,
+      "offset": [
+        0,
+        1.05,
+        0
+      ]
+    }
+  },
+  {
+    "id": "target-wood",
+    "name": "Cible en bois",
+    "category": "static",
+    "modelPath": "/assets/training/target-wood.glb",
+    "stats": {
+      "maxHealth": 60,
+      "defense": 2,
+      "attackDamage": 0,
+      "movementSpeed": 0
+    },
+    "immortal": true,
+    "regeneration": {
+      "enabled": true,
+      "delay": 5,
+      "healthPerSecond": 20
+    },
+    "hurtbox": {
+      "shape": "box",
+      "width": 1.3,
+      "depth": 0.92,
+      "height": 1.84,
+      "offset": [
+        0,
+        0.92,
+        -0.12
+      ]
+    }
+  }
+]

@@ -1,18 +1,19 @@
 import {
   AbstractMesh,
   AnimationGroup,
+  ImportMeshAsync,
   Scene,
-  SceneLoader,
   TransformNode,
   Vector3,
 } from "@babylonjs/core";
-import "@babylonjs/loaders/glTF";
+import { GLTFLoaderAnimationStartMode } from "@babylonjs/loaders/glTF";
 
 const CHARACTER_URL = "/models/hero.glb";
 const TARGET_HEIGHT_METERS = 1.8;
 
 export interface LoadedCharacter {
   root: TransformNode;
+  rightHand: TransformNode;
   animationGroups: AnimationGroup[];
   heightBeforeScale: number;
   scaleApplied: number;
@@ -43,12 +44,27 @@ function getWorldBounds(meshes: AbstractMesh[]): { minimum: Vector3; maximum: Ve
  * Parenting the imported root also preserves its skeleton and animations.
  */
 export async function loadCharacter(scene: Scene): Promise<LoadedCharacter> {
-  const result = await SceneLoader.ImportMeshAsync("", "/models/", "hero.glb", scene);
+  const result = await ImportMeshAsync(CHARACTER_URL, scene, {
+    pluginOptions: { gltf: { animationStartMode: GLTFLoaderAnimationStartMode.NONE } },
+  });
   if (result.meshes.length === 0 || result.animationGroups.length === 0) {
     throw new Error(`Le modèle ${CHARACTER_URL} doit contenir un maillage et des animations.`);
   }
 
-  for (const group of result.animationGroups) group.stop();
+  const hips = result.transformNodes.find(({ name }) => name === "mixamorig:Hips");
+  const rightHand = result.transformNodes.find(({ name }) => name === "mixamorig:RightHand");
+  if (!hips || !rightHand) throw new Error(`Squelette incomplet dans ${CHARACTER_URL} : bassin ou main droite introuvable.`);
+
+  // Keep vertical motion and skeletal poses, but leave horizontal travel to the controller.
+  for (const group of result.animationGroups) {
+    for (const { target, animation } of group.targetedAnimations) {
+      if (target !== hips || animation.targetProperty !== "position") continue;
+      animation.setKeys(animation.getKeys().map((key) => {
+        const value = key.value as Vector3;
+        return { ...key, value: new Vector3(hips.position.x, value.y, hips.position.z) };
+      }));
+    }
+  }
 
   const root = new TransformNode("characterController", scene);
   const importedSceneRoots = result.meshes.filter((mesh) => mesh.parent === null);
@@ -70,6 +86,7 @@ export async function loadCharacter(scene: Scene): Promise<LoadedCharacter> {
 
   return {
     root,
+    rightHand,
     animationGroups: result.animationGroups,
     heightBeforeScale: initialHeight,
     scaleApplied: scale,

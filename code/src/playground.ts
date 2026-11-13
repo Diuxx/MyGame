@@ -1,14 +1,14 @@
 import type { Scene } from "@babylonjs/core";
-import { AnimationPlayer, ANIMATION_LABELS, ATTACK_ANIMATION, IDLE_ANIMATION } from "./animations";
-import { clamp, degreesToRadians } from "./cameraMath";
-import type { LoadedCharacter } from "./character";
-import { requireElement } from "./dom";
-import { createPlaygroundEnvironment, PLAYGROUND_MOVEMENT_LIMIT } from "./environments";
-import { calculateMovementStep } from "./movement";
-import { DEFAULT_CAMERA_ROTATION, DEFAULT_CAMERA_TILT, DEFAULT_VISIBLE_HEIGHT, type CameraControls } from "./scene";
-import { loadTrainingTargets } from "./trainingTargets";
-
-const MOVEMENT_KEYS = new Set(["z", "q", "s", "d", "shift"]);
+import { AnimationPlayer, ANIMATION_LABELS, ATTACK_ANIMATION } from "./character/animations";
+import type { LoadedCharacter } from "./character/character";
+import { createCharacterController } from "./character/characterController";
+import { SWORD_SWING, type Position } from "./combat/combat";
+import { createEnemyScene } from "./enemies/enemyScene";
+import { startEnemyTools } from "./playground/enemyTools";
+import { requireElement } from "./ui/dom";
+import { degreesToRadians } from "./world/cameraMath";
+import { createPlaygroundEnvironment, PLAYGROUND_MOVEMENT_LIMIT } from "./world/environments";
+import { DEFAULT_CAMERA_ROTATION, DEFAULT_CAMERA_TILT, DEFAULT_VISIBLE_HEIGHT, type CameraControls } from "./world/scene";
 
 function linkRangeControl(
   inputId: string,
@@ -37,9 +37,10 @@ export async function startPlayground(
 ): Promise<void> {
   requireElement<HTMLElement>("movementHint").hidden = false;
   const { ground, grid, shadows } = createPlaygroundEnvironment(scene, character.root);
-  for (const mesh of await loadTrainingTargets(scene, ground.position.y)) {
-    shadows.addShadowCaster(mesh, false);
-  }
+  const enemies = createEnemyScene(scene, shadows, ground.position.y);
+  const heroPosition = (): Position => [character.root.position.x, ground.position.y, character.root.position.z];
+  const refreshEnemyHealth = await startEnemyTools(enemies, ground.position.y,
+    (definition) => enemies.findSpawnPosition(definition, heroPosition(), character.root.rotation.y, PLAYGROUND_MOVEMENT_LIMIT), signal);
   const gridToggle = requireElement<HTMLInputElement>("showGrid");
   gridToggle.checked = false;
   gridToggle.addEventListener("change", () => grid.setEnabled(gridToggle.checked), { signal });
@@ -47,7 +48,9 @@ export async function startPlayground(
   const buttonsContainer = requireElement<HTMLDivElement>("animationButtons");
   const pauseButton = requireElement<HTMLButtonElement>("pauseButton");
   const animationStatus = requireElement<HTMLParagraphElement>("animationStatus");
-
+  const canvas = requireElement<HTMLCanvasElement>("renderCanvas");
+  const facingInput = requireElement<HTMLInputElement>("facing");
+  const facingOutput = requireElement<HTMLOutputElement>("facingOutput");
   function updateActiveAnimation(): void {
     buttonsContainer.querySelectorAll<HTMLButtonElement>("button").forEach((button) => {
       const active = button.dataset.animation === animationPlayer.activeName;
@@ -58,7 +61,25 @@ export async function startPlayground(
     animationStatus.textContent = `Animation : ${animationPlayer.activeName}`;
   }
 
+  let pendingImpact = false;
+  const attack = character.animationGroups.find((group) => group.name === ATTACK_ANIMATION);
+  function impact(): void {
+    if (!pendingImpact) return;
+    pendingImpact = false;
+    enemies.strike(heroPosition(), character.root.rotation.y);
+  }
+
+  const controller = createCharacterController(scene, canvas, character.root, ground.position.y,
+    PLAYGROUND_MOVEMENT_LIMIT, cameraControls, animationPlayer, signal, updateActiveAnimation, (yaw) => {
+      const degrees = String(Math.round(yaw * 180 / Math.PI));
+      if (facingInput.value !== degrees) {
+        facingInput.value = degrees;
+        facingOutput.textContent = degrees + "°";
+      }
+    }, () => { pendingImpact = true; });
+
   for (const animation of character.animationGroups) {
+    animation.onAnimationGroupEndObservable.add(() => queueMicrotask(updateActiveAnimation));
     const button = document.createElement("button");
     button.type = "button";
     button.className = "animation-option";
@@ -66,14 +87,29 @@ export async function startPlayground(
     button.textContent = ANIMATION_LABELS[animation.name] ?? animation.name;
     button.title = animation.name;
     button.addEventListener("click", () => {
-      animationPlayer.play(animation.name);
-      updateActiveAnimation();
+      if (animation.name === ATTACK_ANIMATION) controller.attack();
+      else {
+        pendingImpact = false;
+        animationPlayer.play(animation.name);
+        updateActiveAnimation();
+      }
     }, { signal });
     buttonsContainer.append(button);
   }
   // A one-shot animation automatically returns to Idle. Refresh its button state.
-  const attack = character.animationGroups.find((group) => group.name === ATTACK_ANIMATION);
-  attack?.onAnimationGroupEndObservable.add(() => queueMicrotask(updateActiveAnimation));
+  attack?.onAnimationGroupEndObservable.add(() => {
+    // A slow frame can pass the impact frame and the end of the clip together.
+    impact();
+  });
+  scene.onBeforeRenderObservable.add(() => {
+    const delta = scene.getEngine().getDeltaTime() / 1000;
+    enemies.update(document.hidden ? 0 : delta);
+    if (attack && animationPlayer.activeName === ATTACK_ANIMATION && !animationPlayer.isPaused &&
+        attack.getCurrentFrame() >= attack.from + (attack.to - attack.from) * SWORD_SWING.impact) {
+      impact();
+    }
+    refreshEnemyHealth();
+  });
   updateActiveAnimation();
 
   pauseButton.disabled = false;
@@ -86,59 +122,15 @@ export async function startPlayground(
   linkRangeControl("rotation", "rotationOutput", (n) => `${n}°`, (n) => cameraControls.setRotation(n), signal);
   linkRangeControl("tilt", "tiltOutput", (n) => `${n}°`, (n) => cameraControls.setTilt(n), signal);
   linkRangeControl("zoom", "zoomOutput", (n) => `${n.toFixed(1)} u`, (n) => cameraControls.setVisibleHeight(n), signal);
-  const facingInput = requireElement<HTMLInputElement>("facing");
-  const facingOutput = requireElement<HTMLOutputElement>("facingOutput");
   linkRangeControl("facing", "facingOutput", (n) => `${n}°`, (n) => {
+    if (animationPlayer.activeName === ATTACK_ANIMATION) {
+      facingInput.value = String(Math.round(character.root.rotation.y * 180 / Math.PI));
+      facingOutput.textContent = `${facingInput.value}°`;
+      return;
+    }
+    controller.clearAim();
     character.root.rotation.y = degreesToRadians(n);
   }, signal);
-
-  const pressed = new Set<string>();
-  const listenerOptions = { signal };
-  window.addEventListener("keydown", (event) => {
-    const key = event.key.toLowerCase();
-    if (event.ctrlKey || event.altKey || event.metaKey || !MOVEMENT_KEYS.has(key)) return;
-    pressed.add(key);
-  }, listenerOptions);
-  window.addEventListener("keyup", (event) => {
-    pressed.delete(event.key.toLowerCase());
-  }, listenerOptions);
-  window.addEventListener("blur", () => pressed.clear(), listenerOptions);
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden) pressed.clear();
-  }, listenerOptions);
-
-  let wasMoving = false;
-  scene.onBeforeRenderObservable.add(() => {
-    if (animationPlayer.isPaused || animationPlayer.activeName === ATTACK_ANIMATION) return;
-
-    const horizontal = Number(pressed.has("d")) - Number(pressed.has("q"));
-    const vertical = Number(pressed.has("z")) - Number(pressed.has("s"));
-    const running = pressed.has("shift");
-    const step = calculateMovementStep(horizontal, vertical, cameraControls.alpha, scene.getEngine().getDeltaTime() / 1000, running);
-    const { position, rotation } = character.root;
-    const x = clamp(position.x + step.x, -PLAYGROUND_MOVEMENT_LIMIT, PLAYGROUND_MOVEMENT_LIMIT);
-    const z = clamp(position.z + step.z, -PLAYGROUND_MOVEMENT_LIMIT, PLAYGROUND_MOVEMENT_LIMIT);
-    const moving = x !== position.x || z !== position.z;
-
-    if (moving) {
-      rotation.y = Math.atan2(x - position.x, z - position.z);
-      facingInput.value = String(Math.round(rotation.y * 180 / Math.PI));
-      facingOutput.textContent = `${facingInput.value}°`;
-      position.x = x;
-      position.z = z;
-      cameraControls.follow(x, z);
-    }
-
-    // Leave manual previews alone until the player moves.
-    if (moving || wasMoving) {
-      const name = moving ? (running ? "Running" : "Walking") : IDLE_ANIMATION;
-      if (animationPlayer.activeName !== name) {
-        animationPlayer.play(name);
-        updateActiveAnimation();
-      }
-    }
-    wasMoving = moving;
-  });
 
   requireElement<HTMLButtonElement>("resetButton").addEventListener("click", () => {
     const settings = [

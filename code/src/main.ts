@@ -1,9 +1,10 @@
 import { Engine, Scene } from "@babylonjs/core";
-import { AnimationPlayer, IDLE_ANIMATION } from "./animations";
-import { loadCharacter } from "./character";
-import { requireElement } from "./dom";
-import { createGameplayEnvironment } from "./environments";
-import { createCamera } from "./scene";
+import { AnimationPlayer, IDLE_ANIMATION } from "./character/animations";
+import { loadCharacter } from "./character/character";
+import { createCharacterController } from "./character/characterController";
+import { requireElement } from "./ui/dom";
+import { createGameplayEnvironment, PLAYGROUND_MOVEMENT_LIMIT } from "./world/environments";
+import { createCamera } from "./world/scene";
 
 async function start(): Promise<void> {
   const overlay = requireElement<HTMLDivElement>("loadingOverlay");
@@ -40,7 +41,10 @@ async function start(): Promise<void> {
       const { startPlayground } = await import("./playground");
       await startPlayground(scene, camera, character, animationPlayer, signal);
     } else {
-      createGameplayEnvironment(scene, character.root);
+      const ground = createGameplayEnvironment(scene, character.root);
+      createCharacterController(scene, canvas, character.root, ground.position.y,
+        PLAYGROUND_MOVEMENT_LIMIT, camera, animationPlayer, signal);
+      requireElement("movementHint").hidden = false;
     }
 
     const resize = engine.resize.bind(engine);

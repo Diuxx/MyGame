@@ -1,10 +1,15 @@
 {
-  "source": "Meshy_AI_Rigged_Character_T_Pose_20261113_animated_mixamo_All_animation.glb",
+  "source": "public/models/hero.glb",
   "animations": [
-    { "name": "Idle_3", "durationSeconds": 9.9667, "loop": true },
-    { "name": "Walking", "durationSeconds": 1.0333, "loop": true },
     { "name": "Running", "durationSeconds": 0.6333, "loop": true },
-    { "name": "Right_Hand_Sword_Slash", "durationSeconds": 1.5, "loop": false }
+    { "name": "Walking", "durationSeconds": 1.0333, "loop": true },
+    { "name": "Cautious_Crouch_Walk_Forward_inplace", "durationSeconds": 1.1333, "loop": true },
+    { "name": "Idle_9", "durationSeconds": 2, "loop": true },
+    { "name": "Regular_Jump", "durationSeconds": 1.8667, "loop": false },
+    { "name": "Roll_Dodge_3", "durationSeconds": 1.6333, "loop": false },
+    { "name": "Sprint_and_Sudden_Stop", "durationSeconds": 2, "loop": false },
+    { "name": "Thrust_Slash", "durationSeconds": 3, "loop": false },
+    { "name": "Walk_Backward_inplace", "durationSeconds": 0.8667, "loop": true }
   ],
   "skinCount": 1,
   "meshCount": 1,

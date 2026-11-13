@@ -9,7 +9,7 @@
     "dev-gameplay": "vite --mode gameplay",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test": "node --experimental-strip-types --test src/cameraMath.test.ts src/movement.test.ts"
+    "test": "node --experimental-strip-types --test src/world/cameraMath.test.ts src/character/movement.test.ts src/combat/combat.test.ts src/enemies/enemyState.test.ts"
   },
   "dependencies": {
     "@babylonjs/core": "^8.0.0",

@@ -30,13 +30,13 @@
       <section class="stage" aria-label="Aperçu du personnage 3D">
         <canvas id="renderCanvas" aria-label="Personnage 3D en caméra top-down"></canvas>
         <div class="brand"><span class="brand-mark"></span> IDLE RPG <span id="modeLabel" class="brand-note"></span></div>
-        <div id="movementHint" class="stage-footnote" hidden>Z Q S D · Déplacer le héros | Maj · Courir</div>
+        <div id="movementHint" class="stage-footnote" hidden>Souris · Viser | Z/S · Avancer/reculer | Q/D · Pas latéraux | Maj · Courir | E · Attaque 1</div>
       </section>
       <aside id="playgroundPanel" class="panel" aria-label="Contrôles du playground" hidden>
         <header class="panel-header">
           <p class="eyebrow">PROTOTYPE 01</p>
           <h1>Animation Playground</h1>
-          <p>Test du personnage Meshy dans Babylon.js, sans système de combat.</p>
+          <p>Test des animations, de la caméra et du combat.</p>
         </header>
         <div class="control-section">
           <h2>Animations</h2>
@@ -45,6 +45,34 @@
           <input id="speed" type="range" min="0.25" max="2" step="0.05" value="1" />
           <button id="pauseButton" type="button" class="secondary wide" disabled>Pause</button>
         </div>
+        <section class="control-section enemy-tools" aria-labelledby="enemyHeading">
+          <h2 id="enemyHeading">Ennemis</h2>
+          <label>Instance<select id="enemyInstance"><option value="">Nouvel ennemi</option></select></label>
+          <output id="enemyHealth"></output>
+          <form id="enemyForm">
+            <fieldset id="enemyFields">
+              <label>Type<select id="enemyType"></select></label>
+              <div class="enemy-fields">
+                <label>PV max<input id="enemyMaxHealth" type="number" min="1" step="any" required /></label>
+                <label>Défense<input id="enemyDefense" type="number" min="0" step="any" required /></label>
+                <label>Dégâts<input id="enemyAttack" type="number" min="0" step="any" required /></label>
+                <label>Vitesse<input id="enemySpeed" type="number" min="0" step="any" required /></label>
+                <label>Délai (s)<input id="enemyRegenDelay" type="number" min="0" step="any" required /></label>
+                <label>Régén. (PV/s)<input id="enemyRegenRate" type="number" min="0" step="any" required /></label>
+              </div>
+              <label class="grid-toggle"><input id="enemyImmortal" type="checkbox" /> Immortel</label>
+              <label class="grid-toggle"><input id="enemyRegen" type="checkbox" /> Régénération</label>
+            </fieldset>
+            <button id="enemySubmit" class="secondary wide" type="submit">Créer un ennemi</button>
+          </form>
+          <div class="enemy-fields">
+            <button id="enemyReset" class="secondary" type="button" disabled>Rétablir les PV</button>
+            <button id="enemyRemove" class="secondary" type="button" disabled>Retirer</button>
+          </div>
+          <button id="enemyRemoveAll" class="secondary wide" type="button">Retirer tous les ennemis</button>
+          <label class="grid-toggle"><input id="showHurtboxes" type="checkbox" /> Afficher les zones de touche</label>
+          <p id="enemyStatus" role="status"></p>
+        </section>
         <div class="control-section">
           <h2>Caméra</h2>
           <div class="field-row"><label for="rotation">Rotation de la caméra</label><output id="rotationOutput" for="rotation">65°</output></div>
