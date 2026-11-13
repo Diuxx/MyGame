@@ -74,3 +74,10 @@ Ces valeurs sont des réglages de **playground**, pas des mesures exactes issues
 Le fichier `hero.glb` est le modèle Meshy fourni par l'utilisateur. Le projet ne revendique pas de droits nouveaux sur les contenus Meshy.
 
 Les trois GLB de `public/assets/training/` sont des copies des fichiers fournis par l'utilisateur. Leur licence n'a pas été précisée. Leur placement au sol se fait au chargement.
+
+
+## Presets d'ennemis et collisions (branche de développement)
+
+Dans **Ennemis**, les boutons **Sauvegarder / Charger** conservent localement les types, positions et statistiques des instances. **Exporter / Importer JSON** permet d'échanger les presets versionnés. Le chargement ne restaure pas les PV courants : les instances apparaissent avec leur santé maximale. Une erreur de validation ou de chargement conserve les instances précédentes.
+
+La détection des coups est géométrique et séparée du rendu, avec prise en charge des boîtes orientées dans le calcul pur. La collision bloquant les déplacements et le suivi exact de la lame animée ne sont pas encore implémentés. Voir [`docs/COMBAT_ARCHITECTURE.md`](../docs/COMBAT_ARCHITECTURE.md).

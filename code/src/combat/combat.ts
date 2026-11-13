@@ -1,3 +1,5 @@
+import { intersectsMeleeHitbox } from "./hitDetection.ts";
+
 export type Position = readonly [number, number, number];
 
 export type Hurtbox = { height: number; offset: Position } & (
@@ -40,36 +42,18 @@ export function regenerate(enemy: CombatState, delta: number): void {
 
 export const SWORD_SWING = { damage: 25, range: 1.8, radius: 0.55, height: 1 };
 
-/** A rounded forward segment at sword height against a vertical cylinder or axis-aligned box. */
-export function intersectsSwing(origin: Position, yaw: number, position: Position, box: Hurtbox): boolean {
-  const [x, y, z] = box.offset.map((offset, axis) => position[axis] + offset);
-  if (Math.abs(origin[1] + SWORD_SWING.height - y) > box.height / 2) return false;
-  const dx = x - origin[0];
-  const dz = z - origin[2];
-  const forwardX = Math.sin(yaw);
-  const forwardZ = Math.cos(yaw);
-  const projection = dx * forwardX + dz * forwardZ;
-  if (projection < 0) return false;
-
-  if (box.shape === "cylinder") {
-    const along = Math.min(projection, SWORD_SWING.range);
-    return Math.hypot(dx - along * forwardX, dz - along * forwardZ) <= box.radius + SWORD_SWING.radius;
-  }
-
-  // Intersect the forward segment with the box expanded by the swing radius.
-  let near = 0;
-  let far = SWORD_SWING.range;
-  for (const [center, direction, halfSize] of [[dx, forwardX, box.width / 2], [dz, forwardZ, box.depth / 2]]) {
-    const radius = halfSize + SWORD_SWING.radius;
-    if (Math.abs(direction) < 1e-9) {
-      if (Math.abs(center) > radius) return false;
-      continue;
-    }
-    const a = (center - radius) / direction;
-    const b = (center + radius) / direction;
-    near = Math.max(near, Math.min(a, b));
-    far = Math.min(far, Math.max(a, b));
-    if (near > far) return false;
-  }
-  return true;
+/** A forward sword sweep against a cylinder or oriented rectangular hurtbox. */
+export function intersectsSwing(
+  origin: Position,
+  yaw: number,
+  position: Position,
+  box: Hurtbox,
+  targetYaw = 0,
+): boolean {
+  return intersectsMeleeHitbox(origin, yaw, position, box, {
+    range: SWORD_SWING.range,
+    radius: SWORD_SWING.radius,
+    elevation: SWORD_SWING.height,
+    verticalRadius: 0,
+  }, targetYaw);
 }

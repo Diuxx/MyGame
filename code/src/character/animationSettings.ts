@@ -107,7 +107,7 @@ export function createAnimationSettings(saved?: unknown): AnimationSettings {
 
 export function createAttackHits(impact: AttackImpact) {
   const windows = impact.doubleHit ? [impact, impact.second] : [impact];
-  return windows.map(({ from, until }) => ({ window: { from, until }, hit: false }));
+  return windows.map(({ from, until }) => ({ window: { from, until }, triggered: false }));
 }
 
 export function effectivePlaybackSpeed(definition: Definition, settings: AnimationSetting): number {

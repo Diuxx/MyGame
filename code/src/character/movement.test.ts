@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { aimYaw, calculateMovementStep, crossesImpactWindow, dodgeDirection, dodgeInvulnerable, mouseRelativeDirection } from "./movement.ts";
+import { aimYaw, calculateMovementStep, consumeImpactWindow, crossesImpactWindow, dodgeDirection, dodgeInvulnerable, mouseRelativeDirection } from "./movement.ts";
 import { LOCOMOTION_CLIPS as clips, locomotionWeights } from "./locomotion.ts";
 import { createAnimationSettings, createAttackHits, effectivePlaybackSpeed, HERO_ANIMATIONS } from "./animationSettings.ts";
 import { createWeaponState } from "./weaponState.ts";
@@ -136,18 +136,26 @@ test("action timing uses progress and catches an impact window crossed in a sing
 test("attack defaults to two windows and an explicit single-hit preference is preserved", () => {
   const { id } = HERO_ANIMATIONS.attack;
   assert.deepEqual(createAttackHits(createAnimationSettings()[id].impact!), [
-    { hit: false, window: { from: 0.23, until: 0.5 } },
-    { hit: false, window: { from: 0.5, until: 0.8 } },
+    { triggered: false, window: { from: 0.23, until: 0.5 } },
+    { triggered: false, window: { from: 0.5, until: 0.8 } },
   ]);
   const settings = createAnimationSettings({ [id]: { impact: { from: 0.2, until: 0.3, doubleHit: false } } });
   const impact = settings[id].impact!;
   assert.equal(impact.doubleHit, false);
-  assert.deepEqual(createAttackHits(impact), [{ hit: false, window: { from: 0.2, until: 0.3 } }]);
+  assert.deepEqual(createAttackHits(impact), [{ triggered: false, window: { from: 0.2, until: 0.3 } }]);
   impact.doubleHit = true;
   const hits = createAttackHits(impact);
-  hits[0].hit = true;
-  assert.equal(hits[1].hit, false);
+  assert.equal(consumeImpactWindow(hits[0], 0.1, 0.25), true);
+  assert.equal(hits[1].triggered, false);
   assert.equal(crossesImpactWindow(0.4, 0.9, hits[0].window), false);
   assert.equal(crossesImpactWindow(0.4, 0.9, hits[1].window), true);
-  assert.equal(createAttackHits(impact)[0].hit, false);
+  assert.equal(createAttackHits(impact)[0].triggered, false);
+});
+
+
+test("missed attack windows are consumed once and not retried", () => {
+  const event = { window: { from: 0.2, until: 0.5 }, triggered: false };
+  assert.equal(consumeImpactWindow(event, 0, 0.25), true);
+  assert.equal(event.triggered, true);
+  assert.equal(consumeImpactWindow(event, 0.25, 0.4), false);
 });
