@@ -1,7 +1,7 @@
-import type { FlatObstacle } from "./mapCollision.ts";
+import { buildMapObstacles, type FlatObstacle } from "./mapCollision.ts";
 import type { MapAssets, MapDefinition } from "./types.ts";
 
-/** Data-only navigation seam. Pathfinding and rasterization are deferred to P2. */
+/** Data-only navigation seam. A* and grid rasterization are deferred to P2. */
 export interface NavigationData {
   walkable: boolean[][];
   blockingObjects: { id: string; colliders: FlatObstacle[] }[];
@@ -13,6 +13,9 @@ export function createNavigationData(map: MapDefinition, assets: MapAssets): Nav
     walkable,
     blockingObjects: map.objects
       .filter((item) => assets.objects[item.asset].blocksNavigation)
-      .map((item) => ({ id: item.id, colliders: [] })),
+      .map((item) => ({
+        id: item.id,
+        colliders: buildMapObstacles({ ...map, objects: [item] }, assets),
+      })),
   };
 }

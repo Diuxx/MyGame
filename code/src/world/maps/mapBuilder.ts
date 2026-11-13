@@ -1,0 +1,134 @@
+import {
+  Color3, MeshBuilder, StandardMaterial, TransformNode, type AbstractMesh, type Scene,
+} from "@babylonjs/core";
+import type { GroundStep } from "../../combat/bodyCollision";
+import { buildMapObstacles, mapBounds, resolveMapMovement } from "./mapCollision";
+import { MissingMapVisuals } from "./missingVisuals";
+import { MapModelRegistry } from "./modelRegistry";
+import { createNavigationData } from "./navigationData";
+import { tileCenter } from "./validation";
+import type { MapAssets, MapCollider, MapDefinition, MapPosition } from "./types";
+
+function placeNode(scene: Scene, parent: TransformNode, id: string,
+                   position: MapPosition, rotationY = 0): TransformNode {
+  const node = new TransformNode(id, scene);
+  node.parent = parent;
+  node.position.set(...position);
+  node.rotation.y = rotationY * Math.PI / 180;
+  return node;
+}
+
+function colliderDebug(scene: Scene, parent: TransformNode, shape: MapCollider,
+                       material: StandardMaterial): AbstractMesh {
+  const mesh = shape.type === "box"
+    ? MeshBuilder.CreateBox("map-collider-box", {
+      width: shape.size[0], height: shape.size[1], depth: shape.size[2],
+    }, scene)
+    : MeshBuilder.CreateCylinder("map-collider-cylinder", {
+      diameter: shape.radius * 2, height: shape.height, tessellation: 24,
+    }, scene);
+  mesh.parent = parent;
+  mesh.position.set(...shape.position);
+  mesh.material = material;
+  mesh.isPickable = false;
+  mesh.setEnabled(false);
+  return mesh;
+}
+
+export async function buildMap(scene: Scene, definition: MapDefinition, assets: MapAssets,
+                               registry: MapModelRegistry) {
+  const root = new TransformNode("map-" + definition.id, scene);
+  root.setEnabled(false);
+  const missing = new MissingMapVisuals(scene);
+  const missingModels = new Set<string>();
+  const instanceDisposers: (() => void)[] = [];
+  const debugMeshes: AbstractMesh[] = [];
+  const debugMaterial = new StandardMaterial("map-colliders-debug", scene);
+  debugMaterial.disableLighting = true;
+  debugMaterial.emissiveColor = Color3.FromHexString("#F1C85A");
+  debugMaterial.alpha = 0.28;
+  debugMaterial.wireframe = true;
+  debugMaterial.backFaceCulling = false;
+
+  async function renderModel(path: string, node: TransformNode, fallback: () => void): Promise<void> {
+    const dispose = await registry.instantiate(path, node);
+    if (dispose) {
+      instanceDisposers.push(dispose);
+      for (const mesh of node.getChildMeshes()) mesh.isPickable = false;
+    } else {
+      missingModels.add(path);
+      fallback();
+    }
+  }
+
+  function addGroundCollider(): void {
+    const { enabled, thickness } = definition.terrain.groundCollider;
+    if (!enabled) return;
+    const width = definition.terrain.tiles[0].length * definition.tileSize;
+    const depth = definition.terrain.tiles.length * definition.tileSize;
+    const center = tileCenter(definition, (definition.terrain.tiles.length - 1) / 2,
+      (definition.terrain.tiles[0].length - 1) / 2);
+    const ground = MeshBuilder.CreateBox("map-ground-collider", {
+      width, depth, height: thickness,
+    }, scene);
+    ground.parent = root;
+    ground.position.set(center[0], definition.terrain.origin[1] - thickness / 2, center[2]);
+    ground.material = debugMaterial;
+    ground.isPickable = false;
+    ground.setEnabled(false);
+    debugMeshes.push(ground);
+  }
+
+  try {
+    for (const [row, columns] of definition.terrain.tiles.entries()) {
+      for (const [column, tileId] of columns.entries()) {
+        const parent = placeNode(scene, root, "tile-" + row + "-" + column,
+          tileCenter(definition, row, column));
+        const tile = assets.tiles[tileId];
+        await renderModel(tile.model, parent, () => missing.addTile(parent, tile.model, definition.tileSize, tileId));
+      }
+    }
+    for (const object of definition.objects) {
+      const asset = assets.objects[object.asset];
+      const parent = placeNode(scene, root, "map-object-" + object.id, object.position, object.rotationY);
+      await renderModel(asset.model, parent, () => missing.addObject(parent, asset.model, asset.colliders));
+      for (const shape of asset.colliders) {
+        debugMeshes.push(colliderDebug(scene, parent, shape, debugMaterial));
+      }
+    }
+    addGroundCollider();
+  } catch (error) {
+    for (const dispose of instanceDisposers) dispose();
+    root.dispose(false, false);
+    missing.dispose();
+    debugMaterial.dispose();
+    throw error;
+  }
+
+  const obstacles = buildMapObstacles(definition, assets);
+  const bounds = mapBounds(definition);
+  const navigation = createNavigationData(definition, assets);
+  let disposed = false;
+  return {
+    definition,
+    navigation,
+    missingModels: [...missingModels],
+    activate(): void { root.setEnabled(true); },
+    setColliderDebug(visible: boolean): void {
+      for (const mesh of debugMeshes) mesh.setEnabled(visible);
+    },
+    resolveMovement(start: MapPosition, step: GroundStep, heroRadius: number, heroHeight = 1.8): GroundStep {
+      return resolveMapMovement(start, step, heroRadius, obstacles, bounds, heroHeight);
+    },
+    dispose(): void {
+      if (disposed) return;
+      disposed = true;
+      for (const dispose of instanceDisposers) dispose();
+      root.dispose(false, false);
+      missing.dispose();
+      debugMaterial.dispose();
+    },
+  };
+}
+
+export type BuiltMap = Awaited<ReturnType<typeof buildMap>>;
