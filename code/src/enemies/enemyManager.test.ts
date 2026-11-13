@@ -42,3 +42,13 @@ test("enemy colliders block movement and can be disabled per instance", () => {
   enemy.defeated = true;
   assert.deepEqual(manager.resolveMovement([0, 0, 0], { x: 0, z: 10 }, 0.4), { x: 0, z: 10 });
 });
+
+test("custom attack range and damage affect enemy health rather than only debug visuals", () => {
+  const manager = createEnemyManager();
+  const enemy = createEnemy("far-target", definition, [0, 0, 4], definition);
+  manager.add(enemy);
+  assert.equal(manager.strike([0, 0, 0], 0), false);
+  assert.equal(manager.strike([0, 0, 0], 0,
+    { damage: 37, range: 4, radius: 0.3, height: 1 }), true);
+  assert.equal(enemy.health, 63);
+});

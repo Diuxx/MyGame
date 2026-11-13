@@ -3,7 +3,7 @@ import {
   type Scene, type ShadowGenerator,
 } from "@babylonjs/core";
 import "@babylonjs/loaders/glTF";
-import type { Hurtbox, Position } from "../combat/combat";
+import type { Hurtbox, Position, SwordSwing } from "../combat/combat";
 import type { EnemyDefinition, EnemySettings } from "./enemyDefinitions";
 import { createEnemy, getEnemyCollision, type Enemy } from "./enemyState";
 import type { GroundStep } from "../combat/bodyCollision";
@@ -185,8 +185,8 @@ export function createEnemyScene(scene: Scene, shadows: ShadowGenerator, groundY
       manager.update(delta);
       for (const entry of entries.values()) entry.update();
     },
-    strike(origin: Position, yaw: number) {
-      return manager.strike(origin, yaw);
+    strike(origin: Position, yaw: number, swing?: SwordSwing) {
+      return manager.strike(origin, yaw, swing);
     },
   };
 }

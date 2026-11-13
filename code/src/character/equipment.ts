@@ -1,6 +1,6 @@
 import { LoadAssetContainerAsync, TransformNode, Vector3, type AssetContainer, type Scene } from "@babylonjs/core";
 import { degreesToRadians } from "../world/cameraMath";
-import { EQUIPMENT_ALIGNMENT, EQUIPMENT_ASSETS, EQUIPMENT_DEFAULTS, type EquipmentTransform } from "./equipmentTuning";
+import { DEFAULT_DRAWN_KATANA_ROTATION, EQUIPMENT_ALIGNMENT, EQUIPMENT_ASSETS, EQUIPMENT_DEFAULTS, type EquipmentTransform } from "./equipmentTuning";
 import { createWeaponState } from "./weaponState";
 import type { LoadedCharacter } from "./character";
 
@@ -45,7 +45,10 @@ export async function loadEquipment(scene: Scene, character: LoadedCharacter) {
 
   const full = mount("equipment-scabbard-full", assets[0], back);
   const empty = mount("equipment-scabbard-empty", assets[1], back);
-  const katana = mount("equipment-katana", assets[2], hand);
+  // A separate pivot rotates the drawn blade around the hand grip, not its GLB center.
+  const katanaPivot = new TransformNode("equipment-katana-orientation", scene);
+  katanaPivot.parent = hand;
+  const katana = mount("equipment-katana", assets[2], katanaPivot);
   empty.position.copyFromFloats(EQUIPMENT_ALIGNMENT.empty.x, EQUIPMENT_ALIGNMENT.empty.y, EQUIPMENT_ALIGNMENT.empty.z);
   katana.position.copyFromFloats(EQUIPMENT_ALIGNMENT.katana.x, EQUIPMENT_ALIGNMENT.katana.y, EQUIPMENT_ALIGNMENT.katana.z);
 
@@ -66,10 +69,15 @@ export async function loadEquipment(scene: Scene, character: LoadedCharacter) {
   }
   setTransform("back", EQUIPMENT_DEFAULTS.back);
   setTransform("hand", EQUIPMENT_DEFAULTS.hand);
+  const setDrawnKatanaRotation = (rotation: readonly [number, number, number]): void => {
+    katanaPivot.rotation.set(...rotation.map(degreesToRadians) as [number, number, number]);
+  };
+  setDrawnKatanaRotation(DEFAULT_DRAWN_KATANA_ROTATION);
   updateVisibility();
   character.root.onDisposeObservable.addOnce(() => {
     for (const asset of assets) asset.dispose();
     back.dispose();
+    katanaPivot.dispose();
     hand.dispose();
   });
 
@@ -77,6 +85,7 @@ export async function loadEquipment(scene: Scene, character: LoadedCharacter) {
     meshes: assets.flatMap((asset) => asset.meshes.filter((mesh) => mesh.getTotalVertices() > 0)),
     get state() { return weapon.state; },
     setTransform,
+    setDrawnKatanaRotation,
     transition(drawn: boolean, attachmentProgress?: number) {
       weapon.transition(drawn, attachmentProgress);
       updateVisibility();

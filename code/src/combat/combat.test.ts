@@ -47,3 +47,12 @@ test("sword impact respects range, facing and hurtbox height", () => {
   assert.equal(intersectsSwing([0, 0, 0], Math.PI / 2, [2, 0, 0], wooden), true);
   assert.equal(intersectsSwing([0, 0, 0], Math.PI / 2, [2, 0, 2], wooden), false);
 });
+
+test("custom sword reach is used by combat hit detection", () => {
+  const box = { shape: "cylinder", radius: 0.3, height: 2, offset: [0, 1, 0] } as const;
+  const origin = [0, 0, 0] as const;
+  const target = [0, 0, 3] as const;
+  assert.equal(intersectsSwing(origin, 0, target, box), false);
+  assert.equal(intersectsSwing(origin, 0, target, box, 0,
+    { damage: 25, range: 3.3, radius: 0.5, height: 1 }), true);
+});
