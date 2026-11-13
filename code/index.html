@@ -41,6 +41,7 @@
           <button type="button" aria-controls="actionsModule" aria-expanded="false">Animations d’action</button>
           <button type="button" aria-controls="equipmentModule" aria-expanded="false">Équipement</button>
           <button type="button" aria-controls="enemiesModule" aria-expanded="false">Gestion des ennemis</button>
+          <button type="button" aria-controls="collisionsModule" aria-expanded="false">Collisions et hitbox</button>
           <button type="button" aria-controls="cameraModule" aria-expanded="false">Caméra</button>
           <button type="button" aria-controls="modelModule" aria-expanded="false">Modèle chargé</button>
           <button type="button" aria-controls="controlsModule" aria-expanded="false">Commandes</button>
@@ -69,6 +70,16 @@
           </header>
           <div id="animationButtons" class="animation-buttons"></div>
           <div id="movementAnimationSettings" class="animation-settings"></div>
+          <div class="animation-settings">
+            <p class="animation-note">Transitions entre animations (secondes)</p>
+            <div class="field-row"><label for="transitionMove">Déplacements</label><output id="transitionMoveValue"></output></div>
+            <input id="transitionMove" type="range" min="0.03" max="1" step="0.01" />
+            <div class="field-row"><label for="transitionIdle">Retour au repos / collision</label><output id="transitionIdleValue"></output></div>
+            <input id="transitionIdle" type="range" min="0.03" max="1" step="0.01" />
+            <div class="field-row"><label for="transitionSlowDown">Ralentissement</label><output id="transitionSlowDownValue"></output></div>
+            <input id="transitionSlowDown" type="range" min="0.03" max="1" step="0.01" />
+            <p id="transitionStatus" class="animation-note" role="status"></p>
+          </div>
           <button id="pauseButton" type="button" class="secondary wide" disabled>Pause</button>
         </section>
         <section id="actionsModule" class="module-window" aria-labelledby="actionsHeading" hidden>
@@ -106,10 +117,12 @@
                 <label>Défense<input id="enemyDefense" type="number" min="0" step="any" required /></label>
                 <label>Dégâts<input id="enemyAttack" type="number" min="0" step="any" required /></label>
                 <label>Vitesse<input id="enemySpeed" type="number" min="0" step="any" required /></label>
+                <label>Rayon solide<input id="enemyCollisionRadius" type="number" min="0.1" max="10" step="0.05" required /></label>
                 <label>Délai (s)<input id="enemyRegenDelay" type="number" min="0" step="any" required /></label>
                 <label>Régén. (PV/s)<input id="enemyRegenRate" type="number" min="0" step="any" required /></label>
               </div>
               <label class="grid-toggle"><input id="enemyImmortal" type="checkbox" /> Immortel</label>
+              <label class="grid-toggle"><input id="enemySolid" type="checkbox" /> Bloque les déplacements</label>
               <label class="grid-toggle"><input id="enemyRegen" type="checkbox" /> Régénération</label>
             </fieldset>
             <button id="enemySubmit" class="secondary wide" type="submit">Créer un ennemi</button>
@@ -127,8 +140,25 @@
           </div>
           <input id="enemyImportFile" type="file" accept=".json,application/json" hidden />
           <button id="simulateHeroHit" class="secondary wide" type="button">Simuler un coup reçu</button>
-          <label class="grid-toggle"><input id="showHurtboxes" type="checkbox" /> Afficher les zones de touche</label>
           <p id="enemyStatus" role="status"></p>
+        </section>
+        <section id="collisionsModule" class="module-window enemy-tools" aria-labelledby="collisionsHeading" hidden>
+          <header class="module-header">
+            <h2 id="collisionsHeading">Collisions et hitbox du héros</h2>
+            <button class="module-close" type="button" aria-label="Fermer les collisions">×</button>
+          </header>
+          <label class="grid-toggle"><input id="heroSolid" type="checkbox" checked /> Activer les collisions physiques</label>
+          <label class="grid-toggle"><input id="heroHitboxVisible" type="checkbox" checked /> Hitbox du héros (rouge)</label>
+          <label class="grid-toggle"><input id="enemyHitboxesVisible" type="checkbox" /> Hurtboxes des ennemis (cyan)</label>
+          <label class="grid-toggle"><input id="enemyCollidersVisible" type="checkbox" /> Colliders des ennemis (jaune)</label>
+          <div class="enemy-fields">
+            <label>Rayon du héros (u)<input id="heroCollisionRadius" type="number" min="0.1" max="2" step="0.05" value="0.4" /></label>
+            <label>Hauteur de la hitbox (u)<input id="heroCollisionHeight" type="number" min="0.2" max="4" step="0.1" value="1.8" /></label>
+            <label>Décalage vertical (u)<input id="heroCollisionOffset" type="number" min="-1" max="4" step="0.05" value="0.9" /></label>
+          </div>
+          <button id="heroCollisionReset" class="secondary wide" type="button">Rétablir les valeurs par défaut</button>
+          <p class="animation-note">Le volume rouge suit le héros. La marche, la course et l’esquive partagent le même rayon de collision au sol.</p>
+          <p id="heroCollisionStatus" class="animation-note" role="status"></p>
         </section>
         <section id="cameraModule" class="module-window" aria-labelledby="cameraHeading" hidden>
           <header class="module-header">
