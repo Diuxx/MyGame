@@ -1,5 +1,7 @@
 import type { CharacterEquipment } from "../character/equipment";
-import { EQUIPMENT_DEFAULTS, type EquipmentTransform } from "../character/equipmentTuning";
+import {
+  DEFAULT_DRAWN_KATANA_ROTATION, EQUIPMENT_DEFAULTS, parseDrawnKatanaRotation, type EquipmentTransform,
+} from "../character/equipmentTuning";
 import { requireElement } from "../ui/dom";
 
 const STORAGE_KEY = "mon-rpg.playground.equipment.v1";
@@ -7,7 +9,10 @@ const SOCKET_LABELS = { back: "Fourreau — Dos", hand: "Katana — Main droite"
 const AXES = ["X", "Y", "Z"] as const;
 
 export function bindEquipmentTools(equipment: CharacterEquipment, isActing: () => boolean, previewAttack: () => void, signal: AbortSignal): () => void {
-  const transforms = structuredClone(EQUIPMENT_DEFAULTS);
+  const transforms = {
+    ...structuredClone(EQUIPMENT_DEFAULTS),
+    katanaRotation: [...DEFAULT_DRAWN_KATANA_ROTATION] as [number, number, number],
+  };
   let saved: Partial<typeof transforms> | undefined;
   try {
     saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null") ?? undefined;
@@ -81,7 +86,51 @@ export function bindEquipmentTools(equipment: CharacterEquipment, isActing: () =
       fields.append(reset);
     }
   }
-  fields.append(status);
+  // This pivot is separate from the hand socket and rotates around the grip.
+  const katanaRotation = parseDrawnKatanaRotation(saved?.katanaRotation);
+  transforms.katanaRotation = katanaRotation;
+  equipment.setDrawnKatanaRotation(katanaRotation);
+  const bladeGroup = document.createElement("fieldset");
+  const bladeLegend = document.createElement("legend");
+  bladeLegend.textContent = "Orientation de la lame dégainée (°)";
+  bladeGroup.append(bladeLegend);
+  const bladeFields: HTMLInputElement[] = [];
+  AXES.forEach((axis, i) => {
+    const label = document.createElement("label");
+    label.textContent = `Rotation ${axis}`;
+    const input = document.createElement("input");
+    input.type = "number";
+    input.min = "-360";
+    input.max = "360";
+    input.step = "1";
+    input.value = String(katanaRotation[i]);
+    input.addEventListener("input", () => {
+      const value = input.valueAsNumber;
+      if (!Number.isFinite(value) || value < -360 || value > 360) return;
+      katanaRotation[i] = value;
+      equipment.setDrawnKatanaRotation(katanaRotation);
+      save();
+    }, { signal });
+    bladeFields.push(input);
+    label.append(input);
+    bladeGroup.append(label);
+  });
+  fields.append(bladeGroup);
+  const resetBlade = document.createElement("button");
+  resetBlade.type = "button";
+  resetBlade.className = "secondary wide";
+  resetBlade.textContent = "Rétablir l’orientation de la lame";
+  resetBlade.addEventListener("click", () => {
+    katanaRotation.splice(0, 3, ...DEFAULT_DRAWN_KATANA_ROTATION);
+    bladeFields.forEach((input, i) => { input.value = String(katanaRotation[i]); });
+    equipment.setDrawnKatanaRotation(katanaRotation);
+    save();
+  }, { signal });
+  fields.append(resetBlade);
+  const hint = document.createElement("p");
+  hint.className = "animation-note";
+  hint.textContent = "La rotation de la lame est indépendante de l’attache à la main. Cliquez sur « Arme dégainée » pour voir le résultat.";
+  fields.append(hint, status);
 
   let previousState: string | undefined;
   let previouslyLocked: boolean | undefined;
