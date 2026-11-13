@@ -16,6 +16,7 @@ export function bindCollisionTools(
 ) {
   const enabled = requireElement<HTMLInputElement>("heroSolid");
   const showHero = requireElement<HTMLInputElement>("heroHitboxVisible");
+  const quickShowHero = requireElement<HTMLInputElement>("heroHitboxQuickToggle");
   const showEnemyHurtboxes = requireElement<HTMLInputElement>("enemyHitboxesVisible");
   const showEnemyColliders = requireElement<HTMLInputElement>("enemyCollidersVisible");
   const radius = requireElement<HTMLInputElement>("heroCollisionRadius");
@@ -47,6 +48,7 @@ export function bindCollisionTools(
   function showSettings(): void {
     enabled.checked = settings.enabled;
     showHero.checked = settings.showHero;
+    quickShowHero.checked = settings.showHero;
     showEnemyHurtboxes.checked = settings.showEnemyHurtboxes;
     showEnemyColliders.checked = settings.showEnemyColliders;
     radius.value = String(settings.radius);
@@ -85,6 +87,10 @@ export function bindCollisionTools(
   for (const element of [enabled, showHero, showEnemyHurtboxes, showEnemyColliders, radius, height, offsetY]) {
     element.addEventListener("change", updateSettings, { signal });
   }
+  quickShowHero.addEventListener("change", () => {
+    showHero.checked = quickShowHero.checked;
+    updateSettings();
+  }, { signal });
   reset.addEventListener("click", () => {
     settings = { ...DEFAULT_HERO_COLLISION };
     showSettings();
