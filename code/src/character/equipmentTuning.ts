@@ -21,3 +21,14 @@ export const EQUIPMENT_ALIGNMENT = {
   empty: { x: 0, y: -0.06, z: 0 },
   katana: { x: -0.67, y: 0, z: 0 },
 };
+
+/** Relative to the right-hand attachment, not the character's bone orientation. */
+export const DEFAULT_DRAWN_KATANA_ROTATION: readonly [number, number, number] = [0, 0, 0];
+
+export function parseDrawnKatanaRotation(value: unknown): [number, number, number] {
+  if (!Array.isArray(value) || value.length !== 3 ||
+      !value.every((axis) => typeof axis === "number" && Number.isFinite(axis) && Math.abs(axis) <= 360)) {
+    return [...DEFAULT_DRAWN_KATANA_ROTATION];
+  }
+  return [value[0], value[1], value[2]];
+}

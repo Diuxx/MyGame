@@ -1,5 +1,6 @@
-import { applyDamage, intersectsSwing, regenerate, SWORD_SWING, type Position } from "../combat/combat.ts";
-import type { Enemy } from "./enemyState.ts";
+import { applyDamage, intersectsSwing, regenerate, SWORD_SWING, type Position, type SwordSwing } from "../combat/combat.ts";
+import { resolveCircleMovement, type GroundStep } from "../combat/bodyCollision.ts";
+import { getEnemyCollision, type Enemy } from "./enemyState.ts";
 
 /** Runtime enemy state, independent of Babylon.js and developer UI. */
 export function createEnemyManager() {
@@ -25,11 +26,20 @@ export function createEnemyManager() {
     update(deltaSeconds: number): void {
       for (const enemy of instances.values()) regenerate(enemy, deltaSeconds);
     },
-    strike(origin: Position, facingYaw: number): boolean {
+    resolveMovement(start: Position, desired: GroundStep, heroRadius: number): GroundStep {
+      const solids = [...instances.values()].flatMap((enemy) => {
+        const collision = getEnemyCollision(enemy);
+        return enemy.defeated || !collision.solid
+          ? []
+          : [{ x: enemy.position[0], z: enemy.position[2], radius: collision.radius }];
+      });
+      return resolveCircleMovement(start, desired, heroRadius, solids);
+    },
+    strike(origin: Position, facingYaw: number, swing: SwordSwing = SWORD_SWING): boolean {
       let hit = false;
       for (const enemy of instances.values()) {
-        if (intersectsSwing(origin, facingYaw, enemy.position, enemy.definition.hurtbox) &&
-            applyDamage(enemy, SWORD_SWING.damage)) {
+        if (intersectsSwing(origin, facingYaw, enemy.position, enemy.definition.hurtbox, 0, swing) &&
+            applyDamage(enemy, swing.damage)) {
           hit = true;
         }
       }

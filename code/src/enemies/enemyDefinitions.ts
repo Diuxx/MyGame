@@ -1,6 +1,12 @@
 import type { Hurtbox, RegenerationSettings } from "../combat/combat.ts";
 
+export interface EnemyCollision {
+  solid: boolean;
+  radius: number;
+}
+
 export interface EnemySettings {
+  collision?: EnemyCollision;
   stats: { maxHealth: number; defense: number; attackDamage: number; movementSpeed: number };
   immortal: boolean;
   regeneration: RegenerationSettings;
@@ -28,6 +34,12 @@ export function validateEnemySettings(value: unknown): asserts value is EnemySet
   const regen = record(settings.regeneration);
   for (const [key, min] of [["maxHealth", 1], ["defense", 0], ["attackDamage", 0], ["movementSpeed", 0]] as const) {
     if (!number(stats[key], min)) throw new Error(`Statistique invalide : ${key} (minimum ${min}).`);
+  }
+  if (settings.collision !== undefined) {
+    const collision = record(settings.collision);
+    if (typeof collision.solid !== "boolean" || !number(collision.radius, 0.1) || collision.radius > 10) {
+      throw new Error("Collision solide invalide (rayon entre 0,1 et 10).");
+    }
   }
   if (typeof settings.immortal !== "boolean") throw new Error("Option d’immortalité invalide.");
   if (typeof regen.enabled !== "boolean" || !number(regen.delay) || !number(regen.healthPerSecond)) {

@@ -29,3 +29,26 @@ test("manager uses instance IDs and shared combat rules", () => {
   manager.clear();
   assert.equal(manager.list().length, 0);
 });
+
+test("enemy colliders block movement and can be disabled per instance", () => {
+  const manager = createEnemyManager();
+  const enemy = createEnemy("dummy-3", definition, [0, 0, 3], definition);
+  manager.add(enemy);
+  const blocked = manager.resolveMovement([0, 0, 0], { x: 0, z: 10 }, 0.4);
+  assert.ok(blocked.z < 2.2);
+  enemy.collision = { solid: false, radius: 0.5 };
+  assert.deepEqual(manager.resolveMovement([0, 0, 0], { x: 0, z: 10 }, 0.4), { x: 0, z: 10 });
+  enemy.collision.solid = true;
+  enemy.defeated = true;
+  assert.deepEqual(manager.resolveMovement([0, 0, 0], { x: 0, z: 10 }, 0.4), { x: 0, z: 10 });
+});
+
+test("custom attack range and damage affect enemy health rather than only debug visuals", () => {
+  const manager = createEnemyManager();
+  const enemy = createEnemy("far-target", definition, [0, 0, 4], definition);
+  manager.add(enemy);
+  assert.equal(manager.strike([0, 0, 0], 0), false);
+  assert.equal(manager.strike([0, 0, 0], 0,
+    { damage: 37, range: 4, radius: 0.3, height: 1 }), true);
+  assert.equal(enemy.health, 63);
+});

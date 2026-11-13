@@ -1,5 +1,5 @@
 import type { AnimationGroup } from "@babylonjs/core";
-import { HERO_TUNING } from "./heroTuning";
+import { createTransitionSettings, type TransitionSettings } from "./transitionSettings";
 import { LOCOMOTION_CLIPS, locomotionWeights } from "./locomotion";
 import type { GroundVector, MovementMode } from "./movement";
 import { createAnimationSettings, effectivePlaybackSpeed, getAnimationDefinition, HERO_ANIMATIONS, type AnimationSettings } from "./animationSettings";
@@ -18,7 +18,8 @@ export class AnimationPlayer {
   private controlled = false;
   private completedAction = false;
   private transitioning = false;
-  private transitionDuration = HERO_TUNING.transition.move;
+  private transitions = createTransitionSettings();
+  private transitionDuration = this.transitions.move;
   private readonly combatIdleClip: string;
   private combatIdle = false;
 
@@ -110,7 +111,7 @@ export class AnimationPlayer {
     }
     const entering = this.locomotion.size === 0;
     if (entering) previous?.stop(true);
-    const transition = HERO_TUNING.transition;
+    const transition = this.transitions;
     if (primary !== previous) {
       this.transitionDuration = weights.has(this.restClip) ? transition.idle :
         previous?.name === LOCOMOTION_CLIPS.run && !weights.has(LOCOMOTION_CLIPS.run) ? transition.slowDown : transition.move;
@@ -150,6 +151,10 @@ export class AnimationPlayer {
   duration(name: string): number | undefined {
     const group = this.animations.find((animation) => animation.name === name);
     if (group) return group.getLength() * group.speedRatio / this.playbackSpeed(name);
+  }
+
+  setTransitions(settings: TransitionSettings): void {
+    this.transitions = createTransitionSettings(settings);
   }
 
   setSettings(settings: AnimationSettings): void {

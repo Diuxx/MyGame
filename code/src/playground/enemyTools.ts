@@ -2,7 +2,7 @@ import type { Position } from "../combat/combat";
 import { loadEnemyDefinitions, type EnemySettings } from "../enemies/enemyDefinitions";
 import definitionsJson from "../enemies/enemyDefinitions.json";
 import type { createEnemyScene } from "../enemies/enemyScene";
-import { configureEnemy, resetEnemy, type Enemy } from "../enemies/enemyState";
+import { configureEnemy, getEnemyCollision, resetEnemy, type Enemy } from "../enemies/enemyState";
 import { ENEMY_STORAGE_KEY, parseEnemyInstances, serializeEnemyInstances } from "../enemies/enemyPersistence";
 import { requireElement } from "../ui/dom";
 
@@ -24,7 +24,6 @@ export async function startEnemyTools(
   const removeAll = requireElement<HTMLButtonElement>("enemyRemoveAll");
   const health = requireElement<HTMLOutputElement>("enemyHealth");
   const status = requireElement<HTMLParagraphElement>("enemyStatus");
-  const debug = requireElement<HTMLInputElement>("showHurtboxes");
   const save = requireElement<HTMLButtonElement>("enemySave");
   const load = requireElement<HTMLButtonElement>("enemyLoad");
   const exportButton = requireElement<HTMLButtonElement>("enemyExport");
@@ -40,6 +39,8 @@ export async function startEnemyTools(
   const regen = requireElement<HTMLInputElement>("enemyRegen");
   const delay = requireElement<HTMLInputElement>("enemyRegenDelay");
   const rate = requireElement<HTMLInputElement>("enemyRegenRate");
+  const solid = requireElement<HTMLInputElement>("enemySolid");
+  const collisionRadius = requireElement<HTMLInputElement>("enemyCollisionRadius");
 
   for (const definition of definitions) type.add(new Option(definition.name, definition.id));
   const getDefinition = () => definitions.find(({ id }) => id === type.value)!;
@@ -65,6 +66,13 @@ export async function startEnemyTools(
     regen.checked = settings.regeneration.enabled;
     delay.value = String(settings.regeneration.delay);
     rate.value = String(settings.regeneration.healthPerSecond);
+    const definition = enemy?.definition ?? getDefinition();
+    const box = definition.hurtbox;
+    const footprint = box.shape === "cylinder" ? box.radius : Math.hypot(box.width, box.depth) / 2;
+    const defaultRadius = footprint + Math.hypot(box.offset[0], box.offset[2]);
+    const collision = enemy ? getEnemyCollision(enemy) : definition.collision ?? { solid: true, radius: defaultRadius };
+    solid.checked = collision.solid;
+    collisionRadius.value = String(collision.radius);
     type.disabled = !!enemy || pending;
     reset.disabled = remove.disabled = !enemy || pending;
     removeAll.disabled = instances.size === 0 || pending;
@@ -86,7 +94,6 @@ export async function startEnemyTools(
   syncSelection();
   list.addEventListener("change", syncSelection, options);
   type.addEventListener("change", syncSelection, options);
-  debug.addEventListener("change", () => enemies.showHurtboxes(debug.checked), options);
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (pending) return;
@@ -95,6 +102,7 @@ export async function startEnemyTools(
         attackDamage: attack.valueAsNumber, movementSpeed: speed.valueAsNumber },
       immortal: immortal.checked,
       regeneration: { enabled: regen.checked, delay: delay.valueAsNumber, healthPerSecond: rate.valueAsNumber },
+      collision: { solid: solid.checked, radius: collisionRadius.valueAsNumber },
     };
     const enemy = instances.get(list.value);
     status.textContent = "";

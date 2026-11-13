@@ -5,6 +5,9 @@ import { createCharacterController } from "./character/characterController";
 import type { Position } from "./combat/combat";
 import { createEnemyScene } from "./enemies/enemyScene";
 import { startEnemyTools } from "./playground/enemyTools";
+import { bindCollisionTools } from "./playground/collisionTools";
+import { bindAttackTools } from "./playground/attackTools";
+import { bindTransitionTools } from "./playground/transitionTools";
 import { bindModuleWindows } from "./playground/moduleWindows";
 import { bindControlSettings } from "./playground/controlSettings";
 import { bindAnimationTools } from "./playground/animationTools";
@@ -53,6 +56,8 @@ export async function startPlayground(
   gridToggle.checked = false;
   gridToggle.addEventListener("change", () => grid.setEnabled(gridToggle.checked), { signal });
 
+  const collisions = bindCollisionTools(scene, character.root, enemies, signal);
+  const attackTools = bindAttackTools(scene, character.root, signal);
   const canvas = requireElement<HTMLCanvasElement>("renderCanvas");
   const facingInput = requireElement<HTMLInputElement>("facing");
   const facingOutput = requireElement<HTMLOutputElement>("facingOutput");
@@ -63,9 +68,11 @@ export async function startPlayground(
         facingInput.value = degrees;
         facingOutput.textContent = degrees + "°";
       }
-    }, () => enemies.strike(heroPosition(), character.root.rotation.y));
+    }, () => enemies.strike(heroPosition(), character.root.rotation.y, attackTools.getSwing()),
+    collisions.resolveMovement);
   requireElement<HTMLButtonElement>("simulateHeroHit").addEventListener("click", controller.receiveHit, { signal });
   bindControlSettings(controller.setBindings, signal);
+  bindTransitionTools(animationPlayer, signal);
   const updateEquipment = bindEquipmentTools(equipment, () => controller.isActing, controller.previewAttack, signal);
   const updateActiveAnimation = bindAnimationTools(animationPlayer, controller,
     new Set(character.animationGroups.map(({ name }) => name)), signal);
@@ -77,6 +84,7 @@ export async function startPlayground(
     enemies.update(document.hidden ? 0 : delta);
     refreshEnemyHealth();
     updateEquipment();
+    attackTools.setAttacking(controller.isAttacking);
   });
   linkRangeControl("rotation", "rotationOutput", (n) => `${n}°`, (n) => cameraControls.setRotation(n), signal);
   linkRangeControl("tilt", "tiltOutput", (n) => `${n}°`, (n) => cameraControls.setTilt(n), signal);

@@ -41,6 +41,7 @@ export function regenerate(enemy: CombatState, delta: number): void {
 }
 
 export const SWORD_SWING = { damage: 25, range: 1.8, radius: 0.55, height: 1 };
+export type SwordSwing = typeof SWORD_SWING;
 
 /** A forward sword sweep against a cylinder or oriented rectangular hurtbox. */
 export function intersectsSwing(
@@ -49,11 +50,12 @@ export function intersectsSwing(
   position: Position,
   box: Hurtbox,
   targetYaw = 0,
+  swing: SwordSwing = SWORD_SWING,
 ): boolean {
   return intersectsMeleeHitbox(origin, yaw, position, box, {
-    range: SWORD_SWING.range,
-    radius: SWORD_SWING.radius,
-    elevation: SWORD_SWING.height,
+    range: swing.range,
+    radius: swing.radius,
+    elevation: swing.height,
     verticalRadius: 0,
   }, targetYaw);
 }

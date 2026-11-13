@@ -2,6 +2,7 @@ import { Plane, type Scene, type TransformNode } from "@babylonjs/core";
 import { ATTACK_ANIMATION, DODGE_ANIMATION, type AnimationPlayer } from "./animations";
 import { createAnimationSettings, createAttackHits, getAnimationDefinition, HERO_ANIMATIONS, type AnimationSettings } from "./animationSettings";
 import { clamp } from "../world/cameraMath";
+import type { Position } from "../combat/combat";
 import { bindHeroInput } from "./heroInput";
 import { HERO_TUNING } from "./heroTuning";
 import { aimYaw, calculateMovementStep, consumeImpactWindow, dodgeDirection, dodgeInvulnerable, mouseRelativeDirection, type GroundVector } from "./movement";
@@ -25,6 +26,7 @@ export function createCharacterController(
   onAnimationChange: () => void = () => {},
   onFacingChange: (yaw: number) => void = () => {},
   onAttackImpact: () => boolean = () => false,
+  resolveMovement: (start: Position, step: GroundVector) => GroundVector = (_start, step) => step,
 ) {
   const groundPlane = new Plane(0, 1, 0, 0);
   let wasMoving = false;
@@ -90,13 +92,18 @@ export function createCharacterController(
 
   function move(step: GroundVector): GroundVector {
     const { position } = root;
-    const x = clamp(position.x + step.x, -movementLimit, movementLimit);
-    const z = clamp(position.z + step.z, -movementLimit, movementLimit);
-    const actual = { x: x - position.x, z: z - position.z };
+    const desired = {
+      x: clamp(position.x + step.x, -movementLimit, movementLimit) - position.x,
+      z: clamp(position.z + step.z, -movementLimit, movementLimit) - position.z,
+    };
+    const resolved = resolveMovement([position.x, position.y, position.z], desired);
+    const nextX = clamp(position.x + resolved.x, -movementLimit, movementLimit);
+    const nextZ = clamp(position.z + resolved.z, -movementLimit, movementLimit);
+    const actual = { x: nextX - position.x, z: nextZ - position.z };
     if (actual.x || actual.z) {
-      position.x = x;
-      position.z = z;
-      camera.follow(x, z);
+      position.x = nextX;
+      position.z = nextZ;
+      camera.follow(nextX, nextZ);
     }
     return actual;
   }
@@ -158,10 +165,10 @@ export function createCharacterController(
       const direction = mouseRelativeDirection(horizontal, vertical, cursorYaw);
       const speed = settings[movement.id].movement!.speed;
       actual = move(calculateMovementStep(direction, delta, speed));
-      if (actual.x || actual.z) {
-        const yaw = Math.atan2(actual.x, actual.z) + (movement.movement?.facingOffset ?? 0);
-        turn(Math.sin(yaw), Math.cos(yaw), delta);
-      }
+      // Turning follows the requested direction even if a collider prevents motion.
+      // Locomotion animation, however, follows the actual resolved displacement.
+      const yaw = Math.atan2(direction.x, direction.z) + (movement.movement?.facingOffset ?? 0);
+      turn(Math.sin(yaw), Math.cos(yaw), delta);
     }
     const moving = !!(actual.x || actual.z);
     if (moving || wasMoving || restChanged) {
@@ -202,6 +209,7 @@ export function createCharacterController(
       input.clearAim();
     },
     get isActing() { return !!action; },
+    get isAttacking() { return action?.kind === "attack"; },
     get isInvulnerable() { return isInvulnerable(); },
   };
 }

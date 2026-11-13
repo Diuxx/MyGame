@@ -31,6 +31,7 @@ export function serializeEnemyInstances(enemies: readonly Enemy[]): string {
         stats: { ...enemy.stats },
         immortal: enemy.immortal,
         regeneration: { ...enemy.regeneration },
+        ...(enemy.collision ? { collision: { ...enemy.collision } } : {}),
       },
     })),
   };
@@ -67,6 +68,7 @@ export function parseEnemyInstances(json: string, definitions: readonly EnemyDef
         stats: { ...candidate.settings.stats },
         immortal: candidate.settings.immortal,
         regeneration: { ...candidate.settings.regeneration },
+        ...(candidate.settings.collision ? { collision: { ...candidate.settings.collision } } : {}),
       },
     };
   });
