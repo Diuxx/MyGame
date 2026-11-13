@@ -5,6 +5,7 @@ import {
   Scene,
   TransformNode,
   Vector3,
+  type Bone,
 } from "@babylonjs/core";
 import { GLTFLoaderAnimationStartMode } from "@babylonjs/loaders/glTF";
 
@@ -13,7 +14,9 @@ const TARGET_HEIGHT_METERS = 1.8;
 
 export interface LoadedCharacter {
   root: TransformNode;
-  rightHand: TransformNode;
+  hips: TransformNode;
+  rightHand: Bone;
+  skinnedMesh: AbstractMesh;
   animationGroups: AnimationGroup[];
   heightBeforeScale: number;
   scaleApplied: number;
@@ -52,8 +55,9 @@ export async function loadCharacter(scene: Scene): Promise<LoadedCharacter> {
   }
 
   const hips = result.transformNodes.find(({ name }) => name === "mixamorig:Hips");
-  const rightHand = result.transformNodes.find(({ name }) => name === "mixamorig:RightHand");
-  if (!hips || !rightHand) throw new Error(`Squelette incomplet dans ${CHARACTER_URL} : bassin ou main droite introuvable.`);
+  const skinnedMesh = result.meshes.find((mesh) => mesh.skeleton?.bones.some(({ name }) => name === "mixamorig:RightHand"));
+  const rightHand = skinnedMesh?.skeleton?.bones.find(({ name }) => name === "mixamorig:RightHand");
+  if (!hips || !skinnedMesh || !rightHand) throw new Error(`Squelette incomplet dans ${CHARACTER_URL} : bassin ou main droite introuvable.`);
 
   // Keep vertical motion and skeletal poses, but leave horizontal travel to the controller.
   for (const group of result.animationGroups) {
@@ -86,7 +90,9 @@ export async function loadCharacter(scene: Scene): Promise<LoadedCharacter> {
 
   return {
     root,
+    hips,
     rightHand,
+    skinnedMesh,
     animationGroups: result.animationGroups,
     heightBeforeScale: initialHeight,
     scaleApplied: scale,

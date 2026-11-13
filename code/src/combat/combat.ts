@@ -38,7 +38,7 @@ export function regenerate(enemy: CombatState, delta: number): void {
   }
 }
 
-export const SWORD_SWING = { damage: 25, range: 1.8, radius: 0.55, height: 1, impact: 0.4 };
+export const SWORD_SWING = { damage: 25, range: 1.8, radius: 0.55, height: 1 };
 
 /** A rounded forward segment at sword height against a vertical cylinder or axis-aligned box. */
 export function intersectsSwing(origin: Position, yaw: number, position: Position, box: Hurtbox): boolean {

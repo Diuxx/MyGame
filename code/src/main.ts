@@ -2,6 +2,7 @@ import { Engine, Scene } from "@babylonjs/core";
 import { AnimationPlayer, IDLE_ANIMATION } from "./character/animations";
 import { loadCharacter } from "./character/character";
 import { createCharacterController } from "./character/characterController";
+import { loadEquipment } from "./character/equipment";
 import { requireElement } from "./ui/dom";
 import { createGameplayEnvironment, PLAYGROUND_MOVEMENT_LIMIT } from "./world/environments";
 import { createCamera } from "./world/scene";
@@ -31,6 +32,7 @@ async function start(): Promise<void> {
     scene.onDisposeObservable.addOnce(() => listeners.abort());
 
     const character = await loadCharacter(scene);
+    const equipment = await loadEquipment(scene, character);
     const animationPlayer = new AnimationPlayer(character.animationGroups);
     animationPlayer.play(IDLE_ANIMATION);
 
@@ -39,11 +41,12 @@ async function start(): Promise<void> {
     const camera = createCamera(scene, canvas, signal);
     if (mode === "playground") {
       const { startPlayground } = await import("./playground");
-      await startPlayground(scene, camera, character, animationPlayer, signal);
+      await startPlayground(scene, camera, character, animationPlayer, equipment, signal);
     } else {
-      createGameplayEnvironment(scene, character.root);
+      const { shadows } = createGameplayEnvironment(scene, character.root);
+      for (const mesh of equipment.meshes) shadows.addShadowCaster(mesh, false);
       createCharacterController(scene, canvas, character.root,
-        PLAYGROUND_MOVEMENT_LIMIT, camera, animationPlayer, signal);
+        PLAYGROUND_MOVEMENT_LIMIT, camera, animationPlayer, equipment, signal);
       requireElement("movementHint").hidden = false;
     }
 

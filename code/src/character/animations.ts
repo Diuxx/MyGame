@@ -2,53 +2,45 @@ import type { AnimationGroup } from "@babylonjs/core";
 import { HERO_TUNING } from "./heroTuning";
 import { LOCOMOTION_CLIPS, locomotionWeights } from "./locomotion";
 import type { GroundVector, MovementMode } from "./movement";
+import { createAnimationSettings, effectivePlaybackSpeed, getAnimationDefinition, HERO_ANIMATIONS, type AnimationSettings } from "./animationSettings";
 
 export const IDLE_ANIMATION = LOCOMOTION_CLIPS.idle;
-export const ATTACK_ANIMATION = "Thrust_Slash";
-export const DODGE_ANIMATION = "Roll_Dodge_3";
-export const CROUCH_WALK = "Cautious_Crouch_Walk_Forward_inplace";
-const LOOPING_CLIPS = new Set([...Object.values(LOCOMOTION_CLIPS), CROUCH_WALK]);
-
-export const ANIMATION_LABELS: Record<string, string> = {
-  [IDLE_ANIMATION]: "Repos",
-  [LOCOMOTION_CLIPS.walk]: "Marche",
-  [LOCOMOTION_CLIPS.backward]: "Marche arrière",
-  [LOCOMOTION_CLIPS.run]: "Course",
-  [LOCOMOTION_CLIPS.left]: "Pas à gauche",
-  [LOCOMOTION_CLIPS.right]: "Pas à droite",
-  [CROUCH_WALK]: "Marche accroupie",
-  [ATTACK_ANIMATION]: "Attaque",
-  [DODGE_ANIMATION]: "Esquive",
-};
+export const ATTACK_ANIMATION = HERO_ANIMATIONS.attack.id;
+export const DODGE_ANIMATION = HERO_ANIMATIONS.dodge.id;
 
 /** Manages only playback; no gameplay state or physics are implemented here. */
 export class AnimationPlayer {
   private active: AnimationGroup | null = null;
-  private speed = 1;
+  private settings = createAnimationSettings();
   private paused = false;
   private readonly available: Set<string>;
   private locomotion = new Map<AnimationGroup, number>();
   private controlled = false;
+  private completedAction = false;
   private transitioning = false;
   private transitionDuration = HERO_TUNING.transition.move;
-  // The GLB currently uses the same clip for neutral and combat rest.
+  private readonly combatIdleClip: string;
   private combatIdle = false;
 
   get restClip(): string {
     return this.combatIdle ? this.combatIdleClip : IDLE_ANIMATION;
   }
 
-  constructor(private readonly animations: AnimationGroup[], private readonly combatIdleClip = IDLE_ANIMATION) {
+  constructor(private readonly animations: AnimationGroup[]) {
     this.available = new Set(animations.map(({ name }) => name));
-    for (const clip of [IDLE_ANIMATION, LOCOMOTION_CLIPS.walk, LOCOMOTION_CLIPS.backward, LOCOMOTION_CLIPS.run, ATTACK_ANIMATION, DODGE_ANIMATION, combatIdleClip]) {
+    const combatIdle = HERO_ANIMATIONS.combatIdle;
+    this.combatIdleClip = animations.find(({ name }) => name === combatIdle.id || name.toLowerCase() === combatIdle.displayName.toLowerCase())?.name
+      ?? IDLE_ANIMATION;
+    for (const clip of [IDLE_ANIMATION, LOCOMOTION_CLIPS.walk, LOCOMOTION_CLIPS.backward, LOCOMOTION_CLIPS.run, ATTACK_ANIMATION, DODGE_ANIMATION]) {
       if (!this.available.has(clip)) throw new Error(`Clip requis absent de hero.glb : ${clip}`);
     }
     for (const animation of animations) {
       animation.enableBlending = true;
       animation.blendingSpeed = 0.15;
       animation.onAnimationGroupEndObservable.add(() => {
-        if (this.active === animation && !animation.loopAnimation && !this.controlled) {
-          this.play(this.restClip);
+        if (this.active === animation && !animation.loopAnimation) {
+          if (this.controlled) this.completedAction = true;
+          else this.play(this.restClip);
         }
       });
     }
@@ -64,6 +56,16 @@ export class AnimationPlayer {
 
   get isTransitioning(): boolean {
     return this.transitioning;
+  }
+
+  get isActionInterrupted(): boolean {
+    return !this.controlled || (!this.active?.isStarted && !this.completedAction);
+  }
+
+  setCombatIdle(active: boolean): boolean {
+    const previousRest = this.restClip;
+    this.combatIdle = active;
+    return this.restClip !== previousRest && this.activeName === previousRest;
   }
 
   /** Progress of a controller-owned one-shot, including the frame on which it ends. */
@@ -83,16 +85,17 @@ export class AnimationPlayer {
     this.active = selected;
     this.paused = false;
     this.controlled = controlled;
-    if (name === ATTACK_ANIMATION) this.combatIdle = true;
-    else if (name === IDLE_ANIMATION && name !== this.restClip) this.combatIdle = false;
-    const loop = LOOPING_CLIPS.has(name) || name === this.combatIdleClip;
+    this.completedAction = false;
+    const loop = getAnimationDefinition(name)?.loop || name === this.combatIdleClip;
     selected.enableBlending = true;
     selected.weight = -1;
-    selected.start(loop, this.speed, selected.from, selected.to);
+    selected.start(loop, this.playbackSpeed(name), selected.from, selected.to);
   }
 
-  updateLocomotion(displacement: GroundVector, yaw: number, running: boolean, mode: MovementMode, delta: number): void {
-    const weights = locomotionWeights(displacement, yaw, running, mode, this.restClip, this.available);
+  updateLocomotion(displacement: GroundVector, yaw: number, running: boolean, mode: MovementMode, delta: number, movementClip?: string): void {
+    const weights = movementClip && (displacement.x || displacement.z)
+      ? new Map([[movementClip, 1]])
+      : locomotionWeights(displacement, yaw, running, mode, this.restClip, this.available);
     const target = new Map<AnimationGroup, number>();
     let primary: AnimationGroup | undefined;
     for (const group of this.animations) {
@@ -117,7 +120,7 @@ export class AnimationPlayer {
       if (this.locomotion.has(group)) continue;
       group.enableBlending = entering;
       group.weight = 0;
-      group.start(true, this.speed, group.from, group.to);
+      group.start(true, this.playbackSpeed(group.name), group.from, group.to);
       this.locomotion.set(group, 0);
     }
     // Move the whole weight distribution together so the total remains one.
@@ -140,10 +143,22 @@ export class AnimationPlayer {
     this.controlled = false;
   }
 
-  setSpeed(speed: number): void {
-    this.speed = speed;
-    if (this.active) this.active.speedRatio = speed;
-    for (const group of this.locomotion.keys()) group.speedRatio = speed;
+  private playbackSpeed(name: string): number {
+    const definition = getAnimationDefinition(name);
+    return definition ? effectivePlaybackSpeed(definition, this.settings[name]) : 1;
+  }
+
+  duration(name: string): number | undefined {
+    const group = this.animations.find((animation) => animation.name === name);
+    if (group) return group.getLength() * group.speedRatio / this.playbackSpeed(name);
+  }
+
+  setSettings(settings: AnimationSettings): void {
+    this.settings = settings;
+    for (const group of this.locomotion.size ? this.locomotion.keys() : this.active ? [this.active] : []) {
+      const speed = this.playbackSpeed(group.name);
+      if (group.speedRatio !== speed) group.speedRatio = speed;
+    }
   }
 
   togglePause(): boolean {

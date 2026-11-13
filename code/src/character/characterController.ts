@@ -1,10 +1,17 @@
 import { Plane, type Scene, type TransformNode } from "@babylonjs/core";
 import { ATTACK_ANIMATION, DODGE_ANIMATION, type AnimationPlayer } from "./animations";
+import { createAnimationSettings, createAttackHits, getAnimationDefinition, HERO_ANIMATIONS, type AnimationSettings } from "./animationSettings";
 import { clamp } from "../world/cameraMath";
 import { bindHeroInput } from "./heroInput";
 import { HERO_TUNING } from "./heroTuning";
-import { aimYaw, calculateMovementStep, dodgeDirection, dodgeInvulnerable, mouseRelativeDirection, type GroundVector } from "./movement";
+import { aimYaw, calculateMovementStep, crossesImpactWindow, dodgeDirection, dodgeInvulnerable, mouseRelativeDirection, type GroundVector } from "./movement";
 import type { CameraControls } from "../world/scene";
+import type { CharacterEquipment } from "./equipment";
+
+type ActiveAction =
+  | { kind: "attack"; progress: number; hits: ReturnType<typeof createAttackHits>; preview: boolean }
+  | { kind: "dodge"; progress: number; direction: GroundVector; distance: number }
+  | { kind: "preview" };
 
 export function createCharacterController(
   scene: Scene,
@@ -13,17 +20,20 @@ export function createCharacterController(
   movementLimit: number,
   camera: CameraControls,
   animations: AnimationPlayer,
+  equipment: CharacterEquipment,
   signal: AbortSignal,
   onAnimationChange: () => void = () => {},
   onFacingChange: (yaw: number) => void = () => {},
-  onAttack: () => void = () => {},
+  onAttackImpact: () => boolean = () => false,
 ) {
   const groundPlane = new Plane(0, 1, 0, 0);
   let wasMoving = false;
   let cursorYaw: number | undefined;
-  let dodge: { direction: GroundVector; progress: number } | undefined;
+  let action: ActiveAction | undefined;
   let cooldown = 0;
-  let attacking = false;
+  let combatCrouchRemaining = 0;
+  let settings = createAnimationSettings();
+  let selectedMovement = HERO_ANIMATIONS.walk;
 
   function updateCursorYaw(): number | undefined {
     const pointer = input.pointer;
@@ -49,28 +59,33 @@ export function createCharacterController(
     onFacingChange(root.rotation.y);
   }
 
-  function attack(): void {
-    if (dodge || attacking || animations.isPaused || animations.activeName === ATTACK_ANIMATION) return;
-    const yaw = updateCursorYaw() ?? root.rotation.y;
-    turn(Math.sin(yaw), Math.cos(yaw), 1, Infinity);
-    attacking = true;
-    animations.play(ATTACK_ANIMATION, true);
-    onAttack();
+  function canStartAction(): boolean {
+    return !action && !animations.isPaused;
+  }
+
+  function beginAction(clip: string, next: ActiveAction): void {
+    action = next;
+    animations.play(clip, true);
     onAnimationChange();
   }
 
+  function attack(preview = false): void {
+    if (!canStartAction()) return;
+    const yaw = updateCursorYaw() ?? root.rotation.y;
+    turn(Math.sin(yaw), Math.cos(yaw), 1, Infinity);
+    equipment.transition(true);
+    beginAction(ATTACK_ANIMATION, { kind: "attack", progress: 0, hits: createAttackHits(settings[ATTACK_ANIMATION].impact!), preview });
+  }
+
   function startDodge(horizontal: number, vertical: number): void {
-    if (dodge || attacking || cooldown > 0 || animations.isPaused ||
-        animations.activeName === ATTACK_ANIMATION || animations.activeName === DODGE_ANIMATION) return;
+    if (!canStartAction() || cooldown > 0) return;
     const requested = horizontal || vertical
       ? mouseRelativeDirection(horizontal, vertical, updateCursorYaw() ?? cursorYaw ?? root.rotation.y)
       : { x: 0, z: 0 };
     const direction = dodgeDirection(requested, root.rotation.y);
     turn(direction.x, direction.z, 1, Infinity);
-    animations.play(DODGE_ANIMATION, true);
-    dodge = { direction, progress: 0 };
     cooldown = HERO_TUNING.dodge.cooldown;
-    onAnimationChange();
+    beginAction(DODGE_ANIMATION, { kind: "dodge", direction, progress: 0, distance: settings[DODGE_ANIMATION].dodge!.distance });
   }
 
   function move(step: GroundVector): GroundVector {
@@ -86,40 +101,73 @@ export function createCharacterController(
     return actual;
   }
 
+  function refreshCombatCrouch(): void {
+    combatCrouchRemaining = HERO_TUNING.combatCrouchDuration;
+  }
+
+  function isInvulnerable(): boolean {
+    return action?.kind === "dodge" && dodgeInvulnerable(animations.actionProgress, settings[DODGE_ANIMATION].dodge!.window);
+  }
+
+  function updateAction(active: ActiveAction): void {
+    if (active.kind === "attack" && (animations.activeName !== ATTACK_ANIMATION || animations.isActionInterrupted)) {
+      finishAction(active);
+      return;
+    }
+    const progress = animations.actionProgress;
+    if (active.kind === "dodge") {
+      const distance = active.distance * Math.max(0, progress - active.progress);
+      move({ x: active.direction.x * distance, z: active.direction.z * distance });
+      active.progress = progress;
+    } else if (active.kind === "attack" && !active.preview) {
+      for (const hit of active.hits) {
+        if (!hit.hit && crossesImpactWindow(active.progress, progress, hit.window)) {
+          hit.hit = onAttackImpact();
+          if (hit.hit) refreshCombatCrouch();
+        }
+      }
+      active.progress = progress;
+    }
+    if (progress >= 1) finishAction(active);
+  }
+
+  function finishAction(active: ActiveAction): void {
+    if (active.kind === "attack") equipment.transition(false);
+    action = undefined;
+    // Force one locomotion update even when no movement key is held.
+    wasMoving = true;
+  }
+
   const input = bindHeroInput(canvas, attack, startDodge, signal);
   scene.onBeforeRenderObservable.add(() => {
-    const { horizontal, vertical, running } = input.readMovement();
+    const { horizontal, vertical, running } = input.readMovement(!!action);
     if (animations.isPaused || document.hidden) return;
     const delta = scene.getEngine().getDeltaTime() / 1000;
     cooldown = Math.max(0, cooldown - delta);
-    if (dodge) {
-      const progress = animations.actionProgress;
-      const distance = HERO_TUNING.dodge.distance * Math.max(0, progress - dodge.progress);
-      move({ x: dodge.direction.x * distance, z: dodge.direction.z * distance });
-      dodge.progress = progress;
-      if (progress < 1) return;
-      dodge = undefined;
-      wasMoving = true;
-    } else if (attacking) {
-      if (animations.actionProgress < 1) return;
-      attacking = false;
-      wasMoving = true;
-    } else if (animations.activeName === ATTACK_ANIMATION || animations.activeName === DODGE_ANIMATION) {
-      return;
-    }
+    combatCrouchRemaining = Math.max(0, combatCrouchRemaining - delta);
+    if (action) updateAction(action);
+    if (action) return;
 
+    const inCombat = combatCrouchRemaining > 0;
+    const restChanged = animations.setCombatIdle(inCombat);
+    const movement = inCombat
+      ? HERO_ANIMATIONS.crouch
+      : running ? HERO_ANIMATIONS.run : selectedMovement;
     let actual: GroundVector = { x: 0, z: 0 };
     if (horizontal || vertical) {
       cursorYaw = updateCursorYaw() ?? cursorYaw ?? root.rotation.y;
       const direction = mouseRelativeDirection(horizontal, vertical, cursorYaw);
-      const speed = running ? HERO_TUNING.runSpeed : HERO_TUNING.walkSpeed;
+      const speed = settings[movement.id].movement!.speed;
       actual = move(calculateMovementStep(direction, delta, speed));
-      turn(actual.x, actual.z, delta);
+      if (actual.x || actual.z) {
+        const yaw = Math.atan2(actual.x, actual.z) + (movement.movement?.facingOffset ?? 0);
+        turn(Math.sin(yaw), Math.cos(yaw), delta);
+      }
     }
     const moving = !!(actual.x || actual.z);
-    if (moving || wasMoving) {
+    if (moving || wasMoving || restChanged) {
       const previous = animations.activeName;
-      animations.updateLocomotion(actual, root.rotation.y, running, "exploration", delta);
+      animations.updateLocomotion(actual, root.rotation.y, running, "exploration", delta, movement.id);
       if (previous !== animations.activeName) onAnimationChange();
     }
     wasMoving = moving || animations.isTransitioning;
@@ -127,12 +175,34 @@ export function createCharacterController(
 
   return {
     attack,
+    previewAttack: () => attack(true),
+    receiveHit() {
+      if (!isInvulnerable()) refreshCombatCrouch();
+    },
+    preview(id: string) {
+      if (!canStartAction()) return;
+      if (getAnimationDefinition(id)?.category === "action") {
+        beginAction(id, { kind: "preview" });
+        return;
+      }
+      if (animations.activeName === id && getAnimationDefinition(id)?.loop) return;
+      wasMoving = false;
+      animations.play(id);
+    },
+    selectMovement(id: string) {
+      const definition = getAnimationDefinition(id);
+      selectedMovement = definition?.movement?.facingOffset !== undefined ? definition : HERO_ANIMATIONS.walk;
+    },
+    setAnimationSettings(value: AnimationSettings) {
+      settings = value;
+      animations.setSettings(value);
+    },
     setBindings: input.setBindings,
     clearAim() {
       cursorYaw = undefined;
       input.clearAim();
     },
-    get isActing() { return !!dodge || attacking; },
-    get isInvulnerable() { return !!dodge && dodgeInvulnerable(animations.actionProgress); },
+    get isActing() { return !!action; },
+    get isInvulnerable() { return isInvulnerable(); },
   };
 }

@@ -76,5 +76,5 @@ export function createPlaygroundEnvironment(scene: Scene, hero: TransformNode) {
 }
 
 export function createGameplayEnvironment(scene: Scene, hero: TransformNode) {
-  return createFloor(scene, hero, "#A7A981", 400).ground;
+  return createFloor(scene, hero, "#A7A981", 400);
 }

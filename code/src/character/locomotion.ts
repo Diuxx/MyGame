@@ -1,12 +1,13 @@
 import { localMovement, type GroundVector, type MovementMode } from "./movement.ts";
+import { HERO_ANIMATIONS } from "./animationSettings.ts";
 
 export const LOCOMOTION_CLIPS = {
-  idle: "Idle_9",
-  walk: "Walking",
-  backward: "Walk_Backward_inplace",
-  run: "Running",
-  left: "Cautious_Crouch_Walk_Left_inplace",
-  right: "Cautious_Crouch_Walk_Right_inplace",
+  idle: HERO_ANIMATIONS.idle.id,
+  walk: HERO_ANIMATIONS.walk.id,
+  backward: HERO_ANIMATIONS.backward.id,
+  run: HERO_ANIMATIONS.run.id,
+  left: HERO_ANIMATIONS.left.id,
+  right: HERO_ANIMATIONS.right.id,
 };
 
 export function locomotionWeights(

@@ -39,6 +39,7 @@
         <nav class="module-launchers" aria-label="Modules du Playground">
           <button type="button" aria-controls="movementModule" aria-expanded="false">Animations de déplacement</button>
           <button type="button" aria-controls="actionsModule" aria-expanded="false">Animations d’action</button>
+          <button type="button" aria-controls="equipmentModule" aria-expanded="false">Équipement</button>
           <button type="button" aria-controls="enemiesModule" aria-expanded="false">Gestion des ennemis</button>
           <button type="button" aria-controls="cameraModule" aria-expanded="false">Caméra</button>
           <button type="button" aria-controls="modelModule" aria-expanded="false">Modèle chargé</button>
@@ -67,8 +68,7 @@
             <button class="module-close" type="button" aria-label="Fermer les animations de déplacement">×</button>
           </header>
           <div id="animationButtons" class="animation-buttons"></div>
-          <div class="field-row"><label for="speed">Vitesse de lecture</label><output id="speedOutput" for="speed">1.0×</output></div>
-          <input id="speed" type="range" min="0.25" max="2" step="0.05" value="1" />
+          <div id="movementAnimationSettings" class="animation-settings"></div>
           <button id="pauseButton" type="button" class="secondary wide" disabled>Pause</button>
         </section>
         <section id="actionsModule" class="module-window" aria-labelledby="actionsHeading" hidden>
@@ -77,6 +77,19 @@
             <button class="module-close" type="button" aria-label="Fermer les animations d’action">×</button>
           </header>
           <div id="actionButtons" class="animation-buttons"></div>
+          <div id="actionAnimationSettings" class="animation-settings"></div>
+        </section>
+        <section id="equipmentModule" class="module-window equipment-tools" aria-labelledby="equipmentHeading" hidden>
+          <header class="module-header">
+            <h2 id="equipmentHeading">Équipement</h2>
+            <button class="module-close" type="button" aria-label="Fermer l’équipement">×</button>
+          </header>
+          <div class="animation-buttons">
+            <button id="equipmentSheathed" type="button" class="animation-option">Arme rangée</button>
+            <button id="equipmentDrawn" type="button" class="animation-option">Arme dégainée</button>
+            <button id="equipmentAttack" type="button" class="animation-option">Aperçu de l’attaque</button>
+          </div>
+          <div id="equipmentTransforms"></div>
         </section>
         <section id="enemiesModule" class="module-window enemy-tools" aria-labelledby="enemyHeading" hidden>
           <header class="module-header">
@@ -106,6 +119,7 @@
             <button id="enemyRemove" class="secondary" type="button" disabled>Retirer</button>
           </div>
           <button id="enemyRemoveAll" class="secondary wide" type="button">Retirer tous les ennemis</button>
+          <button id="simulateHeroHit" class="secondary wide" type="button">Simuler un coup reçu</button>
           <label class="grid-toggle"><input id="showHurtboxes" type="checkbox" /> Afficher les zones de touche</label>
           <p id="enemyStatus" role="status"></p>
         </section>

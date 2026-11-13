@@ -1,4 +1,5 @@
 import { HERO_TUNING } from "./heroTuning.ts";
+import { HERO_ANIMATIONS } from "./animationSettings.ts";
 
 export type MovementMode = "exploration" | "combat";
 
@@ -47,6 +48,11 @@ export function dodgeDirection(direction: GroundVector, yaw: number): GroundVect
   return direction.x || direction.z ? direction : { x: Math.sin(yaw), z: Math.cos(yaw) };
 }
 
-export function dodgeInvulnerable(progress: number): boolean {
-  return progress >= HERO_TUNING.dodge.invulnerableFrom && progress < HERO_TUNING.dodge.invulnerableUntil;
+export function dodgeInvulnerable(progress: number, { from, until } = HERO_ANIMATIONS.dodge.dodge!.window): boolean {
+  return progress >= from && progress < until;
+}
+
+/** Detect an impact even when one render step crosses the entire window. */
+export function crossesImpactWindow(previous: number, progress: number, { from, until }: { from: number; until: number }): boolean {
+  return progress > previous && progress >= from && (previous < until || (previous === 0 && until === 0));
 }

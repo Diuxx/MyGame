@@ -1,13 +1,15 @@
 import type { Scene } from "@babylonjs/core";
-import { AnimationPlayer, ANIMATION_LABELS, ATTACK_ANIMATION, CROUCH_WALK } from "./character/animations";
+import { type AnimationPlayer } from "./character/animations";
 import type { LoadedCharacter } from "./character/character";
 import { createCharacterController } from "./character/characterController";
-import { SWORD_SWING, type Position } from "./combat/combat";
+import type { Position } from "./combat/combat";
 import { createEnemyScene } from "./enemies/enemyScene";
 import { startEnemyTools } from "./playground/enemyTools";
 import { bindModuleWindows } from "./playground/moduleWindows";
 import { bindControlSettings } from "./playground/controlSettings";
-import { LOCOMOTION_CLIPS } from "./character/locomotion";
+import { bindAnimationTools } from "./playground/animationTools";
+import { bindEquipmentTools } from "./playground/equipmentTools";
+import type { CharacterEquipment } from "./character/equipment";
 import { requireElement } from "./ui/dom";
 import { degreesToRadians } from "./world/cameraMath";
 import { createPlaygroundEnvironment, PLAYGROUND_MOVEMENT_LIMIT } from "./world/environments";
@@ -36,11 +38,13 @@ export async function startPlayground(
   cameraControls: CameraControls,
   character: LoadedCharacter,
   animationPlayer: AnimationPlayer,
+  equipment: CharacterEquipment,
   signal: AbortSignal,
 ): Promise<void> {
   requireElement<HTMLElement>("movementHint").hidden = false;
   bindModuleWindows(signal);
   const { ground, grid, shadows } = createPlaygroundEnvironment(scene, character.root);
+  for (const mesh of equipment.meshes) shadows.addShadowCaster(mesh, false);
   const enemies = createEnemyScene(scene, shadows, ground.position.y);
   const heroPosition = (): Position => [character.root.position.x, ground.position.y, character.root.position.z];
   const refreshEnemyHealth = await startEnemyTools(enemies, ground.position.y,
@@ -49,92 +53,36 @@ export async function startPlayground(
   gridToggle.checked = false;
   gridToggle.addEventListener("change", () => grid.setEnabled(gridToggle.checked), { signal });
 
-  const buttonsContainer = requireElement<HTMLDivElement>("animationButtons");
-  const actionButtons = requireElement<HTMLDivElement>("actionButtons");
-  const previewButtons: HTMLButtonElement[] = [];
-  const movementClips = new Set([...Object.values(LOCOMOTION_CLIPS), CROUCH_WALK]);
-  const pauseButton = requireElement<HTMLButtonElement>("pauseButton");
-  const animationStatus = requireElement<HTMLParagraphElement>("animationStatus");
   const canvas = requireElement<HTMLCanvasElement>("renderCanvas");
   const facingInput = requireElement<HTMLInputElement>("facing");
   const facingOutput = requireElement<HTMLOutputElement>("facingOutput");
-  function updateActiveAnimation(): void {
-    for (const button of previewButtons) {
-      const active = button.dataset.animation === animationPlayer.activeName;
-      button.classList.toggle("active", active);
-      button.setAttribute("aria-pressed", String(active));
-    }
-    pauseButton.textContent = animationPlayer.isPaused ? "Reprendre" : "Pause";
-    animationStatus.textContent = `Animation : ${animationPlayer.activeName}`;
-  }
-
-  let pendingImpact = false;
-  const attack = character.animationGroups.find((group) => group.name === ATTACK_ANIMATION);
-  function impact(): void {
-    if (!pendingImpact) return;
-    pendingImpact = false;
-    enemies.strike(heroPosition(), character.root.rotation.y);
-  }
-
   const controller = createCharacterController(scene, canvas, character.root,
-    PLAYGROUND_MOVEMENT_LIMIT, cameraControls, animationPlayer, signal, updateActiveAnimation, (yaw) => {
+    PLAYGROUND_MOVEMENT_LIMIT, cameraControls, animationPlayer, equipment, signal, () => updateActiveAnimation(), (yaw) => {
       const degrees = String(Math.round(yaw * 180 / Math.PI));
       if (facingInput.value !== degrees) {
         facingInput.value = degrees;
         facingOutput.textContent = degrees + "°";
       }
-    }, () => { pendingImpact = true; });
+    }, () => enemies.strike(heroPosition(), character.root.rotation.y));
+  requireElement<HTMLButtonElement>("simulateHeroHit").addEventListener("click", controller.receiveHit, { signal });
   bindControlSettings(controller.setBindings, signal);
-
+  const updateEquipment = bindEquipmentTools(equipment, () => controller.isActing, controller.previewAttack, signal);
+  const updateActiveAnimation = bindAnimationTools(animationPlayer, controller,
+    new Set(character.animationGroups.map(({ name }) => name)), signal);
   for (const animation of character.animationGroups) {
     animation.onAnimationGroupEndObservable.add(() => queueMicrotask(updateActiveAnimation));
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "animation-option";
-    button.dataset.animation = animation.name;
-    button.textContent = ANIMATION_LABELS[animation.name] ?? animation.name;
-    button.title = animation.name;
-    button.addEventListener("click", () => {
-      if (controller.isActing) return;
-      if (animation.name === ATTACK_ANIMATION) controller.attack();
-      else {
-        pendingImpact = false;
-        animationPlayer.play(animation.name);
-        updateActiveAnimation();
-      }
-    }, { signal });
-    previewButtons.push(button);
-    const container = movementClips.has(animation.name) ? buttonsContainer : actionButtons;
-    container.append(button);
   }
-  // A one-shot animation automatically returns to Idle. Refresh its button state.
-  attack?.onAnimationGroupEndObservable.add(() => {
-    // A slow frame can pass the impact frame and the end of the clip together.
-    impact();
-  });
   scene.onBeforeRenderObservable.add(() => {
     const delta = scene.getEngine().getDeltaTime() / 1000;
     enemies.update(document.hidden ? 0 : delta);
-    if (attack && animationPlayer.activeName === ATTACK_ANIMATION && !animationPlayer.isPaused &&
-        attack.getCurrentFrame() >= attack.from + (attack.to - attack.from) * SWORD_SWING.impact) {
-      impact();
-    }
     refreshEnemyHealth();
+    updateEquipment();
   });
-  updateActiveAnimation();
-
-  pauseButton.disabled = false;
-  pauseButton.addEventListener("click", () => {
-    animationPlayer.togglePause();
-    updateActiveAnimation();
-  }, { signal });
-
-  linkRangeControl("speed", "speedOutput", (n) => `${n.toFixed(2)}×`, (n) => animationPlayer.setSpeed(n), signal);
   linkRangeControl("rotation", "rotationOutput", (n) => `${n}°`, (n) => cameraControls.setRotation(n), signal);
   linkRangeControl("tilt", "tiltOutput", (n) => `${n}°`, (n) => cameraControls.setTilt(n), signal);
   linkRangeControl("zoom", "zoomOutput", (n) => `${n.toFixed(1)} u`, (n) => cameraControls.setVisibleHeight(n), signal);
   linkRangeControl("facing", "facingOutput", (n) => `${n}°`, (n) => {
-    if (controller.isActing || animationPlayer.activeName === ATTACK_ANIMATION) {
+    if (controller.isActing) {
       facingInput.value = String(Math.round(character.root.rotation.y * 180 / Math.PI));
       facingOutput.textContent = `${facingInput.value}°`;
       return;

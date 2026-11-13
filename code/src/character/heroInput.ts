@@ -20,8 +20,8 @@ export function bindHeroInput(
     taps.clear();
     clearAim();
   };
-  const axis = (positive: string, negative: string) => {
-    const keys = pressed.has(positive) || pressed.has(negative) ? pressed : taps;
+  const axis = (positive: string, negative: string, heldOnly: boolean) => {
+    const keys = heldOnly || pressed.has(positive) || pressed.has(negative) ? pressed : taps;
     return Number(keys.has(positive)) - Number(keys.has(negative));
   };
 
@@ -70,9 +70,9 @@ export function bindHeroInput(
       taps.clear();
     },
     get pointer() { return pointer; },
-    readMovement() {
-      const horizontal = axis(bindings.right, bindings.left);
-      const vertical = axis(bindings.forward, bindings.backward);
+    readMovement(heldOnly = false) {
+      const horizontal = axis(bindings.right, bindings.left, heldOnly);
+      const vertical = axis(bindings.forward, bindings.backward, heldOnly);
       taps.clear();
       return { horizontal, vertical, running: pressed.has(bindings.run) };
     },

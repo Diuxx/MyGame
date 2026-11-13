@@ -153,11 +153,14 @@ export function createEnemyScene(scene: Scene, shadows: ShadowGenerator, groundY
       }
     },
     strike(origin: Position, yaw: number) {
+      let hit = false;
       for (const { enemy } of entries.values()) {
-        if (intersectsSwing(origin, yaw, enemy.position, enemy.definition.hurtbox)) {
-          applyDamage(enemy, SWORD_SWING.damage);
+        if (intersectsSwing(origin, yaw, enemy.position, enemy.definition.hurtbox) &&
+            applyDamage(enemy, SWORD_SWING.damage)) {
+          hit = true;
         }
       }
+      return hit;
     },
   };
 }
