@@ -4,15 +4,17 @@ This file defines **general engineering practices** for people and coding agents
 
 ## 1. Source of truth and document boundaries
 
-- **Read [`docs/PROJETCT.md`](docs/PROJETCT.md) before designing or changing gameplay, art direction, or technical scope.** It contains the project's product vision, established decisions, and non-negotiable guidelines.
-- Treat `docs/PROJETCT.md` as **immutable**. **Never modify, rename, move, overwrite, or auto-format it** as part of a coding or documentation task. A request to update another document does not authorize editing it.
-- If a new request conflicts with the project reference, explain the conflict and propose a separate change request. Only the project owner can explicitly authorize a dedicated update to `docs/PROJETCT.md`.
+- **Read [`docs/PROJECT.md`](docs/PROJECT.md) before implementing features.** It is the authoritative entry point for the project's vision and architecture and links to the founding vision in [`docs/PROJETCT.md`](docs/PROJETCT.md).
+- Treat both reference documents as **immutable**. Never modify, rename, move, overwrite, or auto-format either without separate, explicit authorization from the project owner.
+- If a new request conflicts with the project reference, explain the conflict and propose a separate change request.
 - Keep implementation notes, technical decisions, experiments, backlogs, and status updates in **separate, editable documents**. Do not present a prototype assumption as an established requirement.
 - Before making changes, inspect the actual repository, entry points, dependencies, scripts, and nearby conventions. **Existing working code is evidence of implementation, not permission to override the project reference.**
 
 ## 2. Maintainable architecture
 
 - Prefer simple, readable, explicit code. Follow the existing project's conventions and structure.
+- Respect established feature boundaries. Put new source files in the responsible module and reserve the `src/` root for application entry points and essential resources.
+- Keep development tools separate from production gameplay. Avoid unrelated refactors.
 - Give modules and functions focused responsibilities. Extract meaningful rules or complex conditions into well-named functions, but avoid gratuitous abstraction.
 - Separate **game rules and simulation** from rendering, input handling, audio, networking, persistence, and platform-specific APIs.
 - Drive equivalent actions through shared gameplay systems. For example, human, AI, and scripted controllers should issue intents to the same action validation and execution paths.
@@ -67,10 +69,10 @@ This file defines **general engineering practices** for people and coding agents
 
 ## 8. Working agreement for agents
 
-1. Read `docs/PROJETCT.md` and the repository's local instructions.
+1. Read `docs/PROJECT.md`, its linked vision, and the repository's local instructions.
 2. Identify the smallest change that satisfies the request.
 3. Preserve established behavior unless a change is explicitly requested.
 4. Implement with explicit errors, appropriate tests, and minimal dependencies.
 5. Verify what the environment allows; disclose what remains unverified.
 6. Summarize changed files and important decisions.
-7. **Never modify `docs/PROJETCT.md` without a separate, explicit authorization from the project owner.**
+7. **Never modify `docs/PROJECT.md` or `docs/PROJETCT.md` without separate, explicit authorization from the project owner.**

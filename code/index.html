@@ -5,44 +5,149 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#161b1b" />
     <title>Idle RPG — Playground 3D</title>
+    <style>
+      body { margin: 0; background: #161c1c; }
+      #app[inert] { visibility: hidden; }
+      #loadingOverlay {
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: #161c1c;
+        color: #e9eeea;
+        font: 14px system-ui, sans-serif;
+        text-align: center;
+      }
+      #loadingOverlay[hidden] { display: none; }
+      #loadingOverlay.error { color: #ffb4b4; }
+    </style>
   </head>
   <body>
-    <main id="app" class="app">
+    <div id="loadingOverlay" role="status">Chargement du playground…</div>
+    <main id="app" class="app" inert>
       <section class="stage" aria-label="Aperçu du personnage 3D">
-        <canvas id="renderCanvas" aria-label="Personnage 3D en caméra top-down"></canvas>
-        <div class="brand"><span class="brand-mark"></span> IDLE RPG <span class="brand-note">/ PLAYGROUND</span></div>
-        <div id="loadingOverlay" class="loading" role="status" aria-live="polite">Chargement du personnage Meshy…</div>
-        <div class="stage-footnote">Z Q S D · Déplacer le héros | Maj · Courir</div>
+        <canvas id="renderCanvas" tabindex="0" aria-label="Personnage 3D en caméra top-down"></canvas>
+        <div class="brand"><span class="brand-mark"></span> IDLE RPG <span id="modeLabel" class="brand-note"></span></div>
+        <div id="movementHint" class="stage-footnote" hidden><span id="keyboardHint">ZQSD · Déplacement relatif à la souris | Maj · Course</span> | Clic gauche · Attaque | Clic droit · Esquive</div>
       </section>
-      <aside class="panel" aria-label="Contrôles du playground">
+      <aside id="playgroundPanel" class="panel" aria-label="Contrôles du playground" hidden>
         <header class="panel-header">
-          <p class="eyebrow">PROTOTYPE 01</p>
-          <h1>Animation Playground</h1>
-          <p>Test du personnage Meshy dans Babylon.js, sans système de combat.</p>
+          <h1>Playground</h1>
         </header>
-        <div class="control-section">
-          <h2>Animations</h2>
-          <div id="animationButtons" class="animation-buttons" aria-label="Choisir une animation"></div>
-          <div class="field-row"><label for="speed">Vitesse de lecture</label><output id="speedOutput" for="speed">1.0×</output></div>
-          <input id="speed" type="range" min="0.25" max="2" step="0.05" value="1" />
+        <nav class="module-launchers" aria-label="Modules du Playground">
+          <button type="button" aria-controls="movementModule" aria-expanded="false">Animations de déplacement</button>
+          <button type="button" aria-controls="actionsModule" aria-expanded="false">Animations d’action</button>
+          <button type="button" aria-controls="equipmentModule" aria-expanded="false">Équipement</button>
+          <button type="button" aria-controls="enemiesModule" aria-expanded="false">Gestion des ennemis</button>
+          <button type="button" aria-controls="cameraModule" aria-expanded="false">Caméra</button>
+          <button type="button" aria-controls="modelModule" aria-expanded="false">Modèle chargé</button>
+          <button type="button" aria-controls="controlsModule" aria-expanded="false">Commandes</button>
+        </nav>
+      </aside>
+      <div id="playgroundModules" class="module-dock" hidden>
+        <section id="controlsModule" class="module-window enemy-tools" aria-labelledby="controlsHeading" hidden>
+          <header class="module-header">
+            <h2 id="controlsHeading">Commandes</h2>
+            <button class="module-close" type="button" aria-label="Fermer les commandes">×</button>
+          </header>
+          <div class="enemy-fields">
+            <label>Avancer<select id="keyForward"></select></label>
+            <label>Reculer<select id="keyBackward"></select></label>
+            <label>Aller à gauche<select id="keyLeft"></select></label>
+            <label>Aller à droite<select id="keyRight"></select></label>
+            <label>Courir<select id="keyRun"></select></label>
+          </div>
+          <button id="resetBindings" class="secondary wide" type="button">Rétablir les touches par défaut</button>
+          <p id="bindingsStatus" class="micro" role="status" hidden></p>
+        </section>
+        <section id="movementModule" class="module-window" aria-labelledby="movementHeading" hidden>
+          <header class="module-header">
+            <h2 id="movementHeading">Animations de déplacement</h2>
+            <button class="module-close" type="button" aria-label="Fermer les animations de déplacement">×</button>
+          </header>
+          <div id="animationButtons" class="animation-buttons"></div>
+          <div id="movementAnimationSettings" class="animation-settings"></div>
           <button id="pauseButton" type="button" class="secondary wide" disabled>Pause</button>
-        </div>
-        <div class="control-section">
-          <h2>Caméra</h2>
+        </section>
+        <section id="actionsModule" class="module-window" aria-labelledby="actionsHeading" hidden>
+          <header class="module-header">
+            <h2 id="actionsHeading">Animations d’action</h2>
+            <button class="module-close" type="button" aria-label="Fermer les animations d’action">×</button>
+          </header>
+          <div id="actionButtons" class="animation-buttons"></div>
+          <div id="actionAnimationSettings" class="animation-settings"></div>
+        </section>
+        <section id="equipmentModule" class="module-window equipment-tools" aria-labelledby="equipmentHeading" hidden>
+          <header class="module-header">
+            <h2 id="equipmentHeading">Équipement</h2>
+            <button class="module-close" type="button" aria-label="Fermer l’équipement">×</button>
+          </header>
+          <div class="animation-buttons">
+            <button id="equipmentSheathed" type="button" class="animation-option">Arme rangée</button>
+            <button id="equipmentDrawn" type="button" class="animation-option">Arme dégainée</button>
+            <button id="equipmentAttack" type="button" class="animation-option">Aperçu de l’attaque</button>
+          </div>
+          <div id="equipmentTransforms"></div>
+        </section>
+        <section id="enemiesModule" class="module-window enemy-tools" aria-labelledby="enemyHeading" hidden>
+          <header class="module-header">
+            <h2 id="enemyHeading">Gestion des ennemis</h2>
+            <button class="module-close" type="button" aria-label="Fermer la gestion des ennemis">×</button>
+          </header>
+          <label>Instance<select id="enemyInstance"><option value="">Nouvel ennemi</option></select></label>
+          <output id="enemyHealth"></output>
+          <form id="enemyForm">
+            <fieldset id="enemyFields">
+              <label>Type<select id="enemyType"></select></label>
+              <div class="enemy-fields">
+                <label>PV max<input id="enemyMaxHealth" type="number" min="1" step="any" required /></label>
+                <label>Défense<input id="enemyDefense" type="number" min="0" step="any" required /></label>
+                <label>Dégâts<input id="enemyAttack" type="number" min="0" step="any" required /></label>
+                <label>Vitesse<input id="enemySpeed" type="number" min="0" step="any" required /></label>
+                <label>Délai (s)<input id="enemyRegenDelay" type="number" min="0" step="any" required /></label>
+                <label>Régén. (PV/s)<input id="enemyRegenRate" type="number" min="0" step="any" required /></label>
+              </div>
+              <label class="grid-toggle"><input id="enemyImmortal" type="checkbox" /> Immortel</label>
+              <label class="grid-toggle"><input id="enemyRegen" type="checkbox" /> Régénération</label>
+            </fieldset>
+            <button id="enemySubmit" class="secondary wide" type="submit">Créer un ennemi</button>
+          </form>
+          <div class="enemy-fields">
+            <button id="enemyReset" class="secondary" type="button" disabled>Rétablir les PV</button>
+            <button id="enemyRemove" class="secondary" type="button" disabled>Retirer</button>
+          </div>
+          <button id="enemyRemoveAll" class="secondary wide" type="button">Retirer tous les ennemis</button>
+          <button id="simulateHeroHit" class="secondary wide" type="button">Simuler un coup reçu</button>
+          <label class="grid-toggle"><input id="showHurtboxes" type="checkbox" /> Afficher les zones de touche</label>
+          <p id="enemyStatus" role="status"></p>
+        </section>
+        <section id="cameraModule" class="module-window" aria-labelledby="cameraHeading" hidden>
+          <header class="module-header">
+            <h2 id="cameraHeading">Caméra</h2>
+            <button class="module-close" type="button" aria-label="Fermer la caméra">×</button>
+          </header>
+          <div class="field-row"><label for="rotation">Rotation de la caméra</label><output id="rotationOutput" for="rotation">65°</output></div>
+          <input id="rotation" type="range" min="-180" max="180" step="1" value="65" />
           <div class="field-row"><label for="tilt">Inclinaison (depuis la verticale)</label><output id="tiltOutput" for="tilt">40°</output></div>
           <input id="tilt" type="range" min="10" max="65" step="1" value="40" />
-          <div class="field-row"><label for="zoom">Champ vertical visible</label><output id="zoomOutput" for="zoom">20.0 u</output></div>
-          <input id="zoom" type="range" min="5" max="40" step="0.5" value="20" />
+          <div class="field-row"><label for="zoom">Champ vertical visible</label><output id="zoomOutput" for="zoom">25.0 u</output></div>
+          <input id="zoom" type="range" min="5" max="40" step="0.5" value="25" />
           <div class="field-row"><label for="facing">Rotation du héros</label><output id="facingOutput" for="facing">0°</output></div>
           <input id="facing" type="range" min="-180" max="180" step="1" value="0" />
           <button id="resetButton" type="button" class="secondary wide">Réinitialiser la vue</button>
-        </div>
-        <div class="control-section meta">
-          <h2>Modèle chargé</h2>
+          <label class="grid-toggle"><input id="showGrid" type="checkbox" /> Afficher le quadrillage</label>
+        </section>
+        <section id="modelModule" class="module-window meta" aria-labelledby="modelHeading" hidden>
+          <header class="module-header">
+            <h2 id="modelHeading">Modèle chargé</h2>
+            <button class="module-close" type="button" aria-label="Fermer le modèle chargé">×</button>
+          </header>
           <p id="modelStatus">En attente du chargement…</p>
           <p id="animationStatus" class="micro"></p>
-        </div>
-      </aside>
+        </section>
+      </div>
     </main>
     <script type="module" src="/src/main.ts"></script>
   </body>
