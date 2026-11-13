@@ -6,6 +6,8 @@ import type { Position } from "./combat/combat";
 import { createEnemyScene } from "./enemies/enemyScene";
 import { startEnemyTools } from "./playground/enemyTools";
 import { bindCollisionTools } from "./playground/collisionTools";
+import { bindMapTools } from "./playground/mapTools";
+import { createMapSystem } from "./world/maps/mapSystem";
 import { bindAttackTools } from "./playground/attackTools";
 import { bindTransitionTools } from "./playground/transitionTools";
 import { bindModuleWindows } from "./playground/moduleWindows";
@@ -56,7 +58,10 @@ export async function startPlayground(
   gridToggle.checked = false;
   gridToggle.addEventListener("change", () => grid.setEnabled(gridToggle.checked), { signal });
 
-  const collisions = bindCollisionTools(scene, character.root, enemies, signal);
+  const maps = createMapSystem(scene);
+  bindMapTools(maps, character.root, cameraControls, signal);
+  const collisions = bindCollisionTools(scene, character.root, enemies, signal,
+    (start, step, radius, height) => maps.active?.resolveMovement(start, step, radius, height) ?? step);
   const attackTools = bindAttackTools(scene, character.root, signal);
   const canvas = requireElement<HTMLCanvasElement>("renderCanvas");
   const facingInput = requireElement<HTMLInputElement>("facing");

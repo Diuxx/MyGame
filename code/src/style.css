@@ -74,3 +74,7 @@ input[type=range] { accent-color:#a4c49e; display:block; width:100%; margin:0 0 
   .stage-footnote { bottom:16px; left:20px; right:20px; }
 }
 .app[data-mode="gameplay"] .stage, .app[data-mode="gameplay"] #renderCanvas { height:100vh; }
+
+#mapsModule select { display:block; width:100%; margin-top:6px; padding:8px; border:1px solid #4b5f53; border-radius:6px; background:#26362e; color:#dce9dd; }
+#mapsModule .enemy-fields { align-items:stretch; }
+#mapStatus { overflow-wrap:anywhere; line-height:1.5; }

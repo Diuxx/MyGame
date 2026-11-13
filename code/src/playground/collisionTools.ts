@@ -13,6 +13,8 @@ export function bindCollisionTools(
   hero: TransformNode,
   enemies: ReturnType<typeof createEnemyScene>,
   signal: AbortSignal,
+  resolveMap: (start: Position, step: GroundStep, radius: number, height: number) => GroundStep =
+    (_start, step) => step,
 ) {
   const enabled = requireElement<HTMLInputElement>("heroSolid");
   const showHero = requireElement<HTMLInputElement>("heroHitboxVisible");
@@ -109,9 +111,9 @@ export function bindCollisionTools(
 
   return {
     resolveMovement(start: Position, desired: GroundStep): GroundStep {
-      return settings.enabled
-        ? enemies.resolveMovement(start, desired, settings.radius)
-        : desired;
+      if (!settings.enabled) return desired;
+      const enemyStep = enemies.resolveMovement(start, desired, settings.radius);
+      return resolveMap(start, enemyStep, settings.radius, settings.height);
     },
   };
 }
