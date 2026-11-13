@@ -1,5 +1,6 @@
 import { applyDamage, intersectsSwing, regenerate, SWORD_SWING, type Position } from "../combat/combat.ts";
-import type { Enemy } from "./enemyState.ts";
+import { resolveCircleMovement, type GroundStep } from "../combat/bodyCollision.ts";
+import { getEnemyCollision, type Enemy } from "./enemyState.ts";
 
 /** Runtime enemy state, independent of Babylon.js and developer UI. */
 export function createEnemyManager() {
@@ -24,6 +25,15 @@ export function createEnemyManager() {
     },
     update(deltaSeconds: number): void {
       for (const enemy of instances.values()) regenerate(enemy, deltaSeconds);
+    },
+    resolveMovement(start: Position, desired: GroundStep, heroRadius: number): GroundStep {
+      const solids = [...instances.values()].flatMap((enemy) => {
+        const collision = getEnemyCollision(enemy);
+        return enemy.defeated || !collision.solid
+          ? []
+          : [{ x: enemy.position[0], z: enemy.position[2], radius: collision.radius }];
+      });
+      return resolveCircleMovement(start, desired, heroRadius, solids);
     },
     strike(origin: Position, facingYaw: number): boolean {
       let hit = false;

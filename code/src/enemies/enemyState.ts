@@ -1,5 +1,5 @@
 import type { CombatState, Position } from "../combat/combat.ts";
-import { validateEnemySettings, type EnemyDefinition, type EnemySettings } from "./enemyDefinitions.ts";
+import { validateEnemySettings, type EnemyCollision, type EnemyDefinition, type EnemySettings } from "./enemyDefinitions.ts";
 
 export type Enemy = EnemySettings & CombatState & {
   id: string;
@@ -10,6 +10,7 @@ export type Enemy = EnemySettings & CombatState & {
 export function configureEnemy(enemy: Enemy, settings: EnemySettings): void {
   validateEnemySettings(settings);
   enemy.stats = { ...settings.stats };
+  enemy.collision = settings.collision ? { ...settings.collision } : undefined;
   enemy.immortal = settings.immortal;
   enemy.regeneration = { ...settings.regeneration };
   enemy.health = Math.min(enemy.health, enemy.stats.maxHealth);
@@ -23,6 +24,7 @@ export function createEnemy(id: string, definition: EnemyDefinition, position: P
     definition,
     position,
     stats: { ...settings.stats },
+    collision: settings.collision ? { ...settings.collision } : undefined,
     immortal: settings.immortal,
     regeneration: { ...settings.regeneration },
     health: 0,
@@ -40,3 +42,14 @@ export function resetEnemy(enemy: Enemy): void {
   enemy.sinceHit = 0;
 }
 
+
+/** Colliders are circles for predictable lightweight top-down movement. */
+export function getEnemyCollision(enemy: Enemy): EnemyCollision {
+  if (enemy.collision) return enemy.collision;
+  const hurtbox = enemy.definition.hurtbox;
+  const radius = hurtbox.shape === "cylinder"
+    ? hurtbox.radius
+    : Math.hypot(hurtbox.width, hurtbox.depth) / 2;
+  // The collider is rooted on the enemy transform, including any hurtbox offset.
+  return { solid: true, radius: radius + Math.hypot(hurtbox.offset[0], hurtbox.offset[2]) };
+}

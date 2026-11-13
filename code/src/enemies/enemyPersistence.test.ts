@@ -31,3 +31,15 @@ test("rejects invalid version, unknown type, coordinates and settings", () => {
   assert.throws(() => parseEnemyInstances(JSON.stringify({ ...base, instances: [{ ...base.instances[0], position: [0, null, 0] }] }), [definition]), /Position/);
   assert.throws(() => parseEnemyInstances(JSON.stringify({ ...base, instances: [{ ...base.instances[0], settings: { ...base.instances[0].settings, stats: { ...base.instances[0].settings.stats, maxHealth: -2 } } }] }), [definition]), /maxHealth/);
 });
+
+test("custom collision settings persist and legacy snapshots still load", () => {
+  const enemy = createEnemy("dummy-10", definition, [0, 0, 0], definition);
+  enemy.collision = { solid: false, radius: 1.25 };
+  const saved = serializeEnemyInstances([enemy]);
+  assert.deepEqual(parseEnemyInstances(saved, [definition])[0].settings.collision, enemy.collision);
+  const old = JSON.parse(saved);
+  delete old.instances[0].settings.collision;
+  assert.equal(parseEnemyInstances(JSON.stringify(old), [definition])[0].settings.collision, undefined);
+  old.instances[0].settings.collision = { solid: true, radius: -1 };
+  assert.throws(() => parseEnemyInstances(JSON.stringify(old), [definition]), /Collision/);
+});
