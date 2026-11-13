@@ -25,7 +25,7 @@ export const HERO_ANIMATIONS = {
   walk: locomotion("Walking", "Marche", { speed: 3 }, 1.3),
   crouch: locomotion("Cautious_Crouch_Walk_Forward_inplace", "Marche accroupie", { speed: 1.5, facingOffset: 0 }),
   idle: locomotion("Idle_9", "Repos"),
-  combatIdle: locomotion("Idle_5", "Inactif 5"),
+  combatIdle: locomotion("Idle_5", "Idle_5"),
   left: locomotion("Cautious_Crouch_Walk_Left_inplace", "Pas à gauche", { speed: 1.5, facingOffset: Math.PI / 2 }),
   right: locomotion("Cautious_Crouch_Walk_Right_inplace", "Pas à droite", { speed: 1.5, facingOffset: -Math.PI / 2 }),
   backward: locomotion("Walk_Backward_inplace", "Marche arrière", { speed: 1.5, facingOffset: Math.PI }),

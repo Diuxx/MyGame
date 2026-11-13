@@ -28,9 +28,8 @@ export class AnimationPlayer {
 
   constructor(private readonly animations: AnimationGroup[]) {
     this.available = new Set(animations.map(({ name }) => name));
-    const combatIdle = HERO_ANIMATIONS.combatIdle;
-    this.combatIdleClip = animations.find(({ name }) => name === combatIdle.id || name.toLowerCase() === combatIdle.displayName.toLowerCase())?.name
-      ?? IDLE_ANIMATION;
+    const combatIdle = HERO_ANIMATIONS.combatIdle.id;
+    this.combatIdleClip = this.available.has(combatIdle) ? combatIdle : IDLE_ANIMATION;
     for (const clip of [IDLE_ANIMATION, LOCOMOTION_CLIPS.walk, LOCOMOTION_CLIPS.backward, LOCOMOTION_CLIPS.run, ATTACK_ANIMATION, DODGE_ANIMATION]) {
       if (!this.available.has(clip)) throw new Error(`Clip requis absent de hero.glb : ${clip}`);
     }
