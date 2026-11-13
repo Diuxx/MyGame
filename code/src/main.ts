@@ -41,8 +41,8 @@ async function start(): Promise<void> {
       const { startPlayground } = await import("./playground");
       await startPlayground(scene, camera, character, animationPlayer, signal);
     } else {
-      const ground = createGameplayEnvironment(scene, character.root);
-      createCharacterController(scene, canvas, character.root, ground.position.y,
+      createGameplayEnvironment(scene, character.root);
+      createCharacterController(scene, canvas, character.root,
         PLAYGROUND_MOVEMENT_LIMIT, camera, animationPlayer, signal);
       requireElement("movementHint").hidden = false;
     }

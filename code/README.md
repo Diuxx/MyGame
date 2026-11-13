@@ -25,15 +25,16 @@ npm run build
 
 ## Ce qu'on peut tester
 
-- Les neuf clips de `public/models/hero.glb` sont disponibles dans le panneau Animations. Leurs noms exacts figurent dans `ANIMATIONS.json`. La locomotion utilise `Idle_9`, `Walking`, `Walk_Backward_inplace` et `Running`.
-- Le héros s'oriente vers la souris sur le plateau. **Z/S** avancent et reculent, **Q/D** déplacent le héros latéralement et **Maj** permet de courir. La caméra suit le héros.
+- Les onze clips de `public/models/hero.glb` sont disponibles dans les modules d’animation. Leurs noms exacts figurent dans `ANIMATIONS.json`. Le héros se tourne vers son déplacement et passe progressivement entre le repos, la marche et la course.
+- **Z/S** rapprochent ou éloignent le héros du curseur. **Q/D** le déplacent perpendiculairement à gauche ou à droite. **Maj** permet de courir. Le module **Commandes** permet de modifier ces touches dans le Playground. À l’arrêt, le héros garde sa dernière orientation.
+- **Clic droit** lance une esquive dans la direction demandée, ou dans la direction du regard si aucune touche de déplacement n’est enfoncée. La direction reste fixe durant la roulade. La fenêtre d’invulnérabilité couvre 15 % à 65 % du clip et le délai de réactivation est de 500 ms à partir du départ. Le contrôleur expose `isInvulnerable` pour la future réception de dégâts du héros.
 - L'attaque est jouée une fois. À la fin, le héros reprend le déplacement si une direction est maintenue, ou revient au repos.
 - Contrôles : animation, pause/reprise, vitesse, rotation et inclinaison de la caméra, zoom orthographique et orientation du personnage.
 - Le chargement conserve les matériaux, le squelette et les animations du GLB.
 - Le personnage est **recalibré automatiquement à 1,8 unité de haut** et ses pieds sont placés au niveau du sol, ce qui compense l'échelle `0.01` du nœud `Armature` exporté par Meshy.
 - Le studio a un sol beige mat et une ombre douce projetée par la silhouette animée du héros. La case **Afficher le quadrillage** révèle les repères d'une unité.
 - Trois cibles statiques sont disposées devant le héros au démarrage. Dans **Ennemis**, choisir **Nouvel ennemi** pour régler un archétype et le créer près du héros, ou sélectionner une instance pour la modifier, la soigner ou la retirer. Un contour doré repère sa barre de vie. **Afficher les zones de touche** montre les volumes utilisés pour les impacts.
-- Pour toucher une cible, s'en approcher, la viser avec la souris et appuyer sur **E** ou cliquer sur **Attaque**. L'orientation reste fixe pendant le coup. Le coup teste la portée à 40 % du clip et inflige 25 dégâts de base par cible touchée. Les réglages d'une instance sont propres à la session. Une cible immortelle perd des PV jusqu'à 1. La régénération, si activée, reprend après le délai configuré depuis le dernier coup.
+- Pour toucher une cible, s’en approcher et faire un **clic gauche** dans sa direction sur le plateau. Le bouton **Attaque** reste disponible dans le module d’action. L’orientation reste fixe pendant le coup. Le coup teste la portée à 40 % du clip et inflige 25 dégâts de base par cible touchée. Une cible immortelle perd des PV jusqu’à 1. La régénération reprend après le délai configuré depuis le dernier coup.
 
 ## Structure
 

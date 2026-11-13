@@ -1,10 +1,13 @@
 import type { Scene } from "@babylonjs/core";
-import { AnimationPlayer, ANIMATION_LABELS, ATTACK_ANIMATION } from "./character/animations";
+import { AnimationPlayer, ANIMATION_LABELS, ATTACK_ANIMATION, CROUCH_WALK } from "./character/animations";
 import type { LoadedCharacter } from "./character/character";
 import { createCharacterController } from "./character/characterController";
 import { SWORD_SWING, type Position } from "./combat/combat";
 import { createEnemyScene } from "./enemies/enemyScene";
 import { startEnemyTools } from "./playground/enemyTools";
+import { bindModuleWindows } from "./playground/moduleWindows";
+import { bindControlSettings } from "./playground/controlSettings";
+import { LOCOMOTION_CLIPS } from "./character/locomotion";
 import { requireElement } from "./ui/dom";
 import { degreesToRadians } from "./world/cameraMath";
 import { createPlaygroundEnvironment, PLAYGROUND_MOVEMENT_LIMIT } from "./world/environments";
@@ -36,6 +39,7 @@ export async function startPlayground(
   signal: AbortSignal,
 ): Promise<void> {
   requireElement<HTMLElement>("movementHint").hidden = false;
+  bindModuleWindows(signal);
   const { ground, grid, shadows } = createPlaygroundEnvironment(scene, character.root);
   const enemies = createEnemyScene(scene, shadows, ground.position.y);
   const heroPosition = (): Position => [character.root.position.x, ground.position.y, character.root.position.z];
@@ -46,17 +50,20 @@ export async function startPlayground(
   gridToggle.addEventListener("change", () => grid.setEnabled(gridToggle.checked), { signal });
 
   const buttonsContainer = requireElement<HTMLDivElement>("animationButtons");
+  const actionButtons = requireElement<HTMLDivElement>("actionButtons");
+  const previewButtons: HTMLButtonElement[] = [];
+  const movementClips = new Set([...Object.values(LOCOMOTION_CLIPS), CROUCH_WALK]);
   const pauseButton = requireElement<HTMLButtonElement>("pauseButton");
   const animationStatus = requireElement<HTMLParagraphElement>("animationStatus");
   const canvas = requireElement<HTMLCanvasElement>("renderCanvas");
   const facingInput = requireElement<HTMLInputElement>("facing");
   const facingOutput = requireElement<HTMLOutputElement>("facingOutput");
   function updateActiveAnimation(): void {
-    buttonsContainer.querySelectorAll<HTMLButtonElement>("button").forEach((button) => {
+    for (const button of previewButtons) {
       const active = button.dataset.animation === animationPlayer.activeName;
       button.classList.toggle("active", active);
       button.setAttribute("aria-pressed", String(active));
-    });
+    }
     pauseButton.textContent = animationPlayer.isPaused ? "Reprendre" : "Pause";
     animationStatus.textContent = `Animation : ${animationPlayer.activeName}`;
   }
@@ -69,7 +76,7 @@ export async function startPlayground(
     enemies.strike(heroPosition(), character.root.rotation.y);
   }
 
-  const controller = createCharacterController(scene, canvas, character.root, ground.position.y,
+  const controller = createCharacterController(scene, canvas, character.root,
     PLAYGROUND_MOVEMENT_LIMIT, cameraControls, animationPlayer, signal, updateActiveAnimation, (yaw) => {
       const degrees = String(Math.round(yaw * 180 / Math.PI));
       if (facingInput.value !== degrees) {
@@ -77,6 +84,7 @@ export async function startPlayground(
         facingOutput.textContent = degrees + "°";
       }
     }, () => { pendingImpact = true; });
+  bindControlSettings(controller.setBindings, signal);
 
   for (const animation of character.animationGroups) {
     animation.onAnimationGroupEndObservable.add(() => queueMicrotask(updateActiveAnimation));
@@ -87,6 +95,7 @@ export async function startPlayground(
     button.textContent = ANIMATION_LABELS[animation.name] ?? animation.name;
     button.title = animation.name;
     button.addEventListener("click", () => {
+      if (controller.isActing) return;
       if (animation.name === ATTACK_ANIMATION) controller.attack();
       else {
         pendingImpact = false;
@@ -94,7 +103,9 @@ export async function startPlayground(
         updateActiveAnimation();
       }
     }, { signal });
-    buttonsContainer.append(button);
+    previewButtons.push(button);
+    const container = movementClips.has(animation.name) ? buttonsContainer : actionButtons;
+    container.append(button);
   }
   // A one-shot animation automatically returns to Idle. Refresh its button state.
   attack?.onAnimationGroupEndObservable.add(() => {
@@ -123,7 +134,7 @@ export async function startPlayground(
   linkRangeControl("tilt", "tiltOutput", (n) => `${n}°`, (n) => cameraControls.setTilt(n), signal);
   linkRangeControl("zoom", "zoomOutput", (n) => `${n.toFixed(1)} u`, (n) => cameraControls.setVisibleHeight(n), signal);
   linkRangeControl("facing", "facingOutput", (n) => `${n}°`, (n) => {
-    if (animationPlayer.activeName === ATTACK_ANIMATION) {
+    if (controller.isActing || animationPlayer.activeName === ATTACK_ANIMATION) {
       facingInput.value = String(Math.round(character.root.rotation.y * 180 / Math.PI));
       facingOutput.textContent = `${facingInput.value}°`;
       return;

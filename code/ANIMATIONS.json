@@ -9,6 +9,8 @@
     { "name": "Roll_Dodge_3", "durationSeconds": 1.6333, "loop": false },
     { "name": "Sprint_and_Sudden_Stop", "durationSeconds": 2, "loop": false },
     { "name": "Thrust_Slash", "durationSeconds": 3, "loop": false },
+    { "name": "Cautious_Crouch_Walk_Left_inplace", "durationSeconds": 1.1667, "loop": true },
+    { "name": "Cautious_Crouch_Walk_Right_inplace", "durationSeconds": 1.2667, "loop": true },
     { "name": "Walk_Backward_inplace", "durationSeconds": 0.8667, "loop": true }
   ],
   "skinCount": 1,
