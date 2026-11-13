@@ -3,7 +3,7 @@ name: Validate gameplay and playground
 on:
   pull_request:
   push:
-    branches: [develop, "feature/**"]
+    branches: [develop]
 
 jobs:
   test-and-build:
@@ -13,14 +13,18 @@ jobs:
       run:
         working-directory: code
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: "22"
           cache: npm
           cache-dependency-path: code/package-lock.json
       - name: Install dependencies
         run: npm ci
+      - name: Inspect missing Linux Rollup binary
+        run: npm view @rollup/rollup-linux-x64-gnu@4.68.3 dist.integrity
+      - name: Install Linux Rollup binary for verification
+        run: npm install --no-save --package-lock=false @rollup/rollup-linux-x64-gnu@4.68.3
       - name: Test rules and geometry
         run: npm test
       - name: Type-check and build
