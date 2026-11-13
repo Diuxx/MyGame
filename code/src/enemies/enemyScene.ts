@@ -5,7 +5,8 @@ import {
 import "@babylonjs/loaders/glTF";
 import type { Hurtbox, Position } from "../combat/combat";
 import type { EnemyDefinition, EnemySettings } from "./enemyDefinitions";
-import { createEnemy, type Enemy } from "./enemyState";
+import { createEnemy, getEnemyCollision, type Enemy } from "./enemyState";
+import type { GroundStep } from "../combat/bodyCollision";
 import { createEnemyManager } from "./enemyManager";
 
 function footprint(box: Hurtbox): number {
@@ -15,10 +16,11 @@ function footprint(box: Hurtbox): number {
 
 export function createEnemyScene(scene: Scene, shadows: ShadowGenerator, groundY: number) {
   const entries = new Map<string, { enemy: Enemy; update(): void; select(selected: boolean): void;
-    showHurtbox(visible: boolean): void; dispose(): void }>();
+    showHurtbox(visible: boolean): void; showCollider(visible: boolean): void; dispose(): void }>();
   const manager = createEnemyManager();
   let nextId = 1;
   let debug = false;
+  let debugColliders = false;
 
   function material(name: string, color: string, alpha = 1): StandardMaterial {
     const result = new StandardMaterial(name, scene);
@@ -34,6 +36,8 @@ export function createEnemyScene(scene: Scene, shadows: ShadowGenerator, groundY
   const fill = material("enemyHealthFill", "#6DB85D");
   const debugMaterial = material("enemyHurtbox", "#64E9DD", 0.3);
   debugMaterial.wireframe = true;
+  const colliderMaterial = material("enemyCollider", "#FFD166", 0.45);
+  colliderMaterial.wireframe = true;
 
   async function spawn(definition: EnemyDefinition, settings: EnemySettings, position: Position | (() => Position)): Promise<Enemy> {
     const id = `${definition.id}-${nextId++}`;
@@ -68,6 +72,14 @@ export function createEnemyScene(scene: Scene, shadows: ShadowGenerator, groundY
       hurtbox.isPickable = false;
       hurtbox.setEnabled(debug);
 
+      // A circular footprint blocks movement independently of the imported GLB geometry.
+      const collider = MeshBuilder.CreateCylinder(`${id}-collider`, { diameter: 2, height: 0.08, tessellation: 32 }, scene);
+      collider.parent = root;
+      collider.position.y = 0.055;
+      collider.material = colliderMaterial;
+      collider.isPickable = false;
+      collider.setEnabled(false);
+
       const bar = MeshBuilder.CreatePlane(`${id}-health`, { width: 1.28, height: 0.18 }, scene);
       bar.parent = root;
       bar.position.y = bounds.max.y - bounds.min.y + 0.28;
@@ -91,14 +103,23 @@ export function createEnemyScene(scene: Scene, shadows: ShadowGenerator, groundY
           health.setEnabled(ratio > 0);
           health.scaling.x = ratio;
           health.position.x = (ratio - 1) * 0.59;
+          const solid = getEnemyCollision(enemy);
+          collider.scaling.x = solid.radius;
+          collider.scaling.z = solid.radius;
+          collider.setEnabled(debugColliders && solid.solid && !enemy.defeated);
         },
         select(isSelected: boolean) { bar.material = isSelected ? selected : background; },
         showHurtbox(visible: boolean) { hurtbox.setEnabled(visible); },
+        showCollider(visible: boolean) {
+          const solid = getEnemyCollision(enemy);
+          collider.setEnabled(visible && solid.solid && !enemy.defeated);
+        },
         dispose() {
           for (const mesh of geometry) shadows.removeShadowCaster(mesh, false);
           assets.dispose();
           bar.dispose();
           hurtbox.dispose();
+          collider.dispose();
           model.dispose(true);
           root?.dispose(true);
         },
@@ -152,6 +173,13 @@ export function createEnemyScene(scene: Scene, shadows: ShadowGenerator, groundY
     },
     list() {
       return manager.list();
+    },
+    resolveMovement(start: Position, desired: GroundStep, heroRadius: number): GroundStep {
+      return manager.resolveMovement(start, desired, heroRadius);
+    },
+    showColliders(visible: boolean) {
+      debugColliders = visible;
+      for (const entry of entries.values()) entry.showCollider(visible);
     },
     update(delta: number) {
       manager.update(delta);
