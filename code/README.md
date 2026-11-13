@@ -27,13 +27,13 @@ npm run build
 
 - Les onze clips de `public/models/hero.glb` sont disponibles dans les modules d’animation. Leurs noms exacts figurent dans `ANIMATIONS.json`. Le héros se tourne vers son déplacement et passe progressivement entre le repos, la marche et la course.
 - **Z/S** rapprochent ou éloignent le héros du curseur. **Q/D** le déplacent perpendiculairement à gauche ou à droite. **Maj** permet de courir. Le module **Commandes** permet de modifier ces touches dans le Playground. À l’arrêt, le héros garde sa dernière orientation.
-- **Clic droit** lance une esquive dans la direction demandée, ou dans la direction du regard si aucune touche de déplacement n’est enfoncée. La direction reste fixe durant la roulade. La fenêtre d’invulnérabilité couvre 15 % à 65 % du clip et le délai de réactivation est de 500 ms à partir du départ. Le contrôleur expose `isInvulnerable` pour la future réception de dégâts du héros.
+- **Clic droit** lance une esquive dans la direction demandée, ou dans la direction du regard si aucune touche de déplacement n’est enfoncée. La direction reste fixe durant la roulade. La fenêtre d’invulnérabilité couvre 15 % à 90 % du clip par défaut (réglable) et le délai de réactivation est de 500 ms à partir du départ. Le contrôleur expose `isInvulnerable` pour la future réception de dégâts du héros.
 - L'attaque est jouée une fois. À la fin, le héros reprend le déplacement si une direction est maintenue, ou revient au repos.
 - Contrôles : animation, pause/reprise, vitesse, rotation et inclinaison de la caméra, zoom orthographique et orientation du personnage.
 - Le chargement conserve les matériaux, le squelette et les animations du GLB.
 - Le personnage est **recalibré automatiquement à 1,8 unité de haut** et ses pieds sont placés au niveau du sol, ce qui compense l'échelle `0.01` du nœud `Armature` exporté par Meshy.
 - Le studio a un sol beige mat et une ombre douce projetée par la silhouette animée du héros. La case **Afficher le quadrillage** révèle les repères d'une unité.
-- Trois cibles statiques sont disposées devant le héros au démarrage. Dans **Ennemis**, choisir **Nouvel ennemi** pour régler un archétype et le créer près du héros, ou sélectionner une instance pour la modifier, la soigner ou la retirer. Un contour doré repère sa barre de vie. **Afficher les zones de touche** montre les volumes utilisés pour les impacts.
+- Trois cibles statiques sont disposées devant le héros au démarrage. Dans **Ennemis**, choisir **Nouvel ennemi** pour régler un archétype et le créer près du héros, ou sélectionner une instance pour la modifier, la soigner ou la retirer. Un contour doré repère sa barre de vie. Dans **Collisions et hitbox**, on peut afficher la hurtbox rouge du héros, les hurtboxes cyan des ennemis et leurs colliders solides jaunes.
 - Pour toucher une cible, s’en approcher et faire un **clic gauche** dans sa direction sur le plateau. Le bouton **Attaque** reste disponible dans le module d’action. L’orientation reste fixe pendant le coup. Le coup teste la portée à 40 % du clip et inflige 25 dégâts de base par cible touchée. Une cible immortelle perd des PV jusqu’à 1. La régénération reprend après le délai configuré depuis le dernier coup.
 
 ## Structure
@@ -63,7 +63,7 @@ Ces valeurs sont des réglages de **playground**, pas des mesures exactes issues
 
 ## Limites
 
-- Le déplacement est limité au sol du playground. Les ennemis sont statiques. Leurs statistiques d'attaque et de vitesse sont éditables, mais ne déclenchent aucun comportement. Le POC ne gère pas les collisions de déplacement, l'IA, l'équipement ou la magie.
+- Le déplacement est limité au sol du playground. Le héros et les mannequins disposent de colliders physiques circulaires au sol : marche, course et esquive ne traversent pas les mannequins solides. Les ennemis restent statiques ; leurs statistiques d'attaque et de vitesse ne déclenchent encore aucun comportement. Les ennemis mobiles, l'IA et la magie ne sont pas implémentés dans ce playground.
 - Le repos de combat utilise `Idle_9`. Le nœud `mixamorig:RightHand` est exposé pour le futur attachement d'une épée.
 - Le déplacement horizontal du bassin est neutralisé au chargement. La hauteur du bassin reste animée et les pieds ne sont pas verrouillés au sol.
 - Le modèle pèse environ 12 Mo. Il faudra optimiser textures et géométrie avant de cibler les mobiles.
@@ -81,3 +81,9 @@ Les trois GLB de `public/assets/training/` sont des copies des fichiers fournis 
 Dans **Ennemis**, les boutons **Sauvegarder / Charger** conservent localement les types, positions et statistiques des instances. **Exporter / Importer JSON** permet d'échanger les presets versionnés. Le chargement ne restaure pas les PV courants : les instances apparaissent avec leur santé maximale. Une erreur de validation ou de chargement conserve les instances précédentes.
 
 La détection des coups est géométrique et séparée du rendu, avec prise en charge des boîtes orientées dans le calcul pur. La collision bloquant les déplacements et le suivi exact de la lame animée ne sont pas encore implémentés. Voir [`docs/COMBAT_ARCHITECTURE.md`](../docs/COMBAT_ARCHITECTURE.md).
+
+## Collisions et transitions (branche de développement)
+
+Dans le module **Collisions et hitbox**, active ou désactive les collisions, affiche les volumes de debug et règle le rayon, la hauteur et le décalage vertical de la hitbox rouge du héros. Les ennemis possèdent un rayon solide configurable individuellement dans **Gestion des ennemis**, enregistré dans les presets JSON.
+
+Les durées de fondu de déplacement, de retour au repos et de ralentissement sont ajustables dans **Animations de déplacement** et sauvegardées localement. Lorsque le héros se heurte à une cible, l'animation de locomotion dépend du déplacement réellement effectué ; il revient au repos s'il est complètement bloqué. Le détail technique et les essais manuels figurent dans [la documentation des collisions](../docs/COLLISIONS_PLAYGROUND.md).
