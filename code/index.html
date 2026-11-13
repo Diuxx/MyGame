@@ -42,10 +42,16 @@
           <button type="button" aria-controls="equipmentModule" aria-expanded="false">Équipement</button>
           <button type="button" aria-controls="enemiesModule" aria-expanded="false">Gestion des ennemis</button>
           <button type="button" aria-controls="collisionsModule" aria-expanded="false">Collisions et hitbox</button>
+          <button type="button" aria-controls="attackHitboxModule" aria-expanded="false">Zone d’attaque / Portée</button>
           <button type="button" aria-controls="cameraModule" aria-expanded="false">Caméra</button>
           <button type="button" aria-controls="modelModule" aria-expanded="false">Modèle chargé</button>
           <button type="button" aria-controls="controlsModule" aria-expanded="false">Commandes</button>
         </nav>
+        <div class="debug-quick-controls" role="group" aria-label="Affichage rapide des hitboxes">
+          <p>Affichage rapide</p>
+          <label class="grid-toggle"><input id="heroHitboxQuickToggle" type="checkbox" /> Hitbox du héros (rouge)</label>
+          <label class="grid-toggle"><input id="attackHitboxQuickToggle" type="checkbox" /> Zone d’attaque (orange)</label>
+        </div>
       </aside>
       <div id="playgroundModules" class="module-dock" hidden>
         <section id="controlsModule" class="module-window enemy-tools" aria-labelledby="controlsHeading" hidden>
@@ -159,6 +165,23 @@
           <button id="heroCollisionReset" class="secondary wide" type="button">Rétablir les valeurs par défaut</button>
           <p class="animation-note">Le volume rouge suit le héros. La marche, la course et l’esquive partagent le même rayon de collision au sol.</p>
           <p id="heroCollisionStatus" class="animation-note" role="status"></p>
+        </section>
+        <section id="attackHitboxModule" class="module-window enemy-tools" aria-labelledby="attackHitboxHeading" hidden>
+          <header class="module-header">
+            <h2 id="attackHitboxHeading">Portée de l'attaque à l'épée</h2>
+            <button class="module-close" type="button" aria-label="Fermer la zone d'attaque">×</button>
+          </header>
+          <label class="grid-toggle"><input id="attackHitboxVisible" type="checkbox" checked /> Afficher la hitbox d'attaque (orange)</label>
+          <label class="grid-toggle"><input id="attackHitboxAlwaysVisible" type="checkbox" /> Prévisualiser aussi hors des attaques</label>
+          <div class="enemy-fields">
+            <label>Portée de la lame (u)<input id="attackRange" type="number" min="0.1" max="8" step="0.05" value="1.8" /></label>
+            <label>Rayon de la zone (u)<input id="attackRadius" type="number" min="0.05" max="3" step="0.05" value="0.55" /></label>
+            <label>Hauteur du coup (u)<input id="attackHeight" type="number" min="0" max="4" step="0.05" value="1" /></label>
+            <label>Dégâts de base<input id="attackDamage" type="number" min="1" max="10000" step="1" value="25" /></label>
+          </div>
+          <button id="attackHitboxReset" class="secondary wide" type="button">Rétablir l'attaque par défaut</button>
+          <p class="animation-note">La zone orange suit la direction du héros et représente la portée utilisée pour calculer les coups. Elle apparaît pendant l'animation d'attaque. Sa hauteur est celle du plan de collision, pas la trajectoire exacte du katana.</p>
+          <p id="attackHitboxStatus" class="animation-note" role="status"></p>
         </section>
         <section id="cameraModule" class="module-window" aria-labelledby="cameraHeading" hidden>
           <header class="module-header">
