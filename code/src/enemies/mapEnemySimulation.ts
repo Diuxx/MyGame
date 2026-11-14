@@ -147,8 +147,10 @@ export function createMapEnemySimulation(
       actor.skill = "slash";
     }
     actor.state = "windup";
-    actor.windup = actor.skill === "bolt" ? 0.65 : actor.skill === "cleave" ? 0.8 : 0.45;
-    actor.cooldown = actor.spec.ai.attackCooldown * (phase?.attackSpeedMultiplier ?? 1);
+    const speedMultiplier = phase?.attackSpeedMultiplier ?? 1;
+    const baseWindup = actor.skill === "bolt" ? 0.65 : actor.skill === "cleave" ? 0.8 : 0.45;
+    actor.windup = baseWindup * speedMultiplier;
+    actor.cooldown = actor.spec.ai.attackCooldown * speedMultiplier;
   }
 
   function completeAttack(actor: FieldEnemy, player: Position, playerAlive: boolean): void {
@@ -230,7 +232,12 @@ export function createMapEnemySimulation(
       const home = actor.spec.position;
       const playerDistance = distance(actor.entity.position, player);
       const homeDistance = distance(actor.entity.position, home);
-      const beyondLeash = distance(home, player) > actor.spec.ai.leashRadius;
+      // A guard protects a smaller perimeter; aggressive and ranged profiles
+      // can pursue targets throughout their full leash radius.
+      const pursuitRadius = actor.spec.ai.profile === "guard"
+        ? actor.spec.ai.leashRadius * 0.75
+        : actor.spec.ai.leashRadius;
+      const beyondLeash = distance(home, player) > pursuitRadius;
       if (!playerAlive || beyondLeash) {
         if (actor.state === "chase" || actor.state === "return") actor.state = "return";
       } else if (actor.state !== "return" && playerDistance <= actor.spec.ai.aggroRadius) {
