@@ -68,7 +68,7 @@ export function createEditableModel(
     }
   }
 
-  async function load(visual?: VisualOverride): Promise<boolean> {
+  async function load(visual?: VisualOverride, localTextureUrl?: string): Promise<boolean> {
     if (disposed) throw new Error("Modèle déjà libéré.");
     const request = ++generation;
     const next = new TransformNode("editable-visual", scene);
@@ -94,7 +94,7 @@ export function createEditableModel(
         shadows.addShadowCaster(mesh, false);
         casters.push(mesh);
       }
-      paint(visual);
+      paint(visual, localTextureUrl);
       next.setEnabled(true);
       return !!cleanup;
     } catch (error) {

@@ -296,8 +296,7 @@ export async function createMapEnemyScene(
       const actor = simulation.list().find((candidate) => candidate.spec.id === id);
       const view = models.get(id);
       if (!actor || !view) throw new Error("Ennemi inconnu : " + id);
-      await view.model.load(visual);
-      if (localTextureUrl) view.model.setAppearance(visual, localTextureUrl);
+      await view.model.load(visual, localTextureUrl);
       actor.spec.visual = { ...visual };
     },
     strike(origin: Position, yaw: number, swing: SwordSwing): boolean {

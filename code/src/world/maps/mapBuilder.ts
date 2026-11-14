@@ -5,6 +5,7 @@ import {
 import type { GroundStep } from "../../combat/bodyCollision";
 import { buildMapObstacles, mapBounds, resolveMapMovement } from "./mapCollision";
 import { createEditableModel } from "./editableModel";
+import { createWorldInteractionScene } from "./worldInteractionScene";
 import { createNavigationData } from "./navigationData";
 import type { VisualOverride } from "./editorSchema";
 import { MissingMapVisuals } from "./missingVisuals";
@@ -47,6 +48,7 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
   const instanceDisposers: (() => void)[] = [];
   const shadowCasters: AbstractMesh[] = [];
   const debugMeshes: AbstractMesh[] = [];
+  let interactions: ReturnType<typeof createWorldInteractionScene> | undefined;
   const objectViews = new Map<string, {
     parent: TransformNode;
     model: ReturnType<typeof createEditableModel>;
@@ -160,7 +162,9 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
       refreshCollisionMeshes(object.id);
     }
     addGroundCollider();
+    interactions = createWorldInteractionScene(scene, root, definition.interactions ?? [], shadows);
   } catch (error) {
+    interactions?.dispose();
     releaseCasters();
     for (const view of objectViews.values()) view.model.dispose();
     for (const dispose of instanceDisposers) dispose();
@@ -212,8 +216,7 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
       const object = definition.objects.find((item) => item.id === id);
       const view = objectViews.get(id);
       if (!object || !view) throw new Error("Objet de map inconnu : " + id);
-      await view.model.load(visual);
-      if (localTextureUrl) view.model.setAppearance(visual, localTextureUrl);
+      await view.model.load(visual, localTextureUrl);
       object.visual = { ...visual };
     },
     setObjectCollider(id: string, collider: MapCollider): void {
@@ -227,12 +230,16 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
       // The temporary fallback model is rebuilt to match its current collider.
       if (!object.visual?.model) void view.model.load(object.visual);
     },
+    nearbyInteraction(hero: MapPosition) { return interactions?.nearby(hero); },
+    interact(hero: MapPosition) { return interactions?.interact(hero); },
+    getInventory() { return interactions?.inventory() ?? {}; },
     resolveMovement(start: MapPosition, step: GroundStep, heroRadius: number, heroHeight = 1.8): GroundStep {
       return resolveMapMovement(start, step, heroRadius, buildMapObstacles(definition, assets), bounds, heroHeight);
     },
     dispose(): void {
       if (disposed) return;
       disposed = true;
+      interactions?.dispose();
       releaseCasters();
       for (const view of objectViews.values()) view.model.dispose();
       for (const dispose of instanceDisposers) dispose();
