@@ -93,6 +93,15 @@ async function start(): Promise<void> {
 
     const resize = engine.resize.bind(engine);
     const render = scene.render.bind(scene);
+    const renderFps = requireElement("renderFps");
+    let lastFpsUpdate = performance.now();
+    scene.onAfterRenderObservable.add(() => {
+      const now = performance.now();
+      if (now - lastFpsUpdate < 500 || document.hidden) return;
+      lastFpsUpdate = now;
+      const label = `${Math.round(scene.getEngine().getFps())} FPS`;
+      if (renderFps.textContent !== label) renderFps.textContent = label;
+    });
     resize();
     window.addEventListener("resize", () => resize(), { signal });
     await scene.whenReadyAsync();

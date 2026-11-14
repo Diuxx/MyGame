@@ -29,7 +29,10 @@
     <main id="app" class="app" inert>
       <section class="stage" aria-label="Aperçu du personnage 3D">
         <canvas id="renderCanvas" tabindex="0" aria-label="Personnage 3D en caméra top-down"></canvas>
-        <div class="brand"><span class="brand-mark"></span> IDLE RPG <span id="modeLabel" class="brand-note"></span></div>
+        <div class="brand">
+          <span class="brand-mark"></span> IDLE RPG <span id="modeLabel" class="brand-note"></span>
+          <span id="renderFps" class="render-fps"></span>
+        </div>
         <div id="heroHud" class="hero-hud" hidden>
           <div class="hero-hud-heading"><strong>HÉROS</strong><output id="heroLife">PV 100 / 100</output></div>
           <div class="hero-hud-track"><div id="heroLifeFill"></div></div>

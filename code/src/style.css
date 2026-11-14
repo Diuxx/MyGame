@@ -11,6 +11,8 @@ button { cursor:pointer; }
 .brand { position:absolute; top:27px; left:30px; display:flex; align-items:center; gap:9px; color:#344a3b; font-weight:800; font-size:12px; letter-spacing:.16em; pointer-events:none; }
 .brand-note { font-weight:550; opacity:.6; }
 .brand-mark { width:13px; height:13px; border-radius:4px; background:#56785e; transform:rotate(45deg); }
+.render-fps { padding:4px 6px; border-radius:4px; background:#26332d; color:#e5eee5; white-space:nowrap; letter-spacing:normal; font-variant-numeric:tabular-nums; }
+.render-fps:empty { display:none; }
 .stage-footnote { position:absolute; bottom:25px; left:29px; color:#536552; font-size:12px; opacity:.8; pointer-events:none; }
 .panel { padding:25px 18px; background:#1c2423; border-left:1px solid #384340; min-height:100vh; }
 .panel-header h1 { margin:0 0 20px; font-size:22px; line-height:1.2; letter-spacing:-.035em; }
