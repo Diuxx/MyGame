@@ -157,9 +157,9 @@ export class AnimationPlayer {
   }
 
   /** Full-body actions (including dodge) preempt both animation layers. */
-  play(name: string, controlled = false): void {
+  play(name: string, controlled = false, layered = false): void {
     const selected = this.requireClip(name);
-    if (name === ATTACK_ANIMATION && controlled) {
+    if (name === ATTACK_ANIMATION && controlled && layered) {
       this.startUpperAttack(selected);
       return;
     }
