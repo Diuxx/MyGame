@@ -1,41 +1,131 @@
-import type { Scene } from "@babylonjs/core";
+import type { Scene, ShadowGenerator, TransformNode } from "@babylonjs/core";
+import type { Position, SwordSwing } from "../../combat/combat";
+import type { GroundStep } from "../../combat/bodyCollision";
+import { createMapEnemyScene } from "../../enemies/mapEnemyScene";
+import { clearMapProgress, readMapProgress, saveMapProgress } from "../../enemies/mapProgress";
+import type { EnemyEvent, SavedMapProgress } from "../../enemies/mapEnemySimulation";
+import { DEFAULT_ENVIRONMENT, type EnvironmentSettings } from "./environmentSettings";
 import { loadMapData, isMapId, type MapId } from "./dataLoader";
 import { buildMap } from "./mapBuilder";
 import { createMapSession } from "./mapSession";
 import { MapModelRegistry } from "./modelRegistry";
 
-export function createMapSystem(scene: Scene) {
+export interface MapSystemOptions {
+  hero: TransformNode;
+  shadows: ShadowGenerator;
+  applyEnvironment(value: EnvironmentSettings): void;
+  isHeroAlive(): boolean;
+  onHeroHit(damage: number): void;
+  onEncounterEvent?(event: EnemyEvent): void;
+}
+
+/** Integrates maps, lighting and AI without coupling game rules to Babylon.js. */
+export function createMapSystem(scene: Scene, options: MapSystemOptions) {
   const registry = new MapModelRegistry(scene);
+  let showCollisionDebug = false;
+  let showAggroDebug = false;
+  let disposed = false;
+
+  function readProgress(id: string): SavedMapProgress {
+    try { return readMapProgress(localStorage, id); }
+    catch (error) {
+      console.warn("Sauvegarde de progression indisponible :", error);
+      return { defeatedIds: [], clearedWaveIds: [] };
+    }
+  }
+
+  function persist(id: string, progress: SavedMapProgress): void {
+    try { saveMapProgress(localStorage, id, progress); }
+    catch (error) { console.warn("Progression non enregistrée :", error); }
+  }
+
   const session = createMapSession(async (id) => {
     if (!isMapId(id)) throw new Error("Map inconnue : " + id);
-    const { map, assets } = await loadMapData(id);
-    return buildMap(scene, map, assets, registry);
+    const { map, assets, enemyCatalog } = await loadMapData(id);
+    const level = await buildMap(scene, map, assets, registry, options.shadows);
+    try {
+      const enemies = await createMapEnemyScene(scene, map, enemyCatalog, level, {
+        shadows: options.shadows,
+        registry,
+        progress: readProgress(map.id),
+        getHeroPosition: (): Position =>
+          [options.hero.position.x, options.hero.position.y, options.hero.position.z],
+        isHeroAlive: options.isHeroAlive,
+        onHeroHit: options.onHeroHit,
+        onEvent: (event, progress) => {
+          if ((event.type === "death" && event.persistent) || event.type === "waveCleared") {
+            persist(map.id, progress);
+          }
+          options.onEncounterEvent?.(event);
+        },
+      });
+      return {
+        definition: level.definition,
+        missingModels: level.missingModels,
+        navigation: level.navigation,
+        simulation: enemies.simulation,
+        activate(): void {
+          level.activate();
+          enemies.activate();
+          options.applyEnvironment(map.environment ?? DEFAULT_ENVIRONMENT);
+        },
+        setColliderDebug(visible: boolean): void { level.setColliderDebug(visible); },
+        showAggro(visible: boolean): void { enemies.showAggro(visible); },
+        strike(origin: Position, yaw: number, swing: SwordSwing): boolean {
+          return enemies.strike(origin, yaw, swing);
+        },
+        resolveMovement(start: Position, desired: GroundStep, radius: number, height = 1.8): GroundStep {
+          const afterMap = level.resolveMovement(start, desired, radius, height);
+          return enemies.resolveHeroMovement(start, afterMap, radius);
+        },
+        resetProgress(): void {
+          try { clearMapProgress(localStorage, map.id); }
+          catch (error) { console.warn("Impossible de réinitialiser la sauvegarde :", error); }
+          enemies.resetProgress();
+        },
+        dispose(): void {
+          enemies.dispose();
+          level.dispose();
+        },
+      };
+    } catch (error) {
+      level.dispose();
+      throw error;
+    }
   });
-  let debugVisible = false;
-  let disposed = false;
 
   async function load(id: MapId) {
     if (disposed) throw new Error("Système de maps fermé.");
     const result = await session.load(id);
-    result?.setColliderDebug(debugVisible);
+    result?.setColliderDebug(showCollisionDebug);
+    result?.showAggro(showAggroDebug);
     return result;
+  }
+
+  function unload(): void {
+    session.unload();
+    options.applyEnvironment(DEFAULT_ENVIRONMENT);
   }
 
   async function dispose(): Promise<void> {
     if (disposed) return;
     disposed = true;
+    unload();
     await session.dispose();
     await registry.dispose();
   }
 
   scene.onDisposeObservable.addOnce(() => { void dispose(); });
   return {
-    load,
-    unload: () => session.unload(),
+    load, unload,
     get active() { return session.active; },
     showColliders(visible: boolean): void {
-      debugVisible = visible;
+      showCollisionDebug = visible;
       session.active?.setColliderDebug(visible);
+    },
+    showAggro(visible: boolean): void {
+      showAggroDebug = visible;
+      session.active?.showAggro(visible);
     },
     dispose,
   };
