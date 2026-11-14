@@ -4,6 +4,7 @@ import { createAnimationSettings, createAttackHits, getAnimationDefinition, HERO
 import { clamp } from "../world/cameraMath";
 import type { Position } from "../combat/combat";
 import { bindHeroInput } from "./heroInput";
+import { allowsLocomotion } from "./animationLayers";
 import { HERO_TUNING } from "./heroTuning";
 import { aimYaw, calculateMovementStep, consumeImpactWindow, dodgeDirection, dodgeInvulnerable, mouseRelativeDirection, type GroundVector } from "./movement";
 import type { CameraControls } from "../world/scene";
@@ -68,7 +69,7 @@ export function createCharacterController(
 
   function beginAction(clip: string, next: ActiveAction): void {
     action = next;
-    animations.play(clip, true);
+    animations.play(clip, true, next.kind === "attack");
     onAnimationChange();
   }
 
@@ -140,6 +141,7 @@ export function createCharacterController(
 
   function finishAction(active: ActiveAction): void {
     if (active.kind === "attack") equipment.transition(false);
+    animations.finishAction();
     action = undefined;
     // Force one locomotion update even when no movement key is held.
     wasMoving = true;
@@ -147,15 +149,17 @@ export function createCharacterController(
 
   const input = bindHeroInput(canvas, attack, startDodge, signal);
   scene.onBeforeRenderObservable.add(() => {
-    const { horizontal, vertical, running } = input.readMovement(!!action);
+    const { horizontal, vertical, running } = input.readMovement(!allowsLocomotion(action?.kind));
     if (animations.isPaused || document.hidden || !isInputEnabled()) return;
     const delta = scene.getEngine().getDeltaTime() / 1000;
     cooldown = Math.max(0, cooldown - delta);
     combatCrouchRemaining = Math.max(0, combatCrouchRemaining - delta);
     if (action) updateAction(action);
-    if (action) return;
+    if (!allowsLocomotion(action?.kind)) return;
 
-    const inCombat = combatCrouchRemaining > 0;
+    const attacking = action?.kind === "attack";
+    // Combat crouch resumes after the strike; running is not slowed mid-attack.
+    const inCombat = combatCrouchRemaining > 0 && !attacking;
     const restChanged = animations.setCombatIdle(inCombat);
     const movement = inCombat
       ? HERO_ANIMATIONS.crouch
@@ -166,13 +170,18 @@ export function createCharacterController(
       const direction = mouseRelativeDirection(horizontal, vertical, cursorYaw);
       const speed = settings[movement.id].movement!.speed;
       actual = move(calculateMovementStep(direction, delta, speed));
-      // Turning follows the requested direction even if a collider prevents motion.
-      // Locomotion animation, however, follows the actual resolved displacement.
-      const yaw = Math.atan2(direction.x, direction.z) + (movement.movement?.facingOffset ?? 0);
-      turn(Math.sin(yaw), Math.cos(yaw), delta);
+      // During a strike, aim at the pointer while movement remains independent.
+      if (!attacking) {
+        const yaw = Math.atan2(direction.x, direction.z) + (movement.movement?.facingOffset ?? 0);
+        turn(Math.sin(yaw), Math.cos(yaw), delta);
+      }
+    }
+    if (attacking) {
+      const aim = updateCursorYaw() ?? cursorYaw;
+      if (aim !== undefined) turn(Math.sin(aim), Math.cos(aim), delta);
     }
     const moving = !!(actual.x || actual.z);
-    if (moving || wasMoving || restChanged) {
+    if (moving || wasMoving || restChanged || attacking) {
       const previous = animations.activeName;
       animations.updateLocomotion(actual, root.rotation.y, running, "exploration", delta, movement.id);
       if (previous !== animations.activeName) onAnimationChange();
