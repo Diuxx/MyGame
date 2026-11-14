@@ -10,6 +10,7 @@ export function createHeroHud() {
   container.hidden = false;
 
   return {
+    announce(text: string): void { message.textContent = text; },
     refresh(vitals: ReturnType<typeof createHeroVitals>): void {
       life.textContent = vitals.isAlive
         ? `PV ${Math.ceil(vitals.health)} / ${vitals.maxHealth}`

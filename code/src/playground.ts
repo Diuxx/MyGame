@@ -7,6 +7,7 @@ import { createEnemyScene } from "./enemies/enemyScene";
 import { startEnemyTools } from "./playground/enemyTools";
 import { bindCollisionTools } from "./playground/collisionTools";
 import { bindMapTools } from "./playground/mapTools";
+import { bindWorldEditor } from "./playground/worldEditor";
 import { createMapSystem } from "./world/maps/mapSystem";
 import { createHeroVitals } from "./combat/heroVitals";
 import { createHeroHud } from "./ui/heroHud";
@@ -71,12 +72,14 @@ export async function startPlayground(
       if (vitals.hit(damage, controller?.isInvulnerable ?? false)) controller?.receiveHit();
     },
     onEncounterEvent: hud.event,
+    onWorldInteraction: hud.announce,
   });
   bindMapTools(maps, character.root, cameraControls, signal);
+  const canvas = requireElement<HTMLCanvasElement>("renderCanvas");
+  const worldEditor = bindWorldEditor(scene, canvas, maps, signal);
   const collisions = bindCollisionTools(scene, character.root, enemies, signal,
     (start, step, radius, height) => maps.active?.resolveMovement(start, step, radius, height) ?? step);
   const attackTools = bindAttackTools(scene, character.root, signal);
-  const canvas = requireElement<HTMLCanvasElement>("renderCanvas");
   const facingInput = requireElement<HTMLInputElement>("facing");
   const facingOutput = requireElement<HTMLOutputElement>("facingOutput");
   controller = createCharacterController(scene, canvas, character.root,
@@ -93,7 +96,7 @@ export async function startPlayground(
       return dummyHit || worldHit;
     },
     collisions.resolveMovement,
-    () => vitals.isAlive);
+    () => vitals.isAlive && !worldEditor.enabled);
   requireElement<HTMLButtonElement>("simulateHeroHit").addEventListener("click", controller.receiveHit, { signal });
   bindControlSettings(controller.setBindings, signal);
   bindTransitionTools(animationPlayer, signal);
