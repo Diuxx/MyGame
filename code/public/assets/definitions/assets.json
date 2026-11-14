@@ -1,0 +1,130 @@
+{
+  "version": 1,
+  "tiles": {
+    "wood": {
+      "model": "/assets/models/tiles/wood.glb",
+      "walkable": true
+    },
+    "stone": {
+      "model": "/assets/models/tiles/stone.glb",
+      "walkable": true
+    },
+    "grass": {
+      "model": "/assets/models/tiles/grass.glb",
+      "walkable": true
+    },
+    "water": {
+      "model": "/assets/models/tiles/water.glb",
+      "walkable": false
+    }
+  },
+  "objects": {
+    "wall": {
+      "model": "/assets/models/objects/wall.glb",
+      "blocksNavigation": true,
+      "colliders": [
+        {
+          "type": "box",
+          "position": [
+            0,
+            1.5,
+            0
+          ],
+          "size": [
+            2,
+            3,
+            0.3
+          ]
+        }
+      ]
+    },
+    "tree": {
+      "model": "/assets/models/objects/tree.glb",
+      "blocksNavigation": true,
+      "colliders": [
+        {
+          "type": "cylinder",
+          "position": [
+            0,
+            1,
+            0
+          ],
+          "radius": 0.45,
+          "height": 2
+        }
+      ]
+    },
+    "building_l": {
+      "model": "/assets/models/objects/building_l.glb",
+      "blocksNavigation": true,
+      "colliders": [
+        {
+          "type": "box",
+          "position": [
+            0,
+            1.5,
+            -1
+          ],
+          "size": [
+            6,
+            3,
+            2
+          ]
+        },
+        {
+          "type": "box",
+          "position": [
+            -2,
+            1.5,
+            2
+          ],
+          "size": [
+            2,
+            3,
+            4
+          ]
+        }
+      ]
+    },
+    "lantern": {
+      "model": "/assets/models/objects/lantern.glb",
+      "blocksNavigation": true,
+      "colliders": [
+        {
+          "type": "box",
+          "position": [
+            0,
+            0.6,
+            0
+          ],
+          "size": [
+            0.3,
+            1.2,
+            0.3
+          ]
+        }
+      ]
+    },
+    "boulder": {
+      "model": "/assets/models/objects/boulder.glb",
+      "blocksNavigation": true,
+      "colliders": [
+        {
+          "type": "cylinder",
+          "position": [
+            0,
+            0.7,
+            0
+          ],
+          "radius": 0.75,
+          "height": 1.4
+        }
+      ]
+    },
+    "flowers": {
+      "model": "/assets/models/objects/flowers.glb",
+      "blocksNavigation": false,
+      "colliders": []
+    }
+  }
+}

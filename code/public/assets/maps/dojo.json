@@ -1,0 +1,173 @@
+{
+  "version": 1,
+  "id": "dojo",
+  "name": "Cour du dojo",
+  "tileSize": 2,
+  "terrain": {
+    "origin": [
+      0,
+      0,
+      0
+    ],
+    "tiles": [
+      [
+        "stone",
+        "stone",
+        "stone",
+        "stone",
+        "stone",
+        "stone",
+        "stone",
+        "stone"
+      ],
+      [
+        "stone",
+        "wood",
+        "wood",
+        "wood",
+        "wood",
+        "wood",
+        "wood",
+        "stone"
+      ],
+      [
+        "stone",
+        "wood",
+        "wood",
+        "wood",
+        "wood",
+        "wood",
+        "wood",
+        "stone"
+      ],
+      [
+        "stone",
+        "wood",
+        "wood",
+        "wood",
+        "wood",
+        "wood",
+        "wood",
+        "stone"
+      ],
+      [
+        "stone",
+        "wood",
+        "wood",
+        "wood",
+        "wood",
+        "wood",
+        "wood",
+        "stone"
+      ],
+      [
+        "stone",
+        "wood",
+        "wood",
+        "wood",
+        "wood",
+        "wood",
+        "wood",
+        "stone"
+      ],
+      [
+        "stone",
+        "wood",
+        "wood",
+        "wood",
+        "wood",
+        "wood",
+        "wood",
+        "stone"
+      ],
+      [
+        "stone",
+        "stone",
+        "stone",
+        "stone",
+        "stone",
+        "stone",
+        "stone",
+        "stone"
+      ]
+    ],
+    "groundCollider": {
+      "enabled": true,
+      "thickness": 0.2
+    }
+  },
+  "objects": [
+    {
+      "id": "wall-north",
+      "asset": "wall",
+      "position": [
+        3,
+        0,
+        0
+      ],
+      "rotationY": 0
+    },
+    {
+      "id": "wall-west",
+      "asset": "wall",
+      "position": [
+        0,
+        0,
+        3
+      ],
+      "rotationY": 90
+    },
+    {
+      "id": "tree-1",
+      "asset": "tree",
+      "position": [
+        4,
+        0,
+        6
+      ],
+      "rotationY": 0
+    },
+    {
+      "id": "building-1",
+      "asset": "building_l",
+      "position": [
+        10,
+        0,
+        9
+      ],
+      "rotationY": 90
+    },
+    {
+      "id": "lantern-1",
+      "asset": "lantern",
+      "position": [
+        7,
+        0,
+        5
+      ],
+      "rotationY": 0
+    }
+  ],
+  "spawnPoints": [
+    {
+      "id": "player-start",
+      "type": "player",
+      "position": [
+        8,
+        0,
+        3
+      ],
+      "rotationY": 180
+    },
+    {
+      "id": "enemy-start",
+      "type": "enemy",
+      "position": [
+        11,
+        0,
+        4
+      ],
+      "rotationY": 180
+    }
+  ]
+}

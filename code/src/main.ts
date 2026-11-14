@@ -6,6 +6,7 @@ import { loadEquipment } from "./character/equipment";
 import { requireElement } from "./ui/dom";
 import { createGameplayEnvironment, PLAYGROUND_MOVEMENT_LIMIT } from "./world/environments";
 import { createCamera } from "./world/scene";
+import { createMapSystem } from "./world/maps/mapSystem";
 
 async function start(): Promise<void> {
   const overlay = requireElement<HTMLDivElement>("loadingOverlay");
@@ -45,8 +46,18 @@ async function start(): Promise<void> {
     } else {
       const { shadows } = createGameplayEnvironment(scene, character.root);
       for (const mesh of equipment.meshes) shadows.addShadowCaster(mesh, false);
+      const maps = createMapSystem(scene);
+      const loadedMap = await maps.load("dojo");
+      const spawn = loadedMap?.definition.spawnPoints.find((point) => point.type === "player");
+      if (spawn) {
+        character.root.position.set(...spawn.position);
+        character.root.rotation.y = spawn.rotationY * Math.PI / 180;
+        camera.follow(character.root.position.x, character.root.position.z);
+      }
       createCharacterController(scene, canvas, character.root,
-        PLAYGROUND_MOVEMENT_LIMIT, camera, animationPlayer, equipment, signal);
+        PLAYGROUND_MOVEMENT_LIMIT, camera, animationPlayer, equipment, signal,
+        undefined, undefined, undefined,
+        (start, step) => loadedMap?.resolveMovement(start, step, 0.4) ?? step);
       requireElement("movementHint").hidden = false;
     }
 

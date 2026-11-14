@@ -43,6 +43,7 @@
           <button type="button" aria-controls="enemiesModule" aria-expanded="false">Gestion des ennemis</button>
           <button type="button" aria-controls="collisionsModule" aria-expanded="false">Collisions et hitbox</button>
           <button type="button" aria-controls="attackHitboxModule" aria-expanded="false">Zone d’attaque / Portée</button>
+          <button type="button" aria-controls="mapsModule" aria-expanded="false">Maps 3D modulaires</button>
           <button type="button" aria-controls="cameraModule" aria-expanded="false">Caméra</button>
           <button type="button" aria-controls="modelModule" aria-expanded="false">Modèle chargé</button>
           <button type="button" aria-controls="controlsModule" aria-expanded="false">Commandes</button>
@@ -182,6 +183,22 @@
           <button id="attackHitboxReset" class="secondary wide" type="button">Rétablir l'attaque par défaut</button>
           <p class="animation-note">La zone orange suit la direction du héros et représente la portée utilisée pour calculer les coups. Elle apparaît pendant l'animation d'attaque. Sa hauteur est celle du plan de collision, pas la trajectoire exacte du katana.</p>
           <p id="attackHitboxStatus" class="animation-note" role="status"></p>
+        </section>
+        <section id="mapsModule" class="module-window enemy-tools" aria-labelledby="mapsHeading" hidden>
+          <header class="module-header">
+            <h2 id="mapsHeading">Maps 3D modulaires</h2>
+            <button class="module-close" type="button" aria-label="Fermer les maps">×</button>
+          </header>
+          <label for="mapSelect">Niveau</label>
+          <select id="mapSelect"></select>
+          <div class="enemy-fields">
+            <button id="mapLoad" class="secondary" type="button">Charger / remplacer</button>
+            <button id="mapUnload" class="secondary" type="button">Décharger</button>
+          </div>
+          <button id="mapPlaceHero" class="secondary wide" type="button">Placer le héros au spawn</button>
+          <label class="grid-toggle"><input id="mapShowColliders" type="checkbox" /> Afficher les colliders de la map (jaune)</label>
+          <p class="animation-note">Les modèles GLB manquants sont remplacés par leur forme de collision avec leur nom. Les maps se trouvent dans public/assets/maps.</p>
+          <p id="mapStatus" class="animation-note" role="status"></p>
         </section>
         <section id="cameraModule" class="module-window" aria-labelledby="cameraHeading" hidden>
           <header class="module-header">

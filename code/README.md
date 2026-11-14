@@ -102,3 +102,19 @@ orange se dessine pendant toute l'animation d'attaque, avec une option de
 prévisualisation permanente. Les coups restent déclenchés uniquement pendant
 leurs fenêtres d'impact, et leurs calculs utilisent les mêmes paramètres
 que la visualisation.
+
+## Maps 3D modulaires (P1)
+
+Le système de maps est piloté par `public/assets/definitions/assets.json`
+et `public/assets/maps/*.json`. Le Gameplay charge automatiquement le
+dojo ; le Playground propose un module **Maps 3D modulaires** pour
+charger, changer, décharger une map et afficher ses colliders.
+
+Les GLB de tiles et de décor sont actuellement absents : les modèles
+manquants sont remplacés par des boîtes/cylindres issus des volumes
+de collision (ou une dalle pour le sol), avec le nom du fichier
+attendu. Le héros est bloqué par les volumes statiques décrits dans
+les données JSON. Les colliders sont indépendants du modèle 3D.
+
+Voir [docs/MAPS_3D.md](../docs/MAPS_3D.md) pour les formats, exemples,
+contraintes actuelles, commandes et étapes de vérification.
