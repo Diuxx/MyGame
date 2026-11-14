@@ -21,7 +21,10 @@ import type { CharacterEquipment } from "./character/equipment";
 import { requireElement } from "./ui/dom";
 import { degreesToRadians } from "./world/cameraMath";
 import { createPlaygroundEnvironment, PLAYGROUND_MOVEMENT_LIMIT } from "./world/environments";
-import { DEFAULT_CAMERA_ROTATION, DEFAULT_CAMERA_TILT, DEFAULT_VISIBLE_HEIGHT, type CameraControls } from "./world/scene";
+import {
+  DEFAULT_CAMERA_ROTATION, DEFAULT_CAMERA_TILT, DEFAULT_VISIBLE_HEIGHT,
+  MIN_VISIBLE_HEIGHT, MAX_VISIBLE_HEIGHT, type CameraControls,
+} from "./world/scene";
 
 function linkRangeControl(
   inputId: string,
@@ -135,7 +138,20 @@ export async function startPlayground(
   });
   linkRangeControl("rotation", "rotationOutput", (n) => `${n}°`, (n) => cameraControls.setRotation(n), signal);
   linkRangeControl("tilt", "tiltOutput", (n) => `${n}°`, (n) => cameraControls.setTilt(n), signal);
-  linkRangeControl("zoom", "zoomOutput", (n) => `${n.toFixed(1)} u`, (n) => cameraControls.setVisibleHeight(n), signal);
+  const zoom = requireElement<HTMLInputElement>("zoom");
+  const zoomOutput = requireElement<HTMLOutputElement>("zoomOutput");
+  zoom.min = String(MIN_VISIBLE_HEIGHT);
+  zoom.max = String(MAX_VISIBLE_HEIGHT);
+  function refreshZoom(): void {
+    zoom.value = String(cameraControls.visibleHeight);
+    zoomOutput.value = `${cameraControls.visibleHeight.toFixed(1)} u`;
+  }
+  zoom.addEventListener("input", () => {
+    cameraControls.setVisibleHeight(zoom.valueAsNumber);
+    refreshZoom();
+  }, { signal });
+  canvas.addEventListener("wheel", refreshZoom, { passive: true, signal });
+  refreshZoom();
   linkRangeControl("facing", "facingOutput", (n) => `${n}°`, (n) => {
     if (controller.isActing) {
       facingInput.value = String(Math.round(character.root.rotation.y * 180 / Math.PI));

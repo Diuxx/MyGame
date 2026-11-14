@@ -3,6 +3,10 @@ export function clamp(value: number, minimum: number, maximum: number): number {
   return Math.min(maximum, Math.max(minimum, value));
 }
 
+export function wheelZoomHeight(height: number, deltaPixels: number, min: number, max: number): number {
+  return clamp(height * Math.exp(deltaPixels * 0.0015), min, max);
+}
+
 export interface OrthographicBounds {
   left: number;
   right: number;

@@ -1,12 +1,12 @@
 {
   "directory": "/assets/animations/hero",
   "animations": [
-    { "name": "run", "source": "Running", "durationSeconds": 0.6333, "loop": true },
-    { "name": "walk", "source": "Walking", "durationSeconds": 1.0333, "loop": true },
+    { "name": "run", "source": "Running", "durationSeconds": 0.7333, "loop": true },
+    { "name": "walk", "source": "Walking", "durationSeconds": 1.4333, "loop": true },
     { "name": "crouch-walk", "source": "Cautious_Crouch_Walk_Forward_inplace", "durationSeconds": 1.1333, "loop": true },
     { "name": "idle", "source": "Idle_9", "durationSeconds": 2, "loop": true },
     { "name": "jump", "source": "Regular_Jump", "durationSeconds": 1.8667, "loop": false },
-    { "name": "dodge", "source": "Roll_Dodge_3", "durationSeconds": 1.6333, "loop": false },
+    { "name": "dodge", "source": "Roll_Dodge_3", "durationSeconds": 2.3667, "loop": false },
     { "name": "stop", "source": "Sprint_and_Sudden_Stop", "durationSeconds": 2, "loop": false },
     { "name": "attack", "source": "Thrust_Slash", "durationSeconds": 3, "loop": false },
     { "name": "strafe-left", "source": "Cautious_Crouch_Walk_Left_inplace", "durationSeconds": 1.1667, "loop": true },

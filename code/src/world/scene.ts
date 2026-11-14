@@ -4,15 +4,18 @@ import {
   Scene,
   Vector3,
 } from "@babylonjs/core";
-import { calculateOrthographicBounds, degreesToRadians } from "./cameraMath";
+import { calculateOrthographicBounds, clamp, degreesToRadians, wheelZoomHeight } from "./cameraMath";
 
 export const DEFAULT_CAMERA_TILT = 40;
 export const DEFAULT_VISIBLE_HEIGHT = 25;
+export const MIN_VISIBLE_HEIGHT = 5;
+export const MAX_VISIBLE_HEIGHT = 40;
 export const DEFAULT_CAMERA_ROTATION = 65;
 const HERO_FOCUS_HEIGHT = 0;
 
 export interface CameraControls {
   readonly alpha: number;
+  readonly visibleHeight: number;
   follow(x: number, z: number): void;
   setRotation(degrees: number): void;
   setTilt(degreesFromVertical: number): void;
@@ -35,7 +38,7 @@ export function createCamera(scene: Scene, canvas: HTMLCanvasElement, signal: Ab
   camera.maxZ = 100;
   scene.activeCamera = camera;
 
-  let visibleHeight = DEFAULT_VISIBLE_HEIGHT;
+  let visibleHeight: number = DEFAULT_VISIBLE_HEIGHT;
   function updateOrthographicBounds(): void {
     const size = calculateOrthographicBounds(canvas.clientWidth, canvas.clientHeight, visibleHeight);
     camera.orthoLeft = size.left;
@@ -49,16 +52,28 @@ export function createCamera(scene: Scene, canvas: HTMLCanvasElement, signal: Ab
   }
 
   function setVisibleHeight(units: number): void {
-    visibleHeight = units;
+    visibleHeight = clamp(units, MIN_VISIBLE_HEIGHT, MAX_VISIBLE_HEIGHT);
     updateOrthographicBounds();
   }
 
   updateOrthographicBounds();
   window.addEventListener("resize", updateOrthographicBounds, { signal });
+  canvas.addEventListener("wheel", (event) => {
+    if (event.ctrlKey || event.metaKey) return;
+    const mode = event.deltaMode;
+    const pixels = event.deltaY * (mode === WheelEvent.DOM_DELTA_LINE ? 16
+      : mode === WheelEvent.DOM_DELTA_PAGE ? canvas.clientHeight : 1);
+    if (!pixels) return;
+    event.preventDefault();
+    setVisibleHeight(wheelZoomHeight(visibleHeight, pixels, MIN_VISIBLE_HEIGHT, MAX_VISIBLE_HEIGHT));
+  }, { passive: false, signal });
 
   return {
     get alpha() {
       return camera.alpha;
+    },
+    get visibleHeight() {
+      return visibleHeight;
     },
     follow: (x, z) => {
       camera.target.set(x, HERO_FOCUS_HEIGHT, z);

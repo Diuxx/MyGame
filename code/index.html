@@ -78,6 +78,7 @@
             <label>Aller à droite<select id="keyRight"></select></label>
             <label>Courir<select id="keyRun"></select></label>
           </div>
+          <p class="micro">Sur la scène 3D, molette vers le haut pour zoomer et vers le bas pour dézoomer.</p>
           <button id="resetBindings" class="secondary wide" type="button">Rétablir les touches par défaut</button>
           <p id="bindingsStatus" class="micro" role="status" hidden></p>
         </section>
@@ -271,7 +272,7 @@
           <div class="field-row"><label for="tilt">Inclinaison (depuis la verticale)</label><output id="tiltOutput" for="tilt">40°</output></div>
           <input id="tilt" type="range" min="10" max="65" step="1" value="40" />
           <div class="field-row"><label for="zoom">Champ vertical visible</label><output id="zoomOutput" for="zoom">25.0 u</output></div>
-          <input id="zoom" type="range" min="5" max="40" step="0.5" value="25" />
+          <input id="zoom" type="range" min="5" max="40" step="any" value="25" />
           <div class="field-row"><label for="facing">Rotation du héros</label><output id="facingOutput" for="facing">0°</output></div>
           <input id="facing" type="range" min="-180" max="180" step="1" value="0" />
           <button id="resetButton" type="button" class="secondary wide">Réinitialiser la vue</button>

@@ -111,6 +111,20 @@ Pour l’utiliser sur un personnage, il faut un squelette et une pose de
 repos compatibles. Pour le gobelin, voir
 [la conversion avec adaptation au rig](../docs/GOBELIN_POC.md).
 
+Les clips `run` et `walk` du héros viennent des FBX Mixamo dans
+`public/assets/animations/hero/fbx/`. L’option `--target` adapte le
+clip à la pose de repos du héros et conserve le mouvement vertical
+du bassin. Le jeu applique le déplacement horizontal.
+
+```powershell
+node code/tools/convertFbxAnimation.mjs "code/public/assets/animations/hero/fbx/run.fbx" "exports/run.glb" --target "code/public/models/hero.glb"
+```
+
+Remplacer ensuite `code/public/assets/animations/hero/run.glb` par
+ce fichier. Pour la marche, utiliser `walk.fbx` et `walk.glb`.
+Préparer les téléchargements Mixamo sur le personnage cible pour
+obtenir les mêmes noms et la même hiérarchie d’os.
+
 Les trois GLB de `public/assets/training/` sont des copies des fichiers fournis par l'utilisateur. Leur licence n'a pas été précisée. Leur placement au sol se fait au chargement.
 
 

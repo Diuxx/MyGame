@@ -4,7 +4,8 @@ function sameRestPose(source: TransformNode, target: TransformNode): boolean {
   const sourceRotation = source.rotationQuaternion ?? Quaternion.FromEulerVector(source.rotation);
   const targetRotation = target.rotationQuaternion ?? Quaternion.FromEulerVector(target.rotation);
   if (source.name !== target.name ||
-      !source.position.equalsWithEpsilon(target.position, 1e-4) ||
+      // A Blender round trip can introduce sub-millimetre differences in joint positions.
+      !source.position.equalsWithEpsilon(target.position, 1e-3) ||
       !source.scaling.equalsWithEpsilon(target.scaling, 1e-4) ||
       Math.abs(Quaternion.Dot(sourceRotation, targetRotation)) < 1 - 1e-6) return false;
   if (source.name === "__root__") return true;
