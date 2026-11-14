@@ -122,10 +122,14 @@ export async function startPlayground(
     }
     hud.refresh(vitals);
     hud.nearby(worldEditor.enabled ? undefined : maps.active?.nearInteraction()?.label);
-    const worldEnemies = maps.active?.simulation.list() ?? [];
+    const activeMap = maps.active;
+    const worldEnemies = activeMap?.simulation.list() ?? [];
     const alive = worldEnemies.filter((enemy) => enemy.state !== "inactive" && !enemy.entity.defeated);
-    const status = maps.active
-      ? `Ennemis actifs : ${alive.length} / ${worldEnemies.length} · ${alive.map((enemy) => enemy.spec.id + " : " + enemy.state).join(", ")}`
+    const status = activeMap
+      ? `Ennemis actifs : ${alive.length} / ${worldEnemies.length} · ${alive.map((enemy) => {
+        const name = activeMap.enemyAnimationName(enemy.spec.id);
+        return enemy.spec.id + " : " + enemy.state + (name ? " (" + name + ")" : "");
+      }).join(", ")}`
       : "Aucune map active.";
     if (mapEnemyCount.textContent !== status) mapEnemyCount.textContent = status;
   });

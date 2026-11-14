@@ -198,6 +198,22 @@
   },
   "enemySpawns": [
     {
+      "id": "goblin-poc",
+      "enemyId": "goblin",
+      "position": [4, 0, 2.5],
+      "rotationY": 83,
+      "activation": { "mode": "always" },
+      "respawn": { "mode": "afterDelay", "delaySeconds": 10 },
+      "ai": {
+        "profile": "guard",
+        "aggroRadius": 3,
+        "attackRange": 1.2,
+        "leashRadius": 6,
+        "attackCooldown": 2,
+        "skills": ["slash"]
+      }
+    },
+    {
       "id": "door-guard",
       "enemyId": "dojo-guard",
       "position": [

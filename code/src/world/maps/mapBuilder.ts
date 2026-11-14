@@ -69,9 +69,9 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
   debugMaterial.backFaceCulling = false;
 
   async function renderModel(path: string, node: TransformNode, fallback: () => void): Promise<void> {
-    const dispose = await registry.instantiate(path, node);
-    if (dispose) {
-      instanceDisposers.push(dispose);
+    const instance = await registry.instantiate(path, node);
+    if (instance) {
+      instanceDisposers.push(() => instance.dispose());
       for (const mesh of node.getChildMeshes()) mesh.isPickable = false;
     } else {
       missingModels.add(path);
@@ -226,7 +226,8 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
       const object = definition.objects.find((item) => item.id === id);
       const view = objectViews.get(id);
       if (!object || !view) throw new Error("Objet de map inconnu : " + id);
-      await view.model.load(visual, localTextureUrl);
+      const loaded = await view.model.load(visual, localTextureUrl);
+      if (loaded === undefined) return;
       object.visual = { ...visual };
     },
     setObjectCollider(id: string, collider: MapCollider): void {

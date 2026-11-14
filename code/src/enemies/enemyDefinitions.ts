@@ -18,6 +18,7 @@ export interface EnemyDefinition extends EnemySettings {
   modelPath: string;
   category: "static" | "animated";
   hurtbox: Hurtbox;
+  animationClips?: { idle: string; run: string };
 }
 
 function record(value: unknown): Record<string, unknown> {
@@ -60,6 +61,14 @@ export function loadEnemyDefinitions(data: unknown): EnemyDefinition[] {
         throw new Error("Nom, chemin GLB ou catégorie invalide.");
       }
       validateEnemySettings(value);
+      if (definition.animationClips !== undefined) {
+        const { idle, run } = record(definition.animationClips);
+        const isClipPath = (path: unknown) => typeof path === "string" &&
+          /^\/assets\/(?!.*\.\.)[a-z0-9_.-]+(?:\/[a-z0-9_.-]+)*\.glb$/i.test(path);
+        if (!isClipPath(idle) || !isClipPath(run)) {
+          throw new Error("Clips idle et run : chemins GLB sous /assets/ attendus.");
+        }
+      }
       const box = record(definition.hurtbox);
       const positive = (n: unknown) => number(n) && n > 0;
       const dimensionsValid = box.shape === "cylinder" ? positive(box.radius)

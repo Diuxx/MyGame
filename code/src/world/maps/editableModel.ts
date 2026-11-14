@@ -1,6 +1,6 @@
 import {
   Color3, StandardMaterial, Texture, TransformNode,
-  type AbstractMesh, type Scene, type ShadowGenerator,
+  type AbstractMesh, type InstantiatedEntries, type Scene, type ShadowGenerator,
 } from "@babylonjs/core";
 import type { VisualOverride } from "./editorSchema";
 import type { MapModelRegistry } from "./modelRegistry";
@@ -15,9 +15,10 @@ export function createEditableModel(
   defaultPath: string,
   fallback: (holder: TransformNode) => void,
   castsShadows = true,
+  externalClips?: Readonly<Record<string, string>>,
 ) {
   let holder: TransformNode | undefined;
-  let instanceDispose: (() => void) | undefined;
+  let instance: InstantiatedEntries | null = null;
   let casters: AbstractMesh[] = [];
   let painted: StandardMaterial | undefined;
   let image: Texture | undefined;
@@ -28,8 +29,8 @@ export function createEditableModel(
   function release(): void {
     for (const mesh of casters) shadows?.removeShadowCaster(mesh, false);
     casters = [];
-    instanceDispose?.();
-    instanceDispose = undefined;
+    instance?.dispose();
+    instance = null;
     // Imported original materials belong to the cached container, not the instance.
     holder?.dispose(false, false);
     holder = undefined;
@@ -68,25 +69,26 @@ export function createEditableModel(
     }
   }
 
-  async function load(visual?: VisualOverride, localTextureUrl?: string): Promise<boolean> {
+  async function load(visual?: VisualOverride, localTextureUrl?: string): Promise<boolean | undefined> {
     if (disposed) throw new Error("Modèle déjà libéré.");
     const request = ++generation;
     const next = new TransformNode("editable-visual", scene);
     next.parent = parent;
     next.setEnabled(false);
-    let cleanup: (() => void) | null = null;
+    let imported: InstantiatedEntries | null = null;
     try {
-      cleanup = await registry.instantiate(visual?.model ?? defaultPath, next);
+      imported = await registry.instantiate(visual?.model ?? defaultPath, next, externalClips);
       if (disposed || request !== generation) {
-        cleanup?.();
+        imported?.dispose();
         next.dispose(false, false);
-        return false;
+        if (localTextureUrl) URL.revokeObjectURL(localTextureUrl);
+        return undefined;
       }
-      if (!cleanup) fallback(next);
+      if (!imported) fallback(next);
       // Swap only after the replacement is fully constructed.
       release();
       holder = next;
-      instanceDispose = cleanup ?? undefined;
+      instance = imported;
       for (const mesh of next.getChildMeshes()) {
         mesh.isPickable = false;
         mesh.receiveShadows = true;
@@ -96,9 +98,9 @@ export function createEditableModel(
       }
       paint(visual, localTextureUrl);
       next.setEnabled(true);
-      return !!cleanup;
+      return !!imported;
     } catch (error) {
-      cleanup?.();
+      imported?.dispose();
       next.dispose(false, false);
       throw error;
     }
@@ -106,6 +108,7 @@ export function createEditableModel(
 
   return {
     load,
+    get animationGroups() { return instance?.animationGroups; },
     setAppearance: paint,
     dispose(): void {
       disposed = true;

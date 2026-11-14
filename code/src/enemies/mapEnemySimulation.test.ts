@@ -1,7 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { createMapEnemySimulation } from "./mapEnemySimulation.ts";
-import type { EnemyDefinition } from "./enemyDefinitions.ts";
+import { loadEnemyDefinitions, type EnemyDefinition } from "./enemyDefinitions.ts";
+import { buildMapObstacles, mapBounds, resolveMapMovement } from "../world/maps/mapCollision.ts";
+import { validateMapAssets, validateMapDefinition } from "../world/maps/validation.ts";
 import type { MapEncounterConfig, MapEnemySpawn } from "./mapEnemyConfig.ts";
 
 const definition: EnemyDefinition = {
@@ -34,6 +37,53 @@ test("guard detects within circle, chases, then returns when player leaves leash
   assert.equal(actor.state, "return");
   game.update(3, [0, 0, 20]);
   assert.ok(Math.abs(actor.entity.position[2] - 4) < 0.1);
+});
+
+test("the dojo goblin spawns clear of obstacles and waits, pursues, returns and respawns", () => {
+  const load = (path: string) => JSON.parse(readFileSync(new URL(path, import.meta.url), "utf8"));
+  const catalog = loadEnemyDefinitions(load("./fieldEnemyDefinitions.json"));
+  const assets = validateMapAssets(load("../../public/assets/definitions/assets.json"));
+  const dojo = validateMapDefinition(load("../../public/assets/maps/dojo.json"), assets,
+    new Set(catalog.map(({ id }) => id)));
+  const spec = dojo.enemySpawns?.find(({ id }) => id === "goblin-poc");
+  const hero = dojo.spawnPoints.find(({ type }) => type === "player");
+  assert.ok(spec && hero);
+  const obstacles = buildMapObstacles(dojo, assets);
+  const bounds = mapBounds(dojo);
+  const game = createMapEnemySimulation({ enemySpawns: [spec], waves: [], events: [] }, catalog, undefined,
+    { move: (start, step, radius) => resolveMapMovement(start, step, radius, obstacles, bounds) });
+  const [goblin] = game.list();
+  assert.equal(goblin.state, "idle");
+  game.update(0.5, hero.position);
+  assert.deepEqual(goblin.entity.position, spec.position);
+  assert.equal(goblin.state, "idle");
+
+  const [x, y, z] = spec.position;
+  const target = [x + 2, y, z] as const;
+  game.update(0.5, target);
+  assert.equal(goblin.state, "chase");
+  assert.deepEqual(goblin.entity.position, [x + 1, y, z]);
+  game.update(0.1, target);
+  assert.equal(goblin.state, "windup");
+  game.update(0.5, target);
+  assert.ok(game.events().some(({ type }) => type === "hitHero"));
+
+  const outsideLeash = [x + 7, y, z] as const;
+  game.update(0.25, outsideLeash);
+  assert.equal(goblin.state, "return");
+  assert.deepEqual(goblin.entity.position, [x + 0.5, y, z]);
+  game.update(0.25, outsideLeash);
+  game.update(0.1, outsideLeash);
+  assert.equal(goblin.state, "idle");
+  assert.deepEqual(goblin.entity.position, spec.position);
+  assert.equal(goblin.yaw, spec.rotationY * Math.PI / 180);
+
+  assert.ok(game.strike([x, y, z - 1], 0, { damage: 100, range: 2, radius: 0.5, height: 0.7 }));
+  game.update(9.9, outsideLeash);
+  assert.equal(goblin.state, "dead");
+  game.update(0.1, outsideLeash);
+  assert.equal(goblin.state, "idle");
+  assert.deepEqual(goblin.entity.position, spec.position);
 });
 test("enemy telegraphs before damaging the player, then respects cooldown", () => {
   const game = sim({ enemySpawns: [{ ...spawn, position: [0, 0, 1] }] });

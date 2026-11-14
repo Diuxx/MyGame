@@ -110,5 +110,33 @@
         0
       ]
     }
+  },
+  {
+    "id": "goblin",
+    "name": "Gobelin",
+    "modelPath": "/assets/models/enemies/goblin.glb",
+    "category": "animated",
+    "animationClips": {
+      "idle": "/assets/animations/common/dwarf-idle.glb",
+      "run": "/assets/animations/common/mutant-run.glb"
+    },
+    "stats": {
+      "maxHealth": 75,
+      "defense": 0,
+      "attackDamage": 8,
+      "movementSpeed": 2
+    },
+    "immortal": false,
+    "regeneration": {
+      "enabled": false,
+      "delay": 5,
+      "healthPerSecond": 0
+    },
+    "hurtbox": {
+      "shape": "cylinder",
+      "radius": 0.38,
+      "height": 1.4,
+      "offset": [0, 0.7, 0]
+    }
   }
 ]

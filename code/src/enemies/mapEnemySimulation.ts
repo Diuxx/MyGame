@@ -229,6 +229,7 @@ export function createMapEnemySimulation(
             resetEnemy(actor.entity);
             actor.entity.position = [...actor.spec.position];
             actor.state = "idle";
+            actor.yaw = actor.spec.rotationY * Math.PI / 180;
             actor.phaseIndex = -1;
             actor.cooldown = 0;
             eventQueue.push({ type: "respawn", id: actor.spec.id });
@@ -275,6 +276,7 @@ export function createMapEnemySimulation(
         if (homeDistance <= 0.08) {
           actor.state = "idle";
           actor.entity.position = [...home];
+          actor.yaw = actor.spec.rotationY * Math.PI / 180;
         } else move(actor, home, delta);
       } else if (actor.spec.ai.profile === "patrol" && actor.spec.ai.patrol.length) {
         actor.state = "patrol";
@@ -328,6 +330,7 @@ export function createMapEnemySimulation(
         resetEnemy(actor.entity);
         actor.entity.position = [...actor.spec.position];
         actor.state = actor.spec.activation.mode === "wave" ? "inactive" : "idle";
+        actor.yaw = actor.spec.rotationY * Math.PI / 180;
         actor.phaseIndex = -1;
         actor.cooldown = 0;
       }

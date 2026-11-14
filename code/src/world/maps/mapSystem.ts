@@ -70,6 +70,7 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
         missingModels: level.missingModels,
         navigation: level.navigation,
         simulation: enemies.simulation,
+        enemyAnimationName: enemies.animationName,
         activate(): void {
           level.activate();
           enemies.activate();

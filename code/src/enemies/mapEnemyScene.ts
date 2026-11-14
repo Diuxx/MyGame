@@ -11,6 +11,7 @@ import type { BuiltMap } from "../world/maps/mapBuilder";
 import type { EnemyDefinition } from "./enemyDefinitions";
 import type { EnemyEvent, FieldEnemy, SavedMapProgress } from "./mapEnemySimulation";
 import { createMapEnemySimulation } from "./mapEnemySimulation";
+import { createMapEnemyAnimation } from "./mapEnemyAnimation";
 
 function material(scene: Scene, color: string, alpha = 1): StandardMaterial {
   const result = new StandardMaterial("map-enemy-" + color, scene);
@@ -56,6 +57,8 @@ export async function createMapEnemyScene(
   const models = new Map<string, {
     node: TransformNode; model: ReturnType<typeof createEditableModel>;
     bar: Mesh; aggro: AbstractMesh; telegraph: AbstractMesh; picker: Mesh;
+    animation?: ReturnType<typeof createMapEnemyAnimation>;
+    moving: boolean;
   }>();
   const materials: StandardMaterial[] = [];
   const textures: DynamicTexture[] = [];
@@ -121,8 +124,10 @@ export async function createMapEnemyScene(
     const node = new TransformNode("map-enemy-" + enemy.spec.id, scene);
     node.parent = root;
     node.position.set(...enemy.entity.position);
+    const clips = enemy.entity.definition.animationClips;
     const model = createEditableModel(scene, node, options.registry, options.shadows,
-      enemy.entity.definition.modelPath, (holder) => primitive(enemy, holder));
+      enemy.entity.definition.modelPath, (holder) => primitive(enemy, holder), true,
+      clips && { Idle: clips.idle, Run: clips.run });
     editableModels.push(model);
     await model.load(enemy.spec.visual);
     const height = enemy.spec.boss ? 3.25 : 2.1;
@@ -164,7 +169,8 @@ export async function createMapEnemyScene(
     picker.scaling.set(selectionRadius, enemy.entity.definition.hurtbox.height, selectionRadius);
     picker.isPickable = false;
     picker.setEnabled(false);
-    models.set(enemy.spec.id, { node, model, bar, aggro, telegraph, picker });
+    const animation = clips && createMapEnemyAnimation(model.animationGroups ?? []);
+    models.set(enemy.spec.id, { node, model, bar, aggro, telegraph, picker, animation, moving: false });
   }
 
   try {
@@ -184,11 +190,16 @@ export async function createMapEnemyScene(
   let activated = false;
   let disposed = false;
 
-  function refreshVisuals(): void {
+  function refreshVisuals(simulationDelta?: number): void {
     for (const actor of simulation.list()) {
       const view = models.get(actor.spec.id);
       if (!view) continue;
       view.node.setEnabled(actor.state !== "inactive" && !actor.entity.defeated);
+      const [x, , z] = actor.entity.position;
+      if (simulationDelta !== undefined) {
+        view.moving = Math.hypot(x - view.node.position.x, z - view.node.position.z) > 1e-5;
+      }
+      view.animation?.update(actor.state, !paused && view.moving, simulationDelta ?? 0);
       view.node.position.set(...actor.entity.position);
       view.node.rotation.y = actor.yaw;
       const ratio = actor.entity.health / actor.entity.stats.maxHealth;
@@ -215,16 +226,17 @@ export async function createMapEnemyScene(
   }
 
   const tick = (): void => {
-    if (!activated || disposed || paused || document.hidden) return;
+    if (!activated || disposed || document.hidden) return;
     const seconds = Math.min(0.1, scene.getEngine().getDeltaTime() / 1000);
-    simulation.update(seconds, options.getHeroPosition(), options.isHeroAlive());
-    refreshVisuals();
+    if (!paused) simulation.update(seconds, options.getHeroPosition(), options.isHeroAlive());
+    refreshVisuals(seconds);
     dispatchEvents();
   };
   let renderObserver: ReturnType<typeof scene.onBeforeRenderObservable.add> | null = null;
 
   return {
     simulation,
+    animationName: (id: string) => models.get(id)?.animation?.activeName,
     activate(): void {
       if (disposed || activated) return;
       activated = true;
@@ -296,8 +308,13 @@ export async function createMapEnemyScene(
       const actor = simulation.list().find((candidate) => candidate.spec.id === id);
       const view = models.get(id);
       if (!actor || !view) throw new Error("Ennemi inconnu : " + id);
-      await view.model.load(visual, localTextureUrl);
+      const loaded = await view.model.load(visual, localTextureUrl);
+      if (loaded === undefined) return;
+      if (actor.entity.definition.animationClips) {
+        view.animation = createMapEnemyAnimation(view.model.animationGroups ?? []);
+      }
       actor.spec.visual = { ...visual };
+      refreshVisuals();
     },
     strike(origin: Position, yaw: number, swing: SwordSwing): boolean {
       const hit = simulation.strike(origin, yaw, swing);
