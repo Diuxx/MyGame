@@ -29,6 +29,7 @@ export interface MapEnemySpawn {
   ai: AISettings;
   persistDeath: boolean;
   visual?: VisualOverride;
+  overrides?: { movementSpeed?: number; collisionRadius?: number; hurtboxRadius?: number };
   boss?: { phases: BossPhase[] };
 }
 export interface MapWave {
@@ -139,6 +140,21 @@ function parseSpawn(raw: unknown, index: number, catalog: ReadonlySet<string>): 
     }
     boss = { phases };
   }
+  let overrides: MapEnemySpawn["overrides"];
+  if (item.overrides !== undefined) {
+    const raw = data(item.overrides, path + ".overrides");
+    overrides = {
+      ...(raw.movementSpeed === undefined ? {} : {
+        movementSpeed: value(raw.movementSpeed, path + ".overrides.movementSpeed", 0, 20),
+      }),
+      ...(raw.collisionRadius === undefined ? {} : {
+        collisionRadius: value(raw.collisionRadius, path + ".overrides.collisionRadius", 0.1, 10),
+      }),
+      ...(raw.hurtboxRadius === undefined ? {} : {
+        hurtboxRadius: value(raw.hurtboxRadius, path + ".overrides.hurtboxRadius", 0.1, 10),
+      }),
+    };
+  }
   return {
     id: id(item.id, path + ".id"), enemyId,
     position: position(item.position, path + ".position"),
@@ -146,6 +162,7 @@ function parseSpawn(raw: unknown, index: number, catalog: ReadonlySet<string>): 
     activation, respawn, ai: parseAI(item.ai, path + ".ai"),
     persistDeath, ...(boss ? { boss } : {}),
     ...(item.visual === undefined ? {} : { visual: parseVisualOverride(item.visual) }),
+    ...(overrides ? { overrides } : {}),
   };
 }
 
