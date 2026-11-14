@@ -1,5 +1,6 @@
 /** JSON-facing data. All positions are in world units, with Y vertical. */
 import type { EnvironmentSettings } from "./environmentSettings";
+import type { VisualOverride, WorldInteraction } from "./editorSchema";
 import type { MapEnemySpawn, MapWave, MapEncounterEvent } from "../../enemies/mapEnemyConfig";
 
 export type MapPosition = readonly [number, number, number];
@@ -30,6 +31,8 @@ export interface MapObject {
   asset: string;
   position: MapPosition;
   rotationY: number;
+  colliders?: MapCollider[];
+  visual?: VisualOverride;
 }
 
 export interface MapSpawn {
@@ -55,6 +58,7 @@ export interface MapDefinition {
   enemySpawns?: MapEnemySpawn[];
   waves?: MapWave[];
   events?: MapEncounterEvent[];
+  interactions?: WorldInteraction[];
 }
 
 export interface MapBounds {

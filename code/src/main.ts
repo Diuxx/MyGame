@@ -60,6 +60,7 @@ async function start(): Promise<void> {
           if (vitals.hit(damage, controller?.isInvulnerable ?? false)) controller?.receiveHit();
         },
         onEncounterEvent: hud.event,
+        onWorldInteraction: hud.announce,
       });
       const loadedMap = await maps.load("dojo");
       const spawn = loadedMap?.definition.spawnPoints.find((point) => point.type === "player");
@@ -85,6 +86,7 @@ async function start(): Promise<void> {
           }
         }
         hud.refresh(vitals);
+        hud.nearby(maps.active?.nearInteraction()?.label);
       });
       requireElement("movementHint").hidden = false;
     }

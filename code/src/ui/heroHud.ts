@@ -7,9 +7,15 @@ export function createHeroHud() {
   const life = requireElement<HTMLOutputElement>("heroLife");
   const fill = requireElement<HTMLElement>("heroLifeFill");
   const message = requireElement<HTMLElement>("encounterMessage");
+  const prompt = requireElement<HTMLElement>("worldInteractionPrompt");
   container.hidden = false;
 
   return {
+    announce(text: string): void { message.textContent = text; },
+    nearby(label?: string): void {
+      prompt.hidden = !label;
+      prompt.textContent = label ? "E · " + label : "";
+    },
     refresh(vitals: ReturnType<typeof createHeroVitals>): void {
       life.textContent = vitals.isAlive
         ? `PV ${Math.ceil(vitals.health)} / ${vitals.maxHealth}`

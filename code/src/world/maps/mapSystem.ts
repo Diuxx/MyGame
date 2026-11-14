@@ -9,6 +9,8 @@ import { loadMapData, isMapId, type MapId } from "./dataLoader";
 import { buildMap } from "./mapBuilder";
 import { createMapSession } from "./mapSession";
 import { MapModelRegistry } from "./modelRegistry";
+import type { VisualOverride } from "./editorSchema";
+import type { MapPosition } from "./types";
 
 export interface MapSystemOptions {
   hero: TransformNode;
@@ -17,6 +19,7 @@ export interface MapSystemOptions {
   isHeroAlive(): boolean;
   onHeroHit(damage: number): void;
   onEncounterEvent?(event: EnemyEvent): void;
+  onWorldInteraction?(message: string): void;
 }
 
 /** Integrates maps, lighting and AI without coupling game rules to Babylon.js. */
@@ -25,6 +28,8 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
   let showCollisionDebug = false;
   let showAggroDebug = false;
   let disposed = false;
+  let editing = false;
+  const keyboard = new AbortController();
 
   function readProgress(id: string): SavedMapProgress {
     try { return readMapProgress(localStorage, id); }
@@ -61,16 +66,53 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
       });
       return {
         definition: level.definition,
+        assets,
         missingModels: level.missingModels,
         navigation: level.navigation,
         simulation: enemies.simulation,
         activate(): void {
           level.activate();
           enemies.activate();
+          level.setEditorEnabled(editing);
+          enemies.setEditorEnabled(editing);
           options.applyEnvironment(map.environment ?? DEFAULT_ENVIRONMENT);
         },
         setColliderDebug(visible: boolean): void { level.setColliderDebug(visible); },
         showAggro(visible: boolean): void { enemies.showAggro(visible); },
+        setEditorEnabled(visible: boolean): void {
+          level.setEditorEnabled(visible);
+          enemies.setEditorEnabled(visible);
+        },
+        editor: {
+          move(kind: "object" | "enemy", id: string, position: MapPosition): void {
+            if (kind === "object") level.moveObject(id, position);
+            else enemies.moveEnemy(id, position);
+          },
+          rotate(kind: "object" | "enemy", id: string, degrees: number): void {
+            if (kind === "object") level.rotateObject(id, degrees);
+            else enemies.rotateEnemy(id, degrees);
+          },
+          setObjectCollider: level.setObjectCollider,
+          setEnemyParameters: enemies.setEnemyParameters,
+          async setVisual(kind: "object" | "enemy", id: string,
+                          visual: VisualOverride, localTextureUrl?: string): Promise<void> {
+            if (kind === "object") await level.setObjectVisual(id, visual, localTextureUrl);
+            else await enemies.setEnemyVisual(id, visual, localTextureUrl);
+          },
+          importGlb: (file: File) => registry.registerLocalFile(file),
+        },
+        nearInteraction() {
+          return level.nearbyInteraction([
+            options.hero.position.x, options.hero.position.y, options.hero.position.z,
+          ]);
+        },
+        interact() {
+          return level.interact([
+            options.hero.position.x, options.hero.position.y, options.hero.position.z,
+          ]);
+        },
+        inventory: level.getInventory,
+        exportJson(): string { return JSON.stringify(map, null, 2) + "\n"; },
         strike(origin: Position, yaw: number, swing: SwordSwing): boolean {
           return enemies.strike(origin, yaw, swing);
         },
@@ -102,6 +144,20 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
     return result;
   }
 
+  function setEditing(value: boolean): void {
+    editing = value;
+    session.active?.setEditorEnabled(value);
+  }
+
+  window.addEventListener("keydown", (event) => {
+    if (editing || event.repeat || event.key.toLowerCase() !== "e" ||
+        event.ctrlKey || event.altKey || event.metaKey ||
+        (event.target instanceof HTMLElement &&
+          (event.target.isContentEditable || event.target.matches("input, textarea, select")))) return;
+    const result = session.active?.interact();
+    if (result) options.onWorldInteraction?.(result.message);
+  }, { signal: keyboard.signal });
+
   function unload(): void {
     session.unload();
     options.applyEnvironment(DEFAULT_ENVIRONMENT);
@@ -110,6 +166,7 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
   async function dispose(): Promise<void> {
     if (disposed) return;
     disposed = true;
+    keyboard.abort();
     unload();
     await session.dispose();
     await registry.dispose();
@@ -117,7 +174,8 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
 
   scene.onDisposeObservable.addOnce(() => { void dispose(); });
   return {
-    load, unload,
+    load, unload, setEditing,
+    get isEditing() { return editing; },
     get active() { return session.active; },
     showColliders(visible: boolean): void {
       showCollisionDebug = visible;

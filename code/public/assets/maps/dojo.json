@@ -331,5 +331,30 @@
       },
       "message": "Victoire ! Le Gardien du dojo est vaincu."
     }
+  ],
+  "interactions": [
+    {
+      "id": "dojo-gem",
+      "kind": "pickup",
+      "label": "Gemme d'entraînement",
+      "itemId": "training_gem",
+      "position": [
+        8.5,
+        0,
+        4.8
+      ],
+      "range": 1.7
+    },
+    {
+      "id": "dojo-stele",
+      "kind": "inspect",
+      "label": "Stèle des anciens",
+      "position": [
+        2,
+        0,
+        2
+      ],
+      "range": 2.1
+    }
   ]
 }

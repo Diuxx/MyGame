@@ -70,3 +70,17 @@ test("composed rectangles block separate arms, not an enclosing huge circle", ()
   const blocked = resolveMapMovement([1, 0, -2], { x: 0, z: 4 }, 0.2, walls);
   assert.ok(blocked.z < 2);
 });
+
+test("editing one placed collider changes only that object's collision footprint", () => {
+  const edited: MapDefinition = structuredClone(level);
+  const before = buildMapObstacles(edited, assets);
+  edited.objects[0].position = [5, 0, 5];
+  edited.objects[0].colliders = [
+    { type: "box", position: [0, 1, 0], size: [4, 2, 0.5] },
+  ];
+  const after = buildMapObstacles(edited, assets);
+  assert.notDeepEqual(after[0], before[0]);
+  assert.deepEqual(after[1], before[1]); // tree unaffected
+  assert.equal(after[0].type, "box");
+  if (after[0].type === "box") assert.equal(after[0].width, 4);
+});

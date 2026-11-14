@@ -1,4 +1,5 @@
 import { parseEnvironmentSettings } from "./environmentSettings.ts";
+import { parseVisualOverride, parseWorldInteractions } from "./editorSchema.ts";
 import { parseMapEncounters } from "../../enemies/mapEnemyConfig.ts";
 import type {
   MapAssets, MapCollider, MapDefinition, MapPosition, MapBounds,
@@ -154,6 +155,11 @@ export function validateMapDefinition(
       asset: item.asset,
       position: position(item.position, objectId + ".position"),
       rotationY: finite(item.rotationY, objectId + ".rotationY"),
+      ...(item.visual === undefined ? {} : { visual: parseVisualOverride(item.visual) }),
+      ...(item.colliders === undefined ? {} : {
+        colliders: list(item.colliders, objectId + ".colliders").map((raw, i) =>
+          collider(raw, objectId + ".colliders[" + i + "]")),
+      }),
     };
   });
 
@@ -187,7 +193,7 @@ export function validateMapDefinition(
     version: 1, id, name: input.name,
     tileSize, terrain: { origin, tiles, groundCollider: { enabled: ground.enabled, thickness } },
     objects, spawnPoints, environment: parseEnvironmentSettings(input.environment),
-    ...encounters,
+    ...encounters, interactions: parseWorldInteractions(input.interactions),
   };
 }
 
