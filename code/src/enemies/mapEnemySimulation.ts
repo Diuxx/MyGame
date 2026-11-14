@@ -268,8 +268,10 @@ export function createMapEnemySimulation(
 
   function strike(origin: Position, yaw: number, swing: SwordSwing): boolean {
     let any = false;
-    for (const actor of actors.values()) {
-      if (actor.state === "inactive" || actor.entity.defeated) continue;
+    // Snapshot targets: a wave unlocked by this hit must not be hit by the same swing.
+    const candidates = [...actors.values()].filter((actor) =>
+      actor.state !== "inactive" && !actor.entity.defeated);
+    for (const actor of candidates) {
       if (intersectsSwing(origin, yaw, actor.entity.position,
         actor.entity.definition.hurtbox, actor.yaw, swing) &&
         applyDamage(actor.entity, swing.damage)) {
@@ -300,6 +302,7 @@ export function createMapEnemySimulation(
       permanentlyDead.clear();
       cleared.clear();
       waveStarted.clear();
+      triggeredEvents.clear();
       for (const actor of actors.values()) {
         resetEnemy(actor.entity);
         actor.entity.position = [...actor.spec.position];
