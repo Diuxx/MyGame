@@ -180,6 +180,13 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
   // Recalculate lightweight geometry after editor changes, rather than keeping
   // a collider snapshot that would not match the visible placement.
   const navigation = createNavigationData(definition, assets);
+  let obstacles = buildMapObstacles(definition, assets);
+
+  function refreshCollisionData(): void {
+    obstacles = buildMapObstacles(definition, assets);
+    navigation.blockingObjects = createNavigationData(definition, assets).blockingObjects;
+  }
+
   let disposed = false;
   return {
     definition,
@@ -205,6 +212,7 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
       if (!object || !view) throw new Error("Objet de map inconnu : " + id);
       object.position = [...position];
       view.parent.position.set(...position);
+      refreshCollisionData();
     },
     rotateObject(id: string, degrees: number): void {
       const object = definition.objects.find((item) => item.id === id);
@@ -212,6 +220,7 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
       if (!object || !view || !Number.isFinite(degrees)) throw new Error("Rotation d'objet invalide.");
       object.rotationY = degrees;
       view.parent.rotation.y = degrees * Math.PI / 180;
+      refreshCollisionData();
     },
     async setObjectVisual(id: string, visual: VisualOverride, localTextureUrl?: string): Promise<void> {
       const object = definition.objects.find((item) => item.id === id);
@@ -228,6 +237,7 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
       if (!colliders.length) throw new Error("Cet objet ne possède pas de collider.");
       object.colliders = [collider, ...colliders.slice(1)];
       refreshCollisionMeshes(id);
+      refreshCollisionData();
       // The temporary fallback model is rebuilt to match its current collider.
       void view.model.load(object.visual).catch((error: unknown) => {
         console.error("Impossible de reconstruire le visuel provisoire de l'objet :", id, error);
@@ -237,7 +247,7 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
     interact(hero: MapPosition) { return interactions?.interact(hero); },
     getInventory() { return interactions?.inventory() ?? {}; },
     resolveMovement(start: MapPosition, step: GroundStep, heroRadius: number, heroHeight = 1.8): GroundStep {
-      return resolveMapMovement(start, step, heroRadius, buildMapObstacles(definition, assets), bounds, heroHeight);
+      return resolveMapMovement(start, step, heroRadius, obstacles, bounds, heroHeight);
     },
     dispose(): void {
       if (disposed) return;
