@@ -192,14 +192,14 @@ export async function createMapEnemyScene(
     }
   }
 
-  const renderObserver = scene.onBeforeRenderObservable.add(() => {
+  const tick = (): void => {
     if (!activated || disposed || document.hidden) return;
     const seconds = Math.min(0.1, scene.getEngine().getDeltaTime() / 1000);
     simulation.update(seconds, options.getHeroPosition(), options.isHeroAlive());
     refreshVisuals();
     dispatchEvents();
-  });
-  scene.onBeforeRenderObservable.remove(renderObserver);
+  };
+  let renderObserver: ReturnType<typeof scene.onBeforeRenderObservable.add> | null = null;
 
   return {
     simulation,
@@ -207,7 +207,7 @@ export async function createMapEnemyScene(
       if (disposed || activated) return;
       activated = true;
       root.setEnabled(true);
-      scene.onBeforeRenderObservable.add(renderObserver);
+      renderObserver = scene.onBeforeRenderObservable.add(tick);
       refreshVisuals();
       dispatchEvents();
     },
@@ -230,7 +230,7 @@ export async function createMapEnemyScene(
     dispose(): void {
       if (disposed) return;
       disposed = true;
-      scene.onBeforeRenderObservable.remove(renderObserver);
+      if (renderObserver) scene.onBeforeRenderObservable.remove(renderObserver);
       for (const caster of shadowCasters) options.shadows.removeShadowCaster(caster, false);
       for (const dispose of resources) dispose();
       root.dispose(false, false);
