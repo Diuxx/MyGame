@@ -69,7 +69,7 @@ export function createCharacterController(
 
   function beginAction(clip: string, next: ActiveAction): void {
     action = next;
-    animations.play(clip, true);
+    animations.play(clip, true, next.kind === "attack");
     onAnimationChange();
   }
 
