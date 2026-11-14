@@ -95,3 +95,46 @@ test("ranged AI remains at distance and emits a bolt skill", () => {
   game.update(0.7, [0, 0, 0]);
   assert.ok(game.events().some((e) => e.type === "hitHero" && e.skill === "bolt"));
 });
+
+test("patrol follows successive waypoints without aggro", () => {
+  const patrol: MapEnemySpawn = {
+    ...spawn, position: [0, 0, 0],
+    ai: { ...spawn.ai, profile: "patrol", patrol: [[0, 0, 0], [3, 0, 0]] },
+  };
+  const game = sim({ enemySpawns: [patrol] });
+  game.update(0.1, [50, 0, 50]);
+  game.update(0.5, [50, 0, 50]);
+  assert.equal(game.list()[0].state, "patrol");
+  assert.ok(game.list()[0].entity.position[0] > 0.5);
+});
+
+test("heal is a real ability and does not damage the hero", () => {
+  const healer: MapEnemySpawn = {
+    ...spawn, position: [0, 0, 1],
+    ai: { ...spawn.ai, skills: ["heal"] },
+  };
+  const game = sim({ enemySpawns: [healer] });
+  game.list()[0].entity.health = 35;
+  game.update(0.1, [0, 0, 0]);
+  assert.equal(game.list()[0].skill, "heal");
+  game.update(0.6, [0, 0, 0]);
+  assert.equal(game.list()[0].entity.health, 55);
+  assert.equal(game.events().filter((event) => event.type === "hitHero").length, 0);
+});
+
+test("persisted first wave unlocks only the next wave on reload", () => {
+  const config: MapEncounterConfig = {
+    enemySpawns: [
+      { ...spawn, id: "first-actor", activation: { mode: "wave", waveId: "first" },
+        respawn: { mode: "never" } },
+      { ...spawn, id: "second-actor", activation: { mode: "wave", waveId: "second" },
+        respawn: { mode: "never" } },
+    ],
+    waves: [{ id: "first", starts: "always" }, { id: "second", starts: "afterPrevious" }],
+    events: [],
+  };
+  const game = createMapEnemySimulation(config, [definition],
+    { defeatedIds: [], clearedWaveIds: ["first"] });
+  assert.equal(game.list()[0].state, "inactive");
+  assert.equal(game.list()[1].state, "idle");
+});

@@ -157,7 +157,8 @@ export async function createMapEnemyScene(
   }
 
   try {
-    await Promise.all(simulation.list().map((enemy) => createVisual(enemy)));
+    // Serial construction ensures no late GPU allocations survive a failed load.
+    for (const enemy of simulation.list()) await createVisual(enemy);
   } catch (error) {
     for (const dispose of resources) dispose();
     root.dispose(false, false);

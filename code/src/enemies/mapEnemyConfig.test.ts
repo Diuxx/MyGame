@@ -31,3 +31,13 @@ test("wave and boss phase definitions validate all references", () => {
   assert.throws(() => parseMapEncounters({ ...value, enemySpawns: [{ ...boss,
     boss: { phases: [...boss.boss.phases].reverse() } }] }, catalog), /décroissantes/);
 });
+
+test("wave actors cannot respawn and first wave must be immediately startable", () => {
+  assert.throws(() => parseMapEncounters({
+    waves: [{ id: "intro", starts: "always" }],
+    enemySpawns: [{ ...basic, activation: { mode: "wave", waveId: "intro" } }],
+  }, catalog), /respawn/);
+  assert.throws(() => parseMapEncounters({
+    waves: [{ id: "intro", starts: "afterPrevious" }], enemySpawns: [],
+  }, catalog), /première vague/);
+});
