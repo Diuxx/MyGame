@@ -16,6 +16,8 @@ export function bindMapTools(
   const unload = requireElement<HTMLButtonElement>("mapUnload");
   const placeHero = requireElement<HTMLButtonElement>("mapPlaceHero");
   const debug = requireElement<HTMLInputElement>("mapShowColliders");
+  const aggro = requireElement<HTMLInputElement>("mapShowAggro");
+  const resetProgress = requireElement<HTMLButtonElement>("mapResetProgress");
   const status = requireElement<HTMLParagraphElement>("mapStatus");
   let pending = false;
 
@@ -26,6 +28,7 @@ export function bindMapTools(
     selection.disabled = pending;
     unload.disabled = pending || !maps.active;
     placeHero.disabled = pending || !maps.active?.definition.spawnPoints.some((point) => point.type === "player");
+    resetProgress.disabled = pending || !maps.active;
   }
 
   function teleportToSpawn(): void {
@@ -69,5 +72,10 @@ export function bindMapTools(
 
   placeHero.addEventListener("click", teleportToSpawn, { signal });
   debug.addEventListener("change", () => maps.showColliders(debug.checked), { signal });
+  aggro.addEventListener("change", () => maps.showAggro(aggro.checked), { signal });
+  resetProgress.addEventListener("click", () => {
+    maps.active?.resetProgress();
+    status.textContent = "Progression de cette map réinitialisée : ennemis et vagues restaurés.";
+  }, { signal });
   syncButtons();
 }

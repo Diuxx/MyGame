@@ -8,6 +8,8 @@ import { startEnemyTools } from "./playground/enemyTools";
 import { bindCollisionTools } from "./playground/collisionTools";
 import { bindMapTools } from "./playground/mapTools";
 import { createMapSystem } from "./world/maps/mapSystem";
+import { createHeroVitals } from "./combat/heroVitals";
+import { createHeroHud } from "./ui/heroHud";
 import { bindAttackTools } from "./playground/attackTools";
 import { bindTransitionTools } from "./playground/transitionTools";
 import { bindModuleWindows } from "./playground/moduleWindows";
@@ -48,7 +50,7 @@ export async function startPlayground(
 ): Promise<void> {
   requireElement<HTMLElement>("movementHint").hidden = false;
   bindModuleWindows(signal);
-  const { ground, grid, shadows } = createPlaygroundEnvironment(scene, character.root);
+  const { ground, grid, shadows, ambience } = createPlaygroundEnvironment(scene, character.root);
   for (const mesh of equipment.meshes) shadows.addShadowCaster(mesh, false);
   const enemies = createEnemyScene(scene, shadows, ground.position.y);
   const heroPosition = (): Position => [character.root.position.x, ground.position.y, character.root.position.z];
@@ -58,7 +60,18 @@ export async function startPlayground(
   gridToggle.checked = false;
   gridToggle.addEventListener("change", () => grid.setEnabled(gridToggle.checked), { signal });
 
-  const maps = createMapSystem(scene);
+  const vitals = createHeroVitals();
+  const hud = createHeroHud();
+  let controller: ReturnType<typeof createCharacterController> | undefined;
+  const maps = createMapSystem(scene, {
+    hero: character.root, shadows,
+    applyEnvironment: ambience.apply,
+    isHeroAlive: () => vitals.isAlive,
+    onHeroHit: (damage) => {
+      if (vitals.hit(damage, controller?.isInvulnerable ?? false)) controller?.receiveHit();
+    },
+    onEncounterEvent: hud.event,
+  });
   bindMapTools(maps, character.root, cameraControls, signal);
   const collisions = bindCollisionTools(scene, character.root, enemies, signal,
     (start, step, radius, height) => maps.active?.resolveMovement(start, step, radius, height) ?? step);
@@ -66,15 +79,21 @@ export async function startPlayground(
   const canvas = requireElement<HTMLCanvasElement>("renderCanvas");
   const facingInput = requireElement<HTMLInputElement>("facing");
   const facingOutput = requireElement<HTMLOutputElement>("facingOutput");
-  const controller = createCharacterController(scene, canvas, character.root,
+  controller = createCharacterController(scene, canvas, character.root,
     PLAYGROUND_MOVEMENT_LIMIT, cameraControls, animationPlayer, equipment, signal, () => updateActiveAnimation(), (yaw) => {
       const degrees = String(Math.round(yaw * 180 / Math.PI));
       if (facingInput.value !== degrees) {
         facingInput.value = degrees;
         facingOutput.textContent = degrees + "°";
       }
-    }, () => enemies.strike(heroPosition(), character.root.rotation.y, attackTools.getSwing()),
-    collisions.resolveMovement);
+    }, () => {
+      const swing = attackTools.getSwing();
+      const dummyHit = enemies.strike(heroPosition(), character.root.rotation.y, swing);
+      const worldHit = maps.active?.strike(heroPosition(), character.root.rotation.y, swing) ?? false;
+      return dummyHit || worldHit;
+    },
+    collisions.resolveMovement,
+    () => vitals.isAlive);
   requireElement<HTMLButtonElement>("simulateHeroHit").addEventListener("click", controller.receiveHit, { signal });
   bindControlSettings(controller.setBindings, signal);
   bindTransitionTools(animationPlayer, signal);
@@ -90,6 +109,19 @@ export async function startPlayground(
     refreshEnemyHealth();
     updateEquipment();
     attackTools.setAttacking(controller.isAttacking);
+    if (!document.hidden && vitals.update(Math.min(delta, 0.1))) {
+      const spawn = maps.active?.definition.spawnPoints.find((point) => point.type === "player");
+      if (spawn) {
+        character.root.position.set(...spawn.position);
+        cameraControls.follow(spawn.position[0], spawn.position[2]);
+      }
+    }
+    hud.refresh(vitals);
+    const worldEnemies = maps.active?.simulation.list() ?? [];
+    const alive = worldEnemies.filter((enemy) => enemy.state !== "inactive" && !enemy.entity.defeated);
+    requireElement("mapEnemyCount").textContent = maps.active
+      ? `Ennemis actifs : ${alive.length} / ${worldEnemies.length} · ${alive.map((enemy) => enemy.spec.id + " : " + enemy.state).join(", ")}`
+      : "Aucune map active.";
   });
   linkRangeControl("rotation", "rotationOutput", (n) => `${n}°`, (n) => cameraControls.setRotation(n), signal);
   linkRangeControl("tilt", "tiltOutput", (n) => `${n}°`, (n) => cameraControls.setTilt(n), signal);
