@@ -103,6 +103,7 @@ export async function startPlayground(
   for (const animation of character.animationGroups) {
     animation.onAnimationGroupEndObservable.add(() => queueMicrotask(updateActiveAnimation));
   }
+  const mapEnemyCount = requireElement("mapEnemyCount");
   scene.onBeforeRenderObservable.add(() => {
     const delta = scene.getEngine().getDeltaTime() / 1000;
     enemies.update(document.hidden ? 0 : delta);
@@ -119,9 +120,10 @@ export async function startPlayground(
     hud.refresh(vitals);
     const worldEnemies = maps.active?.simulation.list() ?? [];
     const alive = worldEnemies.filter((enemy) => enemy.state !== "inactive" && !enemy.entity.defeated);
-    requireElement("mapEnemyCount").textContent = maps.active
+    const status = maps.active
       ? `Ennemis actifs : ${alive.length} / ${worldEnemies.length} · ${alive.map((enemy) => enemy.spec.id + " : " + enemy.state).join(", ")}`
       : "Aucune map active.";
+    if (mapEnemyCount.textContent !== status) mapEnemyCount.textContent = status;
   });
   linkRangeControl("rotation", "rotationOutput", (n) => `${n}°`, (n) => cameraControls.setRotation(n), signal);
   linkRangeControl("tilt", "tiltOutput", (n) => `${n}°`, (n) => cameraControls.setTilt(n), signal);

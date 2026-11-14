@@ -118,3 +118,14 @@ les données JSON. Les colliders sont indépendants du modèle 3D.
 
 Voir [docs/MAPS_3D.md](../docs/MAPS_3D.md) pour les formats, exemples,
 contraintes actuelles, commandes et étapes de vérification.
+
+## Ambiance des maps et ennemis autonomes
+
+Les maps peuvent maintenant définir `environment`, `enemySpawns`,
+`waves` et `events` dans leurs JSON. Les ennemis sont construits
+avec des primitives Babylon.js lorsque leur GLB est absent, et
+partagent les règles de dégâts, les collisions et un système d'aggro
+indépendant du rendu. Le Playground affiche les zones de détection,
+les états de l'IA, les vagues et la progression des boss.
+
+Guide de configuration : [docs/ENCOUNTERS_AMBIENCE.md](../docs/ENCOUNTERS_AMBIENCE.md).

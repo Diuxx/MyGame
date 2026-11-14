@@ -166,6 +166,12 @@ export function parseMapEncounters(valueAt: unknown, catalog: ReadonlySet<string
     if (spawn.activation.mode === "wave" && !waves.some((wave) => wave.id === spawn.activation.waveId)) {
       throw new Error("Vague inconnue : " + spawn.activation.waveId);
     }
+    if (spawn.activation.mode === "wave" && spawn.respawn.mode !== "never") {
+      throw new Error("Les ennemis de vague doivent avoir respawn.mode = never.");
+    }
+  }
+  if (waves.length && waves[0].starts !== "always") {
+    throw new Error("La première vague doit commencer avec starts = always.");
   }
   const events = (root.events === undefined ? [] : entries(root.events, "events")).map((raw, index): MapEncounterEvent => {
     const entry = data(raw, "events[" + index + "]");
