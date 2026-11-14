@@ -163,8 +163,11 @@ export function parseMapEncounters(valueAt: unknown, catalog: ReadonlySet<string
   if (spawns.length > 80) throw new Error("Maximum 80 ennemis par map.");
   distinct(spawns, "enemySpawns");
   for (const spawn of spawns) {
-    if (spawn.activation.mode === "wave" && !waves.some((wave) => wave.id === spawn.activation.waveId)) {
-      throw new Error("Vague inconnue : " + spawn.activation.waveId);
+    if (spawn.activation.mode === "wave") {
+      const waveId = spawn.activation.waveId;
+      if (!waves.some((wave) => wave.id === waveId)) {
+        throw new Error("Vague inconnue : " + waveId);
+      }
     }
     if (spawn.activation.mode === "wave" && spawn.respawn.mode !== "never") {
       throw new Error("Les ennemis de vague doivent avoir respawn.mode = never.");
