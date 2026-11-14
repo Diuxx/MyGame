@@ -158,7 +158,8 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
         (holder) => missing.addObject(holder, object.visual?.model ?? asset.model,
           object.colliders ?? asset.colliders));
       objectViews.set(object.id, { parent, model, debug: [], picks: [] });
-      await model.load(object.visual);
+      const imported = await model.load(object.visual);
+      if (!imported) missingModels.add(object.visual?.model ?? asset.model);
       refreshCollisionMeshes(object.id);
     }
     addGroundCollider();

@@ -36,6 +36,7 @@ export function bindWorldEditor(
   signal: AbortSignal,
 ) {
   const enabled = requireElement<HTMLInputElement>("worldEditorEnabled");
+  const quickToggle = requireElement<HTMLInputElement>("worldEditorQuickToggle");
   const panel = requireElement<HTMLElement>("worldEditorFields");
   const selectionLabel = requireElement<HTMLElement>("worldEditorSelection");
   const status = requireElement<HTMLElement>("worldEditorStatus");
@@ -187,11 +188,17 @@ export function bindWorldEditor(
   }
 
   enabled.addEventListener("change", () => {
+    quickToggle.checked = enabled.checked;
     maps.setEditing(enabled.checked);
     clearSelection();
     status.textContent = enabled.checked
       ? "Mode édition actif : le combat est désactivé. Glisser sur le terrain pour déplacer."
       : "Mode combat réactivé.";
+  }, { signal });
+
+  quickToggle.addEventListener("change", () => {
+    enabled.checked = quickToggle.checked;
+    enabled.dispatchEvent(new Event("change"));
   }, { signal });
 
   canvas.addEventListener("pointerdown", (event) => {

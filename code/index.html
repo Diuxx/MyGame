@@ -33,6 +33,7 @@
         <div id="heroHud" class="hero-hud" hidden>
           <div class="hero-hud-heading"><strong>HÉROS</strong><output id="heroLife">PV 100 / 100</output></div>
           <div class="hero-hud-track"><div id="heroLifeFill"></div></div>
+          <p id="worldInteractionPrompt" class="interaction-prompt" hidden></p>
           <p id="encounterMessage" role="status" aria-live="polite"></p>
         </div>
         <div id="movementHint" class="stage-footnote" hidden><span id="keyboardHint">ZQSD · Déplacement relatif à la souris | Maj · Course</span> | Clic gauche · Attaque | Clic droit · Esquive</div>
@@ -58,6 +59,7 @@
           <p>Affichage rapide</p>
           <label class="grid-toggle"><input id="heroHitboxQuickToggle" type="checkbox" /> Hitbox du héros (rouge)</label>
           <label class="grid-toggle"><input id="attackHitboxQuickToggle" type="checkbox" /> Zone d’attaque (orange)</label>
+          <label class="grid-toggle"><input id="worldEditorQuickToggle" type="checkbox" /> Mode édition de la map</label>
         </div>
       </aside>
       <div id="playgroundModules" class="module-dock" hidden>

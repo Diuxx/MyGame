@@ -86,6 +86,7 @@ async function start(): Promise<void> {
           }
         }
         hud.refresh(vitals);
+        hud.nearby(maps.active?.nearInteraction()?.label);
       });
       requireElement("movementHint").hidden = false;
     }

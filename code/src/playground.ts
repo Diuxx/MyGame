@@ -121,6 +121,7 @@ export async function startPlayground(
       }
     }
     hud.refresh(vitals);
+    hud.nearby(worldEditor.enabled ? undefined : maps.active?.nearInteraction()?.label);
     const worldEnemies = maps.active?.simulation.list() ?? [];
     const alive = worldEnemies.filter((enemy) => enemy.state !== "inactive" && !enemy.entity.defeated);
     const status = maps.active
