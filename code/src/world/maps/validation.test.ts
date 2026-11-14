@@ -50,3 +50,20 @@ test("composite collider dimensions and coordinates must be valid", () => {
   mutated.objects.wall.colliders = [{ type: "cylinder", position: [0, null, 0], radius: 0.5, height: 1 }];
   assert.throws(() => validateMapAssets(mutated), /position/);
 });
+
+test("map instances validate and retain visual/collider overrides and interactions", () => {
+  const source = load("maps/dojo.json") as Record<string, any>;
+  source.objects[0].visual = {
+    model: "/assets/models/editor/wall.glb", tint: "#bbaa99", scale: 1.4,
+  };
+  source.objects[0].colliders = [{
+    type: "box", position: [0, 1, 0], size: [3, 2, 1],
+  }];
+  const result = validateMapDefinition(source, assets);
+  assert.equal(result.objects[0].visual?.model, "/assets/models/editor/wall.glb");
+  assert.equal(result.objects[0].colliders?.[0].type, "box");
+  assert.equal(result.interactions?.length, 2);
+  const invalid = structuredClone(source);
+  invalid.objects[0].visual.scale = 0;
+  assert.throws(() => validateMapDefinition(invalid, assets), /visual.scale/);
+});

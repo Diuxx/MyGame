@@ -70,7 +70,21 @@ export function createMapEnemySimulation(
   for (const spec of config.enemySpawns) {
     const definition = catalog.get(spec.enemyId);
     if (!definition) throw new Error("Type d'ennemi absent : " + spec.enemyId);
-    const entity = createEnemy(spec.id, definition, spec.position, definition);
+    // Each placed enemy owns its hurtbox and stats; editing one must not
+    // mutate the catalogue or another placement of the same archetype.
+    const instanceDefinition = structuredClone(definition);
+    if (spec.overrides?.hurtboxRadius && instanceDefinition.hurtbox.shape === "cylinder") {
+      instanceDefinition.hurtbox.radius = spec.overrides.hurtboxRadius;
+    }
+    const settings = {
+      ...instanceDefinition,
+      stats: { ...instanceDefinition.stats,
+        movementSpeed: spec.overrides?.movementSpeed ?? instanceDefinition.stats.movementSpeed },
+      collision: spec.overrides?.collisionRadius
+        ? { solid: true, radius: spec.overrides.collisionRadius }
+        : instanceDefinition.collision,
+    };
+    const entity = createEnemy(spec.id, instanceDefinition, spec.position, settings);
     const disabled = spec.persistDeath && permanentlyDead.has(spec.id);
     if (disabled) { entity.health = 0; entity.defeated = true; }
     actors.set(spec.id, {

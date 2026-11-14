@@ -26,7 +26,7 @@ export function buildMapObstacles(map: MapDefinition, assets: MapAssets): FlatOb
   for (const instance of map.objects) {
     const asset = assets.objects[instance.asset];
     const yaw = instance.rotationY * Math.PI / 180;
-    for (const shape of asset.colliders) {
+    for (const shape of instance.colliders ?? asset.colliders) {
       const offset = rotate(shape.position[0], shape.position[2], yaw);
       const centerY = instance.position[1] + shape.position[1];
       const height = shape.type === "box" ? shape.size[1] : shape.height;

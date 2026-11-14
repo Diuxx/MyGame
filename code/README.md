@@ -129,3 +129,12 @@ indépendant du rendu. Le Playground affiche les zones de détection,
 les états de l'IA, les vagues et la progression des boss.
 
 Guide de configuration : [docs/ENCOUNTERS_AMBIENCE.md](../docs/ENCOUNTERS_AMBIENCE.md).
+
+## Éditeur de monde du Playground
+
+Ouvrir une map puis le module **Éditeur de monde** : sélection et
+glissement des objets ou ennemis, collision, IA et aperçu GLB/texture.
+Exporter le JSON après édition ; les assets importés localement
+doivent être copiés dans `public/assets`. Interactions à proximité
+avec la touche **E** (ramassage, inspection). Guide :
+[docs/PLAYGROUND_WORLD_EDITOR.md](../docs/PLAYGROUND_WORLD_EDITOR.md).

@@ -7,6 +7,7 @@ import "@babylonjs/loaders/glTF";
  */
 export class MapModelRegistry {
   private readonly sources = new Map<string, Promise<AssetContainer | null>>();
+  private readonly retired = new Set<AssetContainer>();
 
   constructor(private readonly scene: Scene) {}
 
@@ -31,6 +32,38 @@ export class MapModelRegistry {
     return pending;
   }
 
+  async registerLocalFile(file: File): Promise<string> {
+    if (!/^[a-z0-9][a-z0-9_.-]*\.glb$/i.test(file.name) || file.size === 0 ||
+        file.size > 25 * 1024 * 1024) {
+      throw new Error("GLB invalide (nom simple, fichier non vide, 25 Mo maximum).");
+    }
+    const base = file.name.toLowerCase().replace(/[^a-z0-9_.-]/g, "-");
+    const path = "/assets/models/editor/" + base;
+    const url = URL.createObjectURL(file);
+    try {
+      const container = await LoadAssetContainerAsync(url, this.scene, {
+        pluginExtension: ".glb",
+        pluginOptions: { gltf: { animationStartMode: 0 } },
+      });
+      if (!container.rootNodes.length || !container.meshes.some((mesh) => mesh.getTotalVertices() > 0)) {
+        container.dispose();
+        throw new Error("Le fichier GLB ne contient pas de modèle utilisable.");
+      }
+      // Replace a previous failed lookup or an older locally imported source.
+      const previous = this.sources.get(path);
+      this.sources.set(path, Promise.resolve(container));
+      if (previous) {
+        // Existing instances own their meshes; the earlier source is disposed
+        // only when the registry itself is closed, avoiding dangling instances.
+        const old = await previous;
+        if (old) this.retired.add(old);
+      }
+      return path;
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+
   async instantiate(path: string, parent: TransformNode): Promise<(() => void) | null> {
     const source = await this.getSource(path);
     if (!source) return null;
@@ -51,6 +84,8 @@ export class MapModelRegistry {
   async dispose(): Promise<void> {
     const sources = await Promise.all(this.sources.values());
     for (const source of sources) source?.dispose();
+    for (const old of this.retired) old.dispose();
+    this.retired.clear();
     this.sources.clear();
   }
 }

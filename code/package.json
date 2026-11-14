@@ -9,7 +9,7 @@
     "dev-gameplay": "vite --mode gameplay",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test": "node --experimental-strip-types --test src/world/cameraMath.test.ts src/character/movement.test.ts src/character/equipmentTuning.test.ts src/character/heroCollisionSettings.test.ts src/character/transitionSettings.test.ts src/combat/combat.test.ts src/combat/attackSettings.test.ts src/combat/hitDetection.test.ts src/combat/bodyCollision.test.ts src/enemies/enemyState.test.ts src/enemies/enemyManager.test.ts src/enemies/enemyPersistence.test.ts src/world/maps/validation.test.ts src/world/maps/mapCollision.test.ts src/world/maps/mapSession.test.ts src/world/maps/environmentSettings.test.ts src/enemies/mapEnemyConfig.test.ts src/enemies/mapEnemySimulation.test.ts src/enemies/mapProgress.test.ts src/combat/heroVitals.test.ts"
+    "test": "node --experimental-strip-types --test src/world/cameraMath.test.ts src/character/movement.test.ts src/character/equipmentTuning.test.ts src/character/heroCollisionSettings.test.ts src/character/transitionSettings.test.ts src/combat/combat.test.ts src/combat/attackSettings.test.ts src/combat/hitDetection.test.ts src/combat/bodyCollision.test.ts src/enemies/enemyState.test.ts src/enemies/enemyManager.test.ts src/enemies/enemyPersistence.test.ts src/world/maps/validation.test.ts src/world/maps/mapCollision.test.ts src/world/maps/mapSession.test.ts src/world/maps/environmentSettings.test.ts src/enemies/mapEnemyConfig.test.ts src/enemies/mapEnemySimulation.test.ts src/enemies/mapProgress.test.ts src/combat/heroVitals.test.ts src/world/maps/editorSchema.test.ts"
   },
   "dependencies": {
     "@babylonjs/core": "^8.0.0",

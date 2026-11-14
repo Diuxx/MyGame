@@ -33,6 +33,7 @@
         <div id="heroHud" class="hero-hud" hidden>
           <div class="hero-hud-heading"><strong>HÉROS</strong><output id="heroLife">PV 100 / 100</output></div>
           <div class="hero-hud-track"><div id="heroLifeFill"></div></div>
+          <p id="worldInteractionPrompt" class="interaction-prompt" hidden></p>
           <p id="encounterMessage" role="status" aria-live="polite"></p>
         </div>
         <div id="movementHint" class="stage-footnote" hidden><span id="keyboardHint">ZQSD · Déplacement relatif à la souris | Maj · Course</span> | Clic gauche · Attaque | Clic droit · Esquive</div>
@@ -49,6 +50,7 @@
           <button type="button" aria-controls="collisionsModule" aria-expanded="false">Collisions et hitbox</button>
           <button type="button" aria-controls="attackHitboxModule" aria-expanded="false">Zone d’attaque / Portée</button>
           <button type="button" aria-controls="mapsModule" aria-expanded="false">Maps 3D modulaires</button>
+          <button type="button" aria-controls="worldEditorModule" aria-expanded="false">Éditeur de monde</button>
           <button type="button" aria-controls="cameraModule" aria-expanded="false">Caméra</button>
           <button type="button" aria-controls="modelModule" aria-expanded="false">Modèle chargé</button>
           <button type="button" aria-controls="controlsModule" aria-expanded="false">Commandes</button>
@@ -57,6 +59,7 @@
           <p>Affichage rapide</p>
           <label class="grid-toggle"><input id="heroHitboxQuickToggle" type="checkbox" /> Hitbox du héros (rouge)</label>
           <label class="grid-toggle"><input id="attackHitboxQuickToggle" type="checkbox" /> Zone d’attaque (orange)</label>
+          <label class="grid-toggle"><input id="worldEditorQuickToggle" type="checkbox" /> Mode édition de la map</label>
         </div>
       </aside>
       <div id="playgroundModules" class="module-dock" hidden>
@@ -207,6 +210,53 @@
           <p id="mapEnemyCount" class="animation-note"></p>
           <p class="animation-note">Les modèles GLB manquants sont remplacés par leur forme de collision avec leur nom. Les maps se trouvent dans public/assets/maps.</p>
           <p id="mapStatus" class="animation-note" role="status"></p>
+        </section>
+        <section id="worldEditorModule" class="module-window enemy-tools" aria-labelledby="worldEditorHeading" hidden>
+          <header class="module-header">
+            <h2 id="worldEditorHeading">Éditeur de monde (POC)</h2>
+            <button class="module-close" type="button" aria-label="Fermer l’éditeur">×</button>
+          </header>
+          <label class="grid-toggle"><input id="worldEditorEnabled" type="checkbox" /> Activer la sélection et le déplacement</label>
+          <label class="grid-toggle"><input id="worldEditorSnap" type="checkbox" checked /> Aimantation à 0,5 unité</label>
+          <p class="animation-note">Charger une map, activer ce mode, cliquer sur un ennemi ou un mur, puis glisser. Le combat et l'IA sont suspendus.</p>
+          <p id="worldEditorSelection" class="animation-note"></p>
+          <div id="worldEditorFields" hidden>
+            <div class="enemy-fields">
+              <label>X<input id="worldEditorX" type="number" step="0.1" /></label>
+              <label>Y<input id="worldEditorY" type="number" step="0.1" /></label>
+              <label>Z<input id="worldEditorZ" type="number" step="0.1" /></label>
+              <label>Rotation Y (degrés)<input id="worldEditorRotation" type="number" step="5" /></label>
+            </div>
+            <fieldset id="worldEditorObjectFields">
+              <p class="animation-note">Premier collider de l'objet (les suivants sont conservés)</p>
+              <div class="enemy-fields">
+                <label>Largeur<input id="worldEditorColliderWidth" type="number" min="0.01" max="100" step="0.1" /></label>
+                <label>Hauteur<input id="worldEditorColliderHeight" type="number" min="0.01" max="100" step="0.1" /></label>
+                <label>Profondeur<input id="worldEditorColliderDepth" type="number" min="0.01" max="100" step="0.1" /></label>
+              </div>
+            </fieldset>
+            <fieldset id="worldEditorEnemyFields">
+              <div class="enemy-fields">
+                <label>Vitesse<input id="worldEditorSpeed" type="number" min="0" max="20" step="0.1" /></label>
+                <label>Rayon solide<input id="worldEditorCollisionRadius" type="number" min="0.1" max="10" step="0.05" /></label>
+                <label>Rayon hitbox<input id="worldEditorHurtboxRadius" type="number" min="0.1" max="10" step="0.05" /></label>
+                <label>Détection<input id="worldEditorAggro" type="number" min="0.3" max="30" step="0.1" /></label>
+                <label>Portée attaque<input id="worldEditorAttackRange" type="number" min="0.3" max="12" step="0.1" /></label>
+                <label>Distance retour<input id="worldEditorLeash" type="number" min="0.3" max="40" step="0.1" /></label>
+              </div>
+            </fieldset>
+            <p class="animation-note">Apparence : couleur et échelle, modèle GLB et texture PNG/JPG/WebP au choix.</p>
+            <div class="enemy-fields">
+              <label>Échelle<input id="worldEditorScale" type="number" min="0.05" max="10" step="0.05" value="1" /></label>
+              <label>Couleur<input id="worldEditorTint" type="color" value="#ffffff" /></label>
+            </div>
+            <label>GLB local<input id="worldEditorModelFile" type="file" accept=".glb,model/gltf-binary" /></label>
+            <label>Texture locale<input id="worldEditorTextureFile" type="file" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" /></label>
+            <button id="worldEditorApplyVisual" class="secondary wide" type="button">Appliquer l'apparence</button>
+          </div>
+          <button id="worldEditorExport" class="secondary wide" type="button">Exporter map JSON</button>
+          <p class="animation-note">Les fichiers locaux sont seulement prévisualisés. Copier leurs octets dans public/assets/models/editor ou public/assets/textures/editor puis intégrer le JSON exporté au dépôt.</p>
+          <p id="worldEditorStatus" class="animation-note" role="status"></p>
         </section>
         <section id="cameraModule" class="module-window" aria-labelledby="cameraHeading" hidden>
           <header class="module-header">

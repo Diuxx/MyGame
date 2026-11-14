@@ -4,6 +4,8 @@ import {
 } from "@babylonjs/core";
 import type { Position, SwordSwing } from "../combat/combat";
 import type { MapModelRegistry } from "../world/maps/modelRegistry";
+import { createEditableModel } from "../world/maps/editableModel";
+import type { VisualOverride } from "../world/maps/editorSchema";
 import type { MapDefinition } from "../world/maps/types";
 import type { BuiltMap } from "../world/maps/mapBuilder";
 import type { EnemyDefinition } from "./enemyDefinitions";
@@ -49,10 +51,11 @@ export async function createMapEnemyScene(
   );
   const root = new TransformNode("map-encounters-" + definition.id, scene);
   root.setEnabled(false);
-  const resources: (() => void)[] = [];
+  const editableModels: ReturnType<typeof createEditableModel>[] = [];
   const shadowCasters: AbstractMesh[] = [];
   const models = new Map<string, {
-    node: TransformNode; bar: Mesh; aggro: AbstractMesh; telegraph: AbstractMesh;
+    node: TransformNode; model: ReturnType<typeof createEditableModel>;
+    bar: Mesh; aggro: AbstractMesh; telegraph: AbstractMesh; picker: Mesh;
   }>();
   const materials: StandardMaterial[] = [];
   const textures: DynamicTexture[] = [];
@@ -104,8 +107,7 @@ export async function createMapEnemyScene(
     model.material = mat;
     model.receiveShadows = true;
     model.isPickable = false;
-    options.shadows.addShadowCaster(model, false);
-    shadowCasters.push(model);
+    // Dynamic model wrapper owns shadow casters for both fallback and imported GLBs.
 
     // A small front-facing marker distinguishes direction when testing AI.
     const face = MeshBuilder.CreateSphere("enemy-facing", { diameter: width * 0.23 }, scene);
@@ -119,15 +121,10 @@ export async function createMapEnemyScene(
     const node = new TransformNode("map-enemy-" + enemy.spec.id, scene);
     node.parent = root;
     node.position.set(...enemy.entity.position);
-    const cleanup = await options.registry.instantiate(enemy.entity.definition.modelPath, node);
-    if (cleanup) {
-      resources.push(cleanup);
-      for (const mesh of node.getChildMeshes()) {
-        mesh.receiveShadows = true;
-        options.shadows.addShadowCaster(mesh, false);
-        shadowCasters.push(mesh);
-      }
-    } else primitive(enemy, node);
+    const model = createEditableModel(scene, node, options.registry, options.shadows,
+      enemy.entity.definition.modelPath, (holder) => primitive(enemy, holder));
+    editableModels.push(model);
+    await model.load(enemy.spec.visual);
     const height = enemy.spec.boss ? 3.25 : 2.1;
     label(enemy.entity.definition.name, node, height + 0.35);
     const bg = MeshBuilder.CreatePlane("enemy-health-background", { width: 1.4, height: 0.12 }, scene);
@@ -153,14 +150,28 @@ export async function createMapEnemyScene(
     telegraph.position.y = 0.045;
     telegraph.material = telegraphMaterial;
     telegraph.isPickable = false;
-    models.set(enemy.spec.id, { node, bar, aggro, telegraph });
+    aggro.metadata = { initialRadius: enemy.spec.ai.aggroRadius };
+    telegraph.metadata = { initialRadius: enemy.spec.ai.attackRange };
+    const picker = MeshBuilder.CreateCylinder("enemy-editor-proxy", {
+      diameter: 2, height: 1, tessellation: 16,
+    }, scene);
+    picker.parent = node;
+    picker.metadata = { editorKind: "enemy", editorId: enemy.spec.id };
+    picker.visibility = 0.008;
+    picker.position.y = enemy.entity.definition.hurtbox.offset[1];
+    const selectionRadius = enemy.entity.definition.hurtbox.shape === "cylinder"
+      ? enemy.entity.definition.hurtbox.radius : 0.6;
+    picker.scaling.set(selectionRadius, enemy.entity.definition.hurtbox.height, selectionRadius);
+    picker.isPickable = false;
+    picker.setEnabled(false);
+    models.set(enemy.spec.id, { node, model, bar, aggro, telegraph, picker });
   }
 
   try {
     // Serial construction ensures no late GPU allocations survive a failed load.
     for (const enemy of simulation.list()) await createVisual(enemy);
   } catch (error) {
-    for (const dispose of resources) dispose();
+    for (const model of editableModels) model.dispose();
     root.dispose(false, false);
     for (const caster of shadowCasters) options.shadows.removeShadowCaster(caster, false);
     for (const mat of materials) mat.dispose();
@@ -168,6 +179,8 @@ export async function createMapEnemyScene(
     throw error;
   }
   let debug = false;
+  let editing = false;
+  let paused = false;
   let activated = false;
   let disposed = false;
 
@@ -181,8 +194,16 @@ export async function createMapEnemyScene(
       const ratio = actor.entity.health / actor.entity.stats.maxHealth;
       view.bar.scaling.x = ratio;
       view.bar.position.x = (ratio - 1) * 0.675;
+      const aggroScale = actor.spec.ai.aggroRadius / (view.aggro.metadata as { initialRadius: number }).initialRadius;
+      view.aggro.scaling.x = aggroScale;
+      view.aggro.scaling.z = aggroScale;
+      const attackScale = actor.spec.ai.attackRange / (view.telegraph.metadata as { initialRadius: number }).initialRadius;
+      view.telegraph.scaling.x = attackScale;
+      view.telegraph.scaling.z = attackScale;
       view.aggro.setEnabled(debug);
       view.telegraph.setEnabled(actor.state === "windup");
+      view.picker.setEnabled(editing && actor.state !== "inactive" && !actor.entity.defeated);
+      view.picker.isPickable = editing;
     }
   }
 
@@ -194,7 +215,7 @@ export async function createMapEnemyScene(
   }
 
   const tick = (): void => {
-    if (!activated || disposed || document.hidden) return;
+    if (!activated || disposed || paused || document.hidden) return;
     const seconds = Math.min(0.1, scene.getEngine().getDeltaTime() / 1000);
     simulation.update(seconds, options.getHeroPosition(), options.isHeroAlive());
     refreshVisuals();
@@ -216,6 +237,68 @@ export async function createMapEnemyScene(
       debug = visible;
       refreshVisuals();
     },
+    setEditorEnabled(enabled: boolean): void {
+      editing = enabled;
+      paused = enabled;
+      refreshVisuals();
+    },
+    moveEnemy(id: string, position: Position): void {
+      const actor = simulation.list().find((candidate) => candidate.spec.id === id);
+      if (!actor) throw new Error("Ennemi inconnu : " + id);
+      actor.spec.position = [...position];
+      actor.entity.position = [...position];
+      actor.state = "idle";
+      refreshVisuals();
+    },
+    rotateEnemy(id: string, degrees: number): void {
+      const actor = simulation.list().find((candidate) => candidate.spec.id === id);
+      if (!actor || !Number.isFinite(degrees)) throw new Error("Rotation d'ennemi invalide.");
+      actor.spec.rotationY = degrees;
+      actor.yaw = degrees * Math.PI / 180;
+      refreshVisuals();
+    },
+    setEnemyParameters(id: string, values: {
+      movementSpeed: number; collisionRadius: number; hurtboxRadius: number;
+      aggroRadius: number; attackRange: number; leashRadius: number;
+    }): void {
+      const actor = simulation.list().find((candidate) => candidate.spec.id === id);
+      if (!actor) throw new Error("Ennemi inconnu : " + id);
+      if (![values.movementSpeed, values.collisionRadius, values.hurtboxRadius,
+        values.aggroRadius, values.attackRange, values.leashRadius].every(Number.isFinite) ||
+          values.movementSpeed < 0 || values.movementSpeed > 20 ||
+          values.collisionRadius < 0.1 || values.collisionRadius > 10 ||
+          values.hurtboxRadius < 0.1 || values.hurtboxRadius > 10 ||
+          values.attackRange < 0.3 || values.aggroRadius < values.attackRange ||
+          values.leashRadius < values.aggroRadius) {
+        throw new Error("Dimensions ou paramètres IA invalides.");
+      }
+      actor.spec.overrides = {
+        movementSpeed: values.movementSpeed,
+        collisionRadius: values.collisionRadius,
+        hurtboxRadius: values.hurtboxRadius,
+      };
+      actor.entity.stats.movementSpeed = values.movementSpeed;
+      actor.entity.collision = { solid: true, radius: values.collisionRadius };
+      if (actor.entity.definition.hurtbox.shape === "cylinder") {
+        actor.entity.definition.hurtbox.radius = values.hurtboxRadius;
+      }
+      actor.spec.ai.aggroRadius = values.aggroRadius;
+      actor.spec.ai.attackRange = values.attackRange;
+      actor.spec.ai.leashRadius = values.leashRadius;
+      const view = models.get(id);
+      if (view) {
+        view.picker.scaling.x = values.hurtboxRadius;
+        view.picker.scaling.z = values.hurtboxRadius;
+      }
+      refreshVisuals();
+    },
+    async setEnemyVisual(id: string, visual: VisualOverride, localTextureUrl?: string): Promise<void> {
+      const actor = simulation.list().find((candidate) => candidate.spec.id === id);
+      const view = models.get(id);
+      if (!actor || !view) throw new Error("Ennemi inconnu : " + id);
+      await view.model.load(visual, localTextureUrl);
+      actor.spec.visual = { ...visual };
+    },
     strike(origin: Position, yaw: number, swing: SwordSwing): boolean {
       const hit = simulation.strike(origin, yaw, swing);
       refreshVisuals();
@@ -233,7 +316,7 @@ export async function createMapEnemyScene(
       disposed = true;
       if (renderObserver) scene.onBeforeRenderObservable.remove(renderObserver);
       for (const caster of shadowCasters) options.shadows.removeShadowCaster(caster, false);
-      for (const dispose of resources) dispose();
+      for (const model of editableModels) model.dispose();
       root.dispose(false, false);
       for (const mat of materials) mat.dispose();
       for (const texture of textures) texture.dispose();
