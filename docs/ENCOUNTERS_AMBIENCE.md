@@ -117,7 +117,7 @@ avant de toucher le héros.
 
 | Profil | Comportement |
 |---|---|
-| `guard` | Garde sa position, poursuit et retourne au point de départ |
+| `guard` | Garde sa position ; poursuite limitée à 75 % de son rayon de leash |
 | `patrol` | Suit en boucle les positions du tableau `patrol` ; aggro interrompt la ronde |
 | `aggressive` | Poursuite directe dans le périmètre de leash |
 | `ranged` | Maintient une distance et recule si le héros est trop près |
@@ -129,6 +129,8 @@ choisies dans `ai.skills` ou imposées par une phase de boss.
 Le calcul des dégâts des ennemis et du joueur utilise les
 règles communes de `combat/`, et l'esquive du héros annule les dégâts
 pendant sa fenêtre d'invulnérabilité.
+
+Les phases de boss accélèrent à la fois le temps de préparation et le délai entre les attaques.
 
 Le héros dispose de **100 PV** dans ce POC ; mort : blocage des
 actions, puis réapparition au spawn `player` après 2 secondes

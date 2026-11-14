@@ -138,3 +138,16 @@ test("persisted first wave unlocks only the next wave on reload", () => {
   assert.equal(game.list()[0].state, "inactive");
   assert.equal(game.list()[1].state, "idle");
 });
+
+test("guard protects a shorter perimeter than aggressive melee enemies", () => {
+  const guard = sim();
+  const aggressive = sim({ enemySpawns: [{
+    ...spawn, ai: { ...spawn.ai, profile: "aggressive" },
+  }] });
+  guard.update(0.1, [0, 0, 2]);
+  aggressive.update(0.1, [0, 0, 2]);
+  guard.update(0.2, [0, 0, -3]);
+  aggressive.update(0.2, [0, 0, -3]);
+  assert.equal(guard.list()[0].state, "return");
+  assert.equal(aggressive.list()[0].state, "chase");
+});
