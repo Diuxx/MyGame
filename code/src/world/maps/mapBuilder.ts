@@ -228,7 +228,9 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
       object.colliders = [collider, ...colliders.slice(1)];
       refreshCollisionMeshes(id);
       // The temporary fallback model is rebuilt to match its current collider.
-      if (!object.visual?.model) void view.model.load(object.visual);
+      void view.model.load(object.visual).catch((error: unknown) => {
+        console.error("Impossible de reconstruire le visuel provisoire de l'objet :", id, error);
+      });
     },
     nearbyInteraction(hero: MapPosition) { return interactions?.nearby(hero); },
     interact(hero: MapPosition) { return interactions?.interact(hero); },

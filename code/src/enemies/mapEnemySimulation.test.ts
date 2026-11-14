@@ -151,3 +151,25 @@ test("guard protects a shorter perimeter than aggressive melee enemies", () => {
   assert.equal(guard.list()[0].state, "return");
   assert.equal(aggressive.list()[0].state, "chase");
 });
+
+test("per-instance movement, collision and hurtbox overrides do not mutate other enemies", () => {
+  const first = { ...spawn, id: "fast", overrides: {
+    movementSpeed: 5, collisionRadius: 0.9, hurtboxRadius: 0.75,
+  } };
+  const second = { ...spawn, id: "normal", position: [5, 0, 4] as const };
+  const game = sim({ enemySpawns: [first, second] });
+  const [fast, normal] = game.list();
+  assert.equal(fast.entity.stats.movementSpeed, 5);
+  assert.equal(normal.entity.stats.movementSpeed, 2);
+  assert.equal(fast.entity.collision?.radius, 0.9);
+  assert.equal(normal.entity.collision, undefined);
+  assert.equal(fast.entity.definition.hurtbox.shape, "cylinder");
+  if (fast.entity.definition.hurtbox.shape === "cylinder") {
+    assert.equal(fast.entity.definition.hurtbox.radius, 0.75);
+  }
+  if (normal.entity.definition.hurtbox.shape === "cylinder") {
+    assert.equal(normal.entity.definition.hurtbox.radius, 0.4);
+  }
+  assert.equal(definition.hurtbox.shape, "cylinder");
+  if (definition.hurtbox.shape === "cylinder") assert.equal(definition.hurtbox.radius, 0.4);
+});
