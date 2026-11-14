@@ -37,7 +37,7 @@ async function start(): Promise<void> {
 
     const character = await loadCharacter(scene);
     const equipment = await loadEquipment(scene, character);
-    const animationPlayer = new AnimationPlayer(character.animationGroups);
+    const animationPlayer = new AnimationPlayer(character.animationGroups, scene);
     animationPlayer.play(IDLE_ANIMATION);
 
     // The Playground sidebar changes the canvas width, so reveal it before sizing the camera.
