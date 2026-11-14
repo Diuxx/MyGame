@@ -1,4 +1,5 @@
 import type { Position } from "../combat/combat.ts";
+import { parseVisualOverride, type VisualOverride } from "../world/maps/editorSchema.ts";
 
 export type AIProfile = "guard" | "patrol" | "aggressive" | "ranged";
 export type EnemySkill = "slash" | "cleave" | "bolt" | "heal";
@@ -27,6 +28,7 @@ export interface MapEnemySpawn {
   respawn: Respawn;
   ai: AISettings;
   persistDeath: boolean;
+  visual?: VisualOverride;
   boss?: { phases: BossPhase[] };
 }
 export interface MapWave {
@@ -143,6 +145,7 @@ function parseSpawn(raw: unknown, index: number, catalog: ReadonlySet<string>): 
     rotationY: value(item.rotationY, path + ".rotationY"),
     activation, respawn, ai: parseAI(item.ai, path + ".ai"),
     persistDeath, ...(boss ? { boss } : {}),
+    ...(item.visual === undefined ? {} : { visual: parseVisualOverride(item.visual) }),
   };
 }
 
