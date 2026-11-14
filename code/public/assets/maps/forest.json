@@ -327,5 +327,30 @@
       },
       "message": "Le traqueur est vaincu."
     }
+  ],
+  "interactions": [
+    {
+      "id": "forest-herb",
+      "kind": "pickup",
+      "label": "Herbe magique",
+      "itemId": "magic_herb",
+      "position": [
+        1,
+        0,
+        1
+      ],
+      "range": 1.8
+    },
+    {
+      "id": "forest-altar",
+      "kind": "interact",
+      "label": "Autel de la clairière",
+      "position": [
+        -1,
+        0,
+        6
+      ],
+      "range": 2.2
+    }
   ]
 }
