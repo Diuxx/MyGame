@@ -1,5 +1,6 @@
 import {
   Color3, MeshBuilder, StandardMaterial, TransformNode, type AbstractMesh, type Scene,
+  type ShadowGenerator,
 } from "@babylonjs/core";
 import type { GroundStep } from "../../combat/bodyCollision";
 import { buildMapObstacles, mapBounds, resolveMapMovement } from "./mapCollision";
@@ -36,12 +37,13 @@ function colliderDebug(scene: Scene, parent: TransformNode, shape: MapCollider,
 }
 
 export async function buildMap(scene: Scene, definition: MapDefinition, assets: MapAssets,
-                               registry: MapModelRegistry) {
+                               registry: MapModelRegistry, shadows?: ShadowGenerator) {
   const root = new TransformNode("map-" + definition.id, scene);
   root.setEnabled(false);
   const missing = new MissingMapVisuals(scene);
   const missingModels = new Set<string>();
   const instanceDisposers: (() => void)[] = [];
+  const shadowCasters: AbstractMesh[] = [];
   const debugMeshes: AbstractMesh[] = [];
   const debugMaterial = new StandardMaterial("map-colliders-debug", scene);
   debugMaterial.disableLighting = true;
@@ -59,6 +61,20 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
       missingModels.add(path);
       fallback();
     }
+  }
+
+  function attachShadows(node: TransformNode, casts: boolean): void {
+    for (const mesh of node.getChildMeshes()) {
+      mesh.receiveShadows = true;
+      if (!casts || mesh.name.startsWith("missing-label:") || !shadows) continue;
+      shadows.addShadowCaster(mesh, false);
+      shadowCasters.push(mesh);
+    }
+  }
+
+  function releaseCasters(): void {
+    for (const mesh of shadowCasters) shadows?.removeShadowCaster(mesh, false);
+    shadowCasters.length = 0;
   }
 
   function addGroundCollider(): void {
@@ -86,18 +102,21 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
           tileCenter(definition, row, column));
         const tile = assets.tiles[tileId];
         await renderModel(tile.model, parent, () => missing.addTile(parent, tile.model, definition.tileSize, tileId));
+        attachShadows(parent, false);
       }
     }
     for (const object of definition.objects) {
       const asset = assets.objects[object.asset];
       const parent = placeNode(scene, root, "map-object-" + object.id, object.position, object.rotationY);
       await renderModel(asset.model, parent, () => missing.addObject(parent, asset.model, asset.colliders));
+      attachShadows(parent, true);
       for (const shape of asset.colliders) {
         debugMeshes.push(colliderDebug(scene, parent, shape, debugMaterial));
       }
     }
     addGroundCollider();
   } catch (error) {
+    releaseCasters();
     for (const dispose of instanceDisposers) dispose();
     root.dispose(false, false);
     missing.dispose();
@@ -123,6 +142,7 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
     dispose(): void {
       if (disposed) return;
       disposed = true;
+      releaseCasters();
       for (const dispose of instanceDisposers) dispose();
       root.dispose(false, false);
       missing.dispose();

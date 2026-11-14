@@ -27,6 +27,7 @@ export function createCharacterController(
   onFacingChange: (yaw: number) => void = () => {},
   onAttackImpact: () => boolean = () => false,
   resolveMovement: (start: Position, step: GroundVector) => GroundVector = (_start, step) => step,
+  isInputEnabled: () => boolean = () => true,
 ) {
   const groundPlane = new Plane(0, 1, 0, 0);
   let wasMoving = false;
@@ -62,7 +63,7 @@ export function createCharacterController(
   }
 
   function canStartAction(): boolean {
-    return !action && !animations.isPaused;
+    return isInputEnabled() && !action && !animations.isPaused;
   }
 
   function beginAction(clip: string, next: ActiveAction): void {
@@ -147,7 +148,7 @@ export function createCharacterController(
   const input = bindHeroInput(canvas, attack, startDodge, signal);
   scene.onBeforeRenderObservable.add(() => {
     const { horizontal, vertical, running } = input.readMovement(!!action);
-    if (animations.isPaused || document.hidden) return;
+    if (animations.isPaused || document.hidden || !isInputEnabled()) return;
     const delta = scene.getEngine().getDeltaTime() / 1000;
     cooldown = Math.max(0, cooldown - delta);
     combatCrouchRemaining = Math.max(0, combatCrouchRemaining - delta);

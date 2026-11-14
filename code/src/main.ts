@@ -7,6 +7,9 @@ import { requireElement } from "./ui/dom";
 import { createGameplayEnvironment, PLAYGROUND_MOVEMENT_LIMIT } from "./world/environments";
 import { createCamera } from "./world/scene";
 import { createMapSystem } from "./world/maps/mapSystem";
+import { createHeroVitals } from "./combat/heroVitals";
+import { SWORD_SWING } from "./combat/combat";
+import { createHeroHud } from "./ui/heroHud";
 
 async function start(): Promise<void> {
   const overlay = requireElement<HTMLDivElement>("loadingOverlay");
@@ -44,9 +47,20 @@ async function start(): Promise<void> {
       const { startPlayground } = await import("./playground");
       await startPlayground(scene, camera, character, animationPlayer, equipment, signal);
     } else {
-      const { shadows } = createGameplayEnvironment(scene, character.root);
+      const { shadows, ambience } = createGameplayEnvironment(scene, character.root);
       for (const mesh of equipment.meshes) shadows.addShadowCaster(mesh, false);
-      const maps = createMapSystem(scene);
+      const vitals = createHeroVitals();
+      const hud = createHeroHud();
+      let controller: ReturnType<typeof createCharacterController> | undefined;
+      const maps = createMapSystem(scene, {
+        hero: character.root, shadows,
+        applyEnvironment: ambience.apply,
+        isHeroAlive: () => vitals.isAlive,
+        onHeroHit: (damage) => {
+          if (vitals.hit(damage, controller?.isInvulnerable ?? false)) controller?.receiveHit();
+        },
+        onEncounterEvent: hud.event,
+      });
       const loadedMap = await maps.load("dojo");
       const spawn = loadedMap?.definition.spawnPoints.find((point) => point.type === "player");
       if (spawn) {
@@ -54,10 +68,24 @@ async function start(): Promise<void> {
         character.root.rotation.y = spawn.rotationY * Math.PI / 180;
         camera.follow(character.root.position.x, character.root.position.z);
       }
-      createCharacterController(scene, canvas, character.root,
+      controller = createCharacterController(scene, canvas, character.root,
         PLAYGROUND_MOVEMENT_LIMIT, camera, animationPlayer, equipment, signal,
-        undefined, undefined, undefined,
-        (start, step) => loadedMap?.resolveMovement(start, step, 0.4) ?? step);
+        undefined, undefined,
+        () => maps.active?.strike([
+          character.root.position.x, character.root.position.y, character.root.position.z,
+        ], character.root.rotation.y, SWORD_SWING) ?? false,
+        (start, step) => maps.active?.resolveMovement(start, step, 0.4) ?? step,
+        () => vitals.isAlive);
+      scene.onBeforeRenderObservable.add(() => {
+        if (!document.hidden && vitals.update(Math.min(scene.getEngine().getDeltaTime() / 1000, 0.1))) {
+          const point = maps.active?.definition.spawnPoints.find((entry) => entry.type === "player");
+          if (point) {
+            character.root.position.set(...point.position);
+            camera.follow(point.position[0], point.position[2]);
+          }
+        }
+        hud.refresh(vitals);
+      });
       requireElement("movementHint").hidden = false;
     }
 

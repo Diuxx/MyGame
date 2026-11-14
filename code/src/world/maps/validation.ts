@@ -1,3 +1,5 @@
+import { parseEnvironmentSettings } from "./environmentSettings.ts";
+import { parseMapEncounters } from "../../enemies/mapEnemyConfig.ts";
 import type {
   MapAssets, MapCollider, MapDefinition, MapPosition, MapBounds,
 } from "./types.ts";
@@ -105,7 +107,9 @@ export function validateMapAssets(value: unknown): MapAssets {
   return { version: 1, tiles, objects };
 }
 
-export function validateMapDefinition(value: unknown, assets: MapAssets): MapDefinition {
+export function validateMapDefinition(
+  value: unknown, assets: MapAssets, knownEnemyIds?: ReadonlySet<string>,
+): MapDefinition {
   const input = versions(value, "map.json");
   const id = identifier(input.id, "map.id");
   if (typeof input.name !== "string" || !input.name.trim()) throw new Error("map.name invalide.");
@@ -171,10 +175,19 @@ export function validateMapDefinition(value: unknown, assets: MapAssets): MapDef
       rotationY: finite(spawn.rotationY, spawnId + ".rotationY"),
     };
   });
+  // Standalone geometry validation may omit the enemy catalogue; runtime always
+  // provides it so unknown enemy references are rejected before scene construction.
+  const discovered = Array.isArray(input.enemySpawns)
+    ? new Set(input.enemySpawns.filter((item): item is Record<string, unknown> =>
+      !!item && typeof item === "object" && !Array.isArray(item))
+      .map((item) => item.enemyId).filter((id): id is string => typeof id === "string"))
+    : new Set<string>();
+  const encounters = parseMapEncounters(input, knownEnemyIds ?? discovered);
   return {
     version: 1, id, name: input.name,
     tileSize, terrain: { origin, tiles, groundCollider: { enabled: ground.enabled, thickness } },
-    objects, spawnPoints,
+    objects, spawnPoints, environment: parseEnvironmentSettings(input.environment),
+    ...encounters,
   };
 }
 

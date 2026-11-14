@@ -189,5 +189,143 @@
       ],
       "rotationY": 0
     }
+  ],
+  "environment": {
+    "background": "#A1C1B0",
+    "ambient": {
+      "color": "#C6E0D7",
+      "intensity": 0.7
+    },
+    "sun": {
+      "direction": [
+        -0.45,
+        -1.3,
+        0.65
+      ],
+      "color": "#F5F2DA",
+      "intensity": 0.9,
+      "shadows": {
+        "enabled": true,
+        "darkness": 0.27,
+        "resolution": 1024
+      }
+    },
+    "fog": {
+      "enabled": true,
+      "color": "#B2D2C0",
+      "density": 0.006
+    }
+  },
+  "enemySpawns": [
+    {
+      "id": "forest-patrol",
+      "enemyId": "forest-stalker",
+      "position": [
+        -6,
+        0,
+        4
+      ],
+      "rotationY": 0,
+      "activation": {
+        "mode": "always"
+      },
+      "respawn": {
+        "mode": "afterDelay",
+        "delaySeconds": 12
+      },
+      "ai": {
+        "profile": "patrol",
+        "aggroRadius": 5,
+        "attackRange": 1.3,
+        "leashRadius": 8,
+        "attackCooldown": 1.8,
+        "patrol": [
+          [
+            -6,
+            0,
+            4
+          ],
+          [
+            -4,
+            0,
+            7
+          ],
+          [
+            -7,
+            0,
+            7
+          ]
+        ],
+        "skills": [
+          "slash"
+        ]
+      }
+    },
+    {
+      "id": "forest-hunter",
+      "enemyId": "forest-stalker",
+      "position": [
+        5,
+        0,
+        2
+      ],
+      "rotationY": 180,
+      "activation": {
+        "mode": "always"
+      },
+      "respawn": {
+        "mode": "afterDelay",
+        "delaySeconds": 18
+      },
+      "ai": {
+        "profile": "aggressive",
+        "aggroRadius": 7,
+        "attackRange": 1.2,
+        "leashRadius": 9,
+        "attackCooldown": 1.5,
+        "skills": [
+          "slash",
+          "cleave"
+        ]
+      }
+    },
+    {
+      "id": "forest-archer-1",
+      "enemyId": "forest-archer",
+      "position": [
+        3,
+        0,
+        -6
+      ],
+      "rotationY": 90,
+      "activation": {
+        "mode": "always"
+      },
+      "respawn": {
+        "mode": "afterDelay",
+        "delaySeconds": 20
+      },
+      "ai": {
+        "profile": "ranged",
+        "aggroRadius": 8,
+        "attackRange": 6,
+        "leashRadius": 10,
+        "attackCooldown": 2.2,
+        "skills": [
+          "bolt"
+        ]
+      }
+    }
+  ],
+  "waves": [],
+  "events": [
+    {
+      "id": "forest-first-blood",
+      "when": {
+        "type": "enemyDefeated",
+        "target": "forest-hunter"
+      },
+      "message": "Le traqueur est vaincu."
+    }
   ]
 }

@@ -1,4 +1,7 @@
 /** JSON-facing data. All positions are in world units, with Y vertical. */
+import type { EnvironmentSettings } from "./environmentSettings";
+import type { MapEnemySpawn, MapWave, MapEncounterEvent } from "../../enemies/mapEnemyConfig";
+
 export type MapPosition = readonly [number, number, number];
 
 export type MapCollider =
@@ -48,6 +51,10 @@ export interface MapDefinition {
   };
   objects: MapObject[];
   spawnPoints: MapSpawn[];
+  environment?: EnvironmentSettings;
+  enemySpawns?: MapEnemySpawn[];
+  waves?: MapWave[];
+  events?: MapEncounterEvent[];
 }
 
 export interface MapBounds {

@@ -1,5 +1,7 @@
 import { validateMapAssets, validateMapDefinition } from "./validation";
 import type { MapAssets, MapDefinition } from "./types";
+import { loadEnemyDefinitions } from "../../enemies/enemyDefinitions";
+import fieldEnemyDefinitions from "../../enemies/fieldEnemyDefinitions.json";
 
 const MAPS = {
   dojo: "/assets/maps/dojo.json",
@@ -28,13 +30,18 @@ export function isMapId(value: string): value is MapId {
 }
 
 /** Validate all data and references before loading a single GLB. */
-export async function loadMapData(id: MapId): Promise<{ assets: MapAssets; map: MapDefinition }> {
+export async function loadMapData(id: MapId): Promise<{
+  assets: MapAssets;
+  map: MapDefinition;
+  enemyCatalog: ReturnType<typeof loadEnemyDefinitions>;
+}> {
   const [rawAssets, rawMap] = await Promise.all([
     fetchJson("/assets/definitions/assets.json"),
     fetchJson(MAPS[id]),
   ]);
   const assets = validateMapAssets(rawAssets);
-  const map = validateMapDefinition(rawMap, assets);
+  const enemyCatalog = loadEnemyDefinitions(fieldEnemyDefinitions);
+  const map = validateMapDefinition(rawMap, assets, new Set(enemyCatalog.map((enemy) => enemy.id)));
   if (map.id !== id) throw new Error("Identifiant de map inattendu : " + map.id);
-  return { assets, map };
+  return { assets, map, enemyCatalog };
 }
