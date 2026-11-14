@@ -25,7 +25,7 @@ npm run build
 
 ## Ce qu'on peut tester
 
-- Les onze clips de `public/models/hero.glb` sont disponibles dans les modules d’animation. Leurs noms exacts figurent dans `ANIMATIONS.json`. Le héros se tourne vers son déplacement et passe progressivement entre le repos, la marche et la course.
+- Les onze clips du héros sont chargés depuis `public/assets/animations/hero/`. Leurs noms en minuscules figurent dans `ANIMATIONS.json`. Le héros se tourne vers son déplacement et passe progressivement entre le repos, la marche et la course.
 - **Z/S** rapprochent ou éloignent le héros du curseur. **Q/D** le déplacent perpendiculairement à gauche ou à droite. **Maj** permet de courir. Le module **Commandes** permet de modifier ces touches dans le Playground. À l’arrêt, le héros garde sa dernière orientation.
 - **Clic droit** lance une esquive dans la direction demandée, ou dans la direction du regard si aucune touche de déplacement n’est enfoncée. La direction reste fixe durant la roulade. La fenêtre d’invulnérabilité couvre 15 % à 90 % du clip par défaut (réglable) et le délai de réactivation est de 500 ms à partir du départ. Le contrôleur expose `isInvulnerable` pour la future réception de dégâts du héros.
 - L'attaque est jouée une fois. À la fin, le héros reprend le déplacement si une direction est maintenue, ou revient au repos.
@@ -39,7 +39,7 @@ npm run build
 ## Structure
 
 ```text
-public/models/hero.glb  # Asset Meshy fourni
+public/models/hero.glb  # Modèle Meshy riggé et texturé
 src/main.ts             # Sélection du mode et initialisation commune
 src/playground.ts       # Contrôles de test du Playground
 src/character/          # Chargement du héros, animations, entrées et mouvement
@@ -71,7 +71,45 @@ Ces valeurs sont des réglages de **playground**, pas des mesures exactes issues
 
 ## Provenance des assets
 
-Le fichier `hero.glb` est le modèle Meshy fourni par l'utilisateur. Le projet ne revendique pas de droits nouveaux sur les contenus Meshy.
+Le fichier `hero.glb` provient du modèle Meshy fourni par l'utilisateur. Le projet ne revendique pas de droits nouveaux sur les contenus Meshy.
+
+Pour régénérer le modèle et les onze clips, passer le GLB source animé au script depuis la racine du dépôt. Il remplace le modèle de jeu et écrit les clips à partir des noms déclarés dans `ANIMATIONS.json`.
+
+```text
+node code/tools/extractHeroAnimations.mjs chemin/vers/hero-anime.glb
+```
+
+Pour convertir un GLB en FBX sans les textures Metallic et Roughness,
+lancer le script Node depuis la racine du dépôt. Il utilise Blender
+en arrière-plan. Le lanceur cherche Blender dans le PATH puis dans
+le dossier d’installation standard sous Windows. Pour choisir un autre
+exécutable, définir `BLENDER_PATH` dans PowerShell, par exemple avec
+`$env:BLENDER_PATH = 'C:\Program Files\Blender Foundation\Blender 5.3\blender.exe'`.
+Le FBX intègre les textures prises en charge par l’exporteur, dont la
+couleur de base et la normal map. Les valeurs numériques de Metallic
+et Roughness restent disponibles.
+
+```powershell
+node code/tools/exportFbx.mjs "chemin/vers/modele.glb" "chemin/vers/modele.fbx"
+```
+
+Le chemin de sortie est facultatif. Par défaut, le FBX est créé à côté
+du GLB avec le même nom. Choisir un nouveau chemin si un FBX existe déjà.
+
+Pour convertir un FBX qui contient une armature et une seule animation
+en clip GLB indépendant, utiliser le même Blender depuis Node.
+
+```powershell
+node code/tools/convertFbxAnimation.mjs "chemin/vers/mutant-run.fbx" "chemin/vers/run.glb"
+```
+
+Le clip reprend le nom de sortie en minuscules, ici `run`. Par défaut,
+le GLB est créé à côté du FBX. Un chemin existant est refusé.
+Le clip contient les nœuds du squelette et les courbes d’animation,
+sans maillage ni textures. Le déplacement de la racine du FBX est conservé.
+Pour l’utiliser sur un personnage, il faut un squelette et une pose de
+repos compatibles. Pour le gobelin, voir
+[la conversion avec adaptation au rig](../docs/GOBELIN_POC.md).
 
 Les trois GLB de `public/assets/training/` sont des copies des fichiers fournis par l'utilisateur. Leur licence n'a pas été précisée. Leur placement au sol se fait au chargement.
 

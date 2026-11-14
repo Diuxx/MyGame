@@ -123,6 +123,18 @@ test("synchronization uses a fixed reference and retains the independent playbac
   assert.equal(effectivePlaybackSpeed(walk, config), 1.2);
 });
 
+test("saved hero animation settings migrate to lowercase clip names", () => {
+  const settings = createAnimationSettings({
+    Idle_9: { playbackSpeed: 0.75 },
+    Running: { playbackSpeed: 1.5, movement: { speed: 5, sync: true } },
+    Thrust_Slash: { playbackSpeed: 1.25 },
+    attack: { playbackSpeed: 2.25 },
+  });
+  assert.equal(settings.idle.playbackSpeed, 0.75);
+  assert.deepEqual(settings.run.movement, { speed: 5, sync: true });
+  assert.equal(settings.attack.playbackSpeed, 2.25);
+});
+
 test("action timing uses progress and catches an impact window crossed in a single step", () => {
   const window = { from: 0.4, until: 0.6 };
   assert.equal(crossesImpactWindow(0.1, 0.3, window), false);

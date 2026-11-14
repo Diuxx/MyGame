@@ -1,3 +1,5 @@
+import animationManifest from "../../ANIMATIONS.json" with { type: "json" };
+
 type Movement = { speed: number; facingOffset?: number };
 type Window = { from: number; until: number };
 type AttackImpact = Window & { doubleHit: boolean; second: Window };
@@ -21,28 +23,30 @@ function action(id: string, displayName: string, settings?: Partial<Pick<Definit
 }
 
 export const HERO_ANIMATIONS = {
-  run: locomotion("Running", "Course", { speed: 4.5 }),
-  walk: locomotion("Walking", "Marche", { speed: 3 }, 1.3),
-  crouch: locomotion("Cautious_Crouch_Walk_Forward_inplace", "Marche accroupie", { speed: 1.5, facingOffset: 0 }),
-  idle: locomotion("Idle_9", "Repos"),
-  combatIdle: locomotion("Idle_5", "Idle_5"),
-  left: locomotion("Cautious_Crouch_Walk_Left_inplace", "Pas à gauche", { speed: 1.5, facingOffset: Math.PI / 2 }),
-  right: locomotion("Cautious_Crouch_Walk_Right_inplace", "Pas à droite", { speed: 1.5, facingOffset: -Math.PI / 2 }),
-  backward: locomotion("Walk_Backward_inplace", "Marche arrière", { speed: 1.5, facingOffset: Math.PI }),
-  dodge: action("Roll_Dodge_3", "Esquive", {
+  run: locomotion("run", "Course", { speed: 4.5 }),
+  walk: locomotion("walk", "Marche", { speed: 3 }, 1.3),
+  crouch: locomotion("crouch-walk", "Marche accroupie", { speed: 1.5, facingOffset: 0 }),
+  idle: locomotion("idle", "Repos"),
+  combatIdle: locomotion("combat-idle", "Repos en combat"),
+  left: locomotion("strafe-left", "Pas à gauche", { speed: 1.5, facingOffset: Math.PI / 2 }),
+  right: locomotion("strafe-right", "Pas à droite", { speed: 1.5, facingOffset: -Math.PI / 2 }),
+  backward: locomotion("walk-backward", "Marche arrière", { speed: 1.5, facingOffset: Math.PI }),
+  dodge: action("dodge", "Esquive", {
     playbackSpeed: 2.5,
     dodge: { distance: 2, window: { from: 0.15, until: 0.9 } },
   }),
-  attack: action("Thrust_Slash", "Attaque à l’épée", {
+  attack: action("attack", "Attaque à l’épée", {
     playbackSpeed: 2,
     impact: { from: 0.23, until: 0.5, doubleHit: true, second: { from: 0.5, until: 0.8 } },
   }),
-  jump: action("Regular_Jump", "Saut", { playbackSpeed: 1.5 }),
-  stop: action("Sprint_and_Sudden_Stop", "Arrêt brusque après sprint"),
+  jump: action("jump", "Saut", { playbackSpeed: 1.5 }),
+  stop: action("stop", "Arrêt brusque après sprint"),
 };
 
 export const ANIMATION_DEFINITIONS = Object.values(HERO_ANIMATIONS);
 const definitions = new Map(ANIMATION_DEFINITIONS.map((definition) => [definition.id, definition]));
+const legacyIds = new Map(animationManifest.animations.map(({ name, source }) => [name, source]));
+legacyIds.set(HERO_ANIMATIONS.combatIdle.id, "Idle_5");
 export const getAnimationDefinition = (id: string) => definitions.get(id);
 
 export const ANIMATION_RANGES = {
@@ -78,7 +82,8 @@ function windowSettings(value: unknown, defaults: Window): Window {
 export function createAnimationSettings(saved?: unknown): AnimationSettings {
   const entries = record(saved);
   return Object.fromEntries(ANIMATION_DEFINITIONS.map((definition) => {
-    const value = record(entries[definition.id]);
+    const legacyId = legacyIds.get(definition.id);
+    const value = record(entries[definition.id] ?? (legacyId ? entries[legacyId] : undefined));
     const settings: AnimationSetting = {
       playbackSpeed: number(value.playbackSpeed, definition.playbackSpeed, ANIMATION_RANGES.playback),
     };

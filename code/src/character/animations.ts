@@ -32,7 +32,7 @@ export class AnimationPlayer {
     const combatIdle = HERO_ANIMATIONS.combatIdle.id;
     this.combatIdleClip = this.available.has(combatIdle) ? combatIdle : IDLE_ANIMATION;
     for (const clip of [IDLE_ANIMATION, LOCOMOTION_CLIPS.walk, LOCOMOTION_CLIPS.backward, LOCOMOTION_CLIPS.run, ATTACK_ANIMATION, DODGE_ANIMATION]) {
-      if (!this.available.has(clip)) throw new Error(`Clip requis absent de hero.glb : ${clip}`);
+      if (!this.available.has(clip)) throw new Error(`Clip du héros requis : ${clip}`);
     }
     for (const animation of animations) {
       animation.enableBlending = true;
