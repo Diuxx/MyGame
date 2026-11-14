@@ -169,5 +169,167 @@
       ],
       "rotationY": 180
     }
+  ],
+  "environment": {
+    "background": "#B7C9C3",
+    "ambient": {
+      "color": "#D5E3EA",
+      "intensity": 0.66
+    },
+    "sun": {
+      "direction": [
+        -0.65,
+        -1.4,
+        0.35
+      ],
+      "color": "#FFE1AF",
+      "intensity": 1.05,
+      "shadows": {
+        "enabled": true,
+        "darkness": 0.3,
+        "resolution": 1024
+      }
+    },
+    "fog": {
+      "enabled": false,
+      "color": "#C5CFCA",
+      "density": 0.005
+    }
+  },
+  "enemySpawns": [
+    {
+      "id": "door-guard",
+      "enemyId": "dojo-guard",
+      "position": [
+        12,
+        0,
+        4
+      ],
+      "rotationY": 180,
+      "activation": {
+        "mode": "always"
+      },
+      "respawn": {
+        "mode": "afterDelay",
+        "delaySeconds": 16
+      },
+      "ai": {
+        "profile": "guard",
+        "aggroRadius": 4.5,
+        "attackRange": 1.5,
+        "leashRadius": 7,
+        "attackCooldown": 2,
+        "skills": [
+          "slash"
+        ]
+      }
+    },
+    {
+      "id": "arena-guard",
+      "enemyId": "dojo-guard",
+      "position": [
+        13,
+        0,
+        7
+      ],
+      "rotationY": 180,
+      "activation": {
+        "mode": "wave",
+        "waveId": "first"
+      },
+      "respawn": {
+        "mode": "never"
+      },
+      "ai": {
+        "profile": "aggressive",
+        "aggroRadius": 7,
+        "attackRange": 1.5,
+        "leashRadius": 10,
+        "attackCooldown": 1.8,
+        "skills": [
+          "slash",
+          "cleave"
+        ]
+      }
+    },
+    {
+      "id": "ancient-guardian",
+      "enemyId": "dojo-guardian",
+      "position": [
+        13,
+        0,
+        13
+      ],
+      "rotationY": 180,
+      "activation": {
+        "mode": "wave",
+        "waveId": "boss"
+      },
+      "respawn": {
+        "mode": "never"
+      },
+      "persistDeath": true,
+      "ai": {
+        "profile": "aggressive",
+        "aggroRadius": 9,
+        "attackRange": 2,
+        "leashRadius": 12,
+        "attackCooldown": 2.4,
+        "skills": [
+          "slash",
+          "cleave"
+        ]
+      },
+      "boss": {
+        "phases": [
+          {
+            "belowHealth": 0.7,
+            "attackSpeedMultiplier": 0.75,
+            "skill": "cleave"
+          },
+          {
+            "belowHealth": 0.3,
+            "attackSpeedMultiplier": 0.55,
+            "skill": "bolt"
+          }
+        ]
+      }
+    }
+  ],
+  "waves": [
+    {
+      "id": "first",
+      "starts": "always"
+    },
+    {
+      "id": "boss",
+      "starts": "afterPrevious"
+    }
+  ],
+  "events": [
+    {
+      "id": "dojo-wave-cleared",
+      "when": {
+        "type": "waveCleared",
+        "target": "first"
+      },
+      "message": "La sentinelle est vaincue. Le Gardien ancien apparaît."
+    },
+    {
+      "id": "dojo-boss-phase",
+      "when": {
+        "type": "bossPhase",
+        "target": "ancient-guardian"
+      },
+      "message": "Le Gardien change de stratégie !"
+    },
+    {
+      "id": "dojo-victory",
+      "when": {
+        "type": "enemyDefeated",
+        "target": "ancient-guardian"
+      },
+      "message": "Victoire ! Le Gardien du dojo est vaincu."
+    }
   ]
 }
