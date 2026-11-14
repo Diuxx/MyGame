@@ -10,7 +10,7 @@ import { buildMap } from "./mapBuilder";
 import { createMapSession } from "./mapSession";
 import { MapModelRegistry } from "./modelRegistry";
 import type { VisualOverride } from "./editorSchema";
-import type { MapCollider, MapPosition } from "./types";
+import type { MapPosition } from "./types";
 
 export interface MapSystemOptions {
   hero: TransformNode;

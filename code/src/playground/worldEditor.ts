@@ -1,5 +1,5 @@
 import {
-  Color3, MeshBuilder, Plane, type Scene, type TransformNode,
+  Color3, MeshBuilder, Plane, StandardMaterial, type Scene,
 } from "@babylonjs/core";
 import type { MapCollider, MapPosition } from "../world/maps/types";
 import type { VisualOverride } from "../world/maps/editorSchema";
@@ -48,7 +48,10 @@ export function bindWorldEditor(
   const marker = MeshBuilder.CreateTorus("world-editor-selection-ring", {
     diameter: 1.5, thickness: 0.06, tessellation: 32,
   }, scene);
-  marker.color = Color3.FromHexString("#FFE083");
+  const markerMaterial = new StandardMaterial("world-editor-selection-color", scene);
+  markerMaterial.emissiveColor = Color3.FromHexString("#FFE083");
+  markerMaterial.disableLighting = true;
+  marker.material = markerMaterial;
   marker.isPickable = false;
   marker.setEnabled(false);
   let selected: Selection | undefined;
@@ -290,6 +293,7 @@ export function bindWorldEditor(
     scene.onBeforeRenderObservable.remove(observer);
     maps.setEditing(false);
     marker.dispose();
+    markerMaterial.dispose();
   }, { once: true });
   clearSelection();
 
