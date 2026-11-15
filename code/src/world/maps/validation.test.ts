@@ -107,3 +107,15 @@ test("map instances validate and retain visual/collider overrides and interactio
   invalid.objects[0].visual.scale = 0;
   assert.throws(() => validateMapDefinition(invalid, assets), /visual.scale/);
 });
+
+test("primitive prototype zones retain their non-GLB ground, geometry and exits", () => {
+  for (const id of ["prototype-forest", "prototype-arena"]) {
+    const map = validateMapDefinition(load("maps/" + id + ".json"), assets);
+    assert.equal(map.id, id);
+    assert.ok(map.terrain.primitiveGround);
+    assert.equal(map.terrain.tiles.flat().filter(Boolean).length, 0);
+    assert.ok(map.primitives?.length);
+    assert.ok(map.exits?.length);
+    assert.ok(map.exits?.every((exit) => exit.targetSpawn.length > 0));
+  }
+});

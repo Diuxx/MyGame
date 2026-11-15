@@ -41,6 +41,15 @@ export function buildMapObstacles(map: MapDefinition, assets: MapAssets): FlatOb
         : { ...base, type: "circle", radius: shape.radius });
     }
   }
+  for (const primitive of map.primitives ?? []) {
+    if (!primitive.blocksMovement) continue;
+    const [x, y, z] = primitive.position;
+    const [width, height, depth] = primitive.size;
+    const bounds = { x, z, minY: y - height / 2, maxY: y + height / 2 };
+    result.push(primitive.kind === "box"
+      ? { ...bounds, type: "box", width, depth, yaw: primitive.rotationY * Math.PI / 180 }
+      : { ...bounds, type: "circle", radius: Math.max(width, depth) / 2 });
+  }
   return result;
 }
 

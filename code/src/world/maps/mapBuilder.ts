@@ -11,6 +11,7 @@ import type { VisualOverride } from "./editorSchema";
 import { MissingMapVisuals } from "./missingVisuals";
 import { MapModelRegistry } from "./modelRegistry";
 import { tileCenter } from "./validation";
+import { createZoneScene } from "./zoneScene";
 import type { MapAssets, MapCollider, MapDefinition, MapObject, MapPosition } from "./types";
 
 function placeNode(scene: Scene, parent: TransformNode, id: string,
@@ -48,6 +49,7 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
   const tiles = new Map<string, () => void>();
   const debugMeshes: AbstractMesh[] = [];
   let interactions: ReturnType<typeof createWorldInteractionScene> | undefined;
+  let zone: ReturnType<typeof createZoneScene> | undefined;
   const objectViews = new Map<string, {
     parent: TransformNode;
     model: ReturnType<typeof createEditableModel>;
@@ -170,6 +172,7 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
   }
 
   try {
+    zone = createZoneScene(scene, root, definition, shadows);
     for (const [row, columns] of definition.terrain.tiles.entries()) {
       for (const [column, tileId] of columns.entries()) {
         if (tileId !== null) await renderTile(row, column, tileId);
@@ -183,6 +186,7 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
     interactions = createWorldInteractionScene(scene, root, definition.interactions ?? [], shadows);
   } catch (error) {
     interactions?.dispose();
+    zone?.dispose();
     for (const view of objectViews.values()) view.model.dispose();
     for (const release of tiles.values()) release();
     root.dispose(false, false);
@@ -207,6 +211,7 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
     definition,
     navigation,
     missingModels: [...missingModels],
+    setZoneDebug(visible: boolean): void { zone?.setDebug(visible); },
     setVisible(visible: boolean): void { root.setEnabled(visible); },
     setColliderDebug(visible: boolean): void {
       debugVisible = visible;
@@ -282,6 +287,7 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
       if (disposed) return;
       disposed = true;
       interactions?.dispose();
+      zone?.dispose();
       for (const view of objectViews.values()) view.model.dispose();
       for (const release of tiles.values()) release();
       root.dispose(false, false);
