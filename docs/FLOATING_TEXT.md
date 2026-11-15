@@ -1,60 +1,82 @@
-# Floating combat text — implementation notes
+# Floating Text — JSON tuning
 
-The floating-text feature follows the existing architecture boundaries described in
-PROJECT.md. It never modifies health or recomputes damage. These notes are
-editable; the founding project references remain unchanged.
+The presentation-only floating-text feature follows the architecture in
+[PROJECT.md](PROJECT.md). It never calculates damage or changes animation timing.
 
-## Behaviour
+## Authoritative source
 
-- Action messages (ATTACK, DODGE, WALK, SPRINT) are emitted by the hero
-  controller only when an action starts or the movement state changes. Holding a
-  movement key does not generate a new message every frame.
-- Damage messages are triggered after applyDamage, based on the target's
-  actual health difference. This includes defense, overkill caps and the
-  immortality floor. Targets can be hit multiple times independently.
-- Critical-hit style is implemented for future combat abilities, but the current
-  sword attack has no critical-hit rule. The Playground can preview this style.
-- Collision currently returns intersection only, not the precise contact point.
-  The centre of the target's hurtbox is used as an **approximate impact anchor**.
-  A future contact-point-aware hit detector can replace it without changing the
-  renderer. World objects with no damage/health model do not display numbers.
+The committed file **code/FLOATING_TEXT.json** supplies the production defaults
+for both Gameplay and Playground. The loader and validator are in
+**code/src/ui/floatingTextConfig.ts**. Both modes consume the same JSON; no
+second set of hardcoded style defaults is maintained in TypeScript.
 
-## Presentation and resources
+The manifest is version 1 and defines:
 
-The renderer is code/src/ui/floatingTextSystem.ts. It uses one
-pointer-transparent HTML overlay positioned over the Babylon canvas, with
-world-to-screen projection each frame. This keeps the feature dependency-free
-(no new Babylon GUI package) and keeps visual resources outside combat rules.
-Each message owns its life timer and fades/rises/scales independently. The
-overlay follows the hero root at a configurable head-height offset.
+- \`actions.styles.movement\`: WALK, SPRINT and DODGE; initially **11 px / 450 ms**
+  to keep movement feedback discreet.
+- \`actions.styles.attack\`: ATTACK; initially **14 px / 650 ms**, slightly more visible.
+- Each style has its own duration, size, scale, vertical rise and colour.
+- \`actions.labels\` and \`actions.anchorHeight\` provide the words and hero offset.
+- \`damage.normal\` and \`damage.critical\` retain their existing independent
+  presentation settings. The real sword attack currently has no crit rule;
+  the Playground can preview the critical style.
+- \`limits\`, \`enabled\`, \`actions.enabled\` and \`damage.enabled\` retain the
+  previous safety caps and display switches.
 
-One before-render observer updates all messages, with a global and per-entity
-cap. The observer and overlay are removed on scene disposal. Hidden/off-screen
-messages are not drawn, and mouse input passes through the overlay.
+The strict manifest parser refuses incompatible versions and invalid fields.
+Temporary editor values are also bounded to safe ranges.
 
-## Playground and preferences
+## Playground workflow
 
-Run cd code && npm run dev-playground, then open **Floating Text** in the
-Playground module list. The panel offers individual enable switches, size,
-duration, rise and scale controls, normal/critical colours and four previews
-(including a simulated critical hit). Changes apply immediately.
+From the code directory, run \`npm run dev-playground\`, open **Floating Text**
+and adjust the movement and attack sections separately. Changing values updates
+future messages immediately; existing messages finish with the style captured
+when they were created. Movement and attack previews are independent of real
+combat, as are the normal/critical damage previews.
 
-The full development configuration is saved as
-mon-rpg.playground.floating-text.v1 in localStorage. The player's global
-display preference is separate:
-mon-rpg.settings.floating-text-enabled. This preference is also read in
-gameplay mode. If localStorage is unavailable, defaults are used and settings
-remain effective for the current session.
+- **Exporter FLOATING_TEXT.json** downloads the *complete* version 1 manifest.
+- **Copier le JSON complet** copies the same content when browser clipboard
+  permission is available.
+- **Importer FLOATING_TEXT.json** accepts a compatible full manifest, validates
+  it and applies its values only in Playground.
+- **Rétablir le JSON versionné** discards the local Playground override and
+  restores the values from the committed manifest.
 
-Add new action names in floatingTextConfig.ts, rather than coupling the
-renderer to animation clips. More specialised settings, anchor tracking and
-combat event sources can be added when real gameplay requires them.
+The browser **does not edit Git files**. To make edits permanent, export the
+file, replace code/FLOATING_TEXT.json in the working copy, commit the change,
+and relaunch Gameplay. As with the animation tuning module, exporting is an
+explicit designer action.
 
-## Checks
+Temporary Playground values use localStorage key
+\`mon-rpg.playground.floating-text.v2\`. The previous v1 override is intentionally
+not loaded: the new movement/attack profiles cannot be mapped safely from its
+single shared action style, and stale large text sizes must not override the
+new defaults. Gameplay **never** reads this Playground tuning key.
 
-From code/ run npm test and npm run build, then launch both
-npm run dev-playground and npm run dev-gameplay.
+The personal enable/disable preference remains separate at
+\`mon-rpg.settings.floating-text-enabled\`. It is respected in both modes, even
+when the versioned manifest has different default styles. If storage access is
+blocked, the Playground still applies changes for the current session.
 
-Check in-engine action overlap and impact placement, zoom/camera movement,
-enemy deaths and respawns, Playground world-editor clicks, browser resizing,
-and scene reload. Device performance has not been established by unit tests.
+## Rendering and combat limits
+
+The existing renderer uses a single pointer-transparent HTML overlay above
+the Babylon canvas, refreshed by one scene render observer. Texts have
+independent lifetimes and caps; all overlay resources are cleaned up on scene
+disposal. The lighter movement weight is presentation-only.
+
+The current collision system reports an overlap rather than a precise surface
+contact point: damage numbers appear at the centre of the target's hurtbox.
+Targets without damage/health state do not display damage. Nothing in this
+tuning feature modifies combat rules, the hero equipment system or hitboxes.
+
+## Verification
+
+From code/, run \`npm test\` and \`npm run build\`.
+
+In both Playground and Gameplay, verify that WALK/SPRINT/DODGE are subdued,
+ATTACK is separately sized, actions overlap safely, enemy damage still appears,
+the camera and resize work, and disabling text persists. In Playground, also
+export a tuned manifest, import it again, reset to the committed JSON and check
+the source indicator. After committing the exported JSON, launch Gameplay to
+confirm the defaults changed without relying on browser storage.

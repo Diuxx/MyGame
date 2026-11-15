@@ -1,7 +1,7 @@
 import { Matrix, Vector3, type Scene, type TransformNode } from '@babylonjs/core';
 import type { DamageResolved, Position } from '../combat/combat.ts';
 import {
-  createFloatingTextConfig, type ActionSplashId, type FloatingTextConfig, type FloatingTextStyle,
+  actionTextStyle, createFloatingTextConfig, type ActionSplashId, type FloatingTextConfig, type FloatingTextStyle,
 } from './floatingTextConfig.ts';
 import { floatingTextFrame } from './floatingTextAnimation.ts';
 
@@ -58,6 +58,9 @@ export function createFloatingTextSystem(
 
     const element = document.createElement('span');
     element.className = 'floating-text';
+    if (category === 'action' && style === config.actions.styles.movement) {
+      element.classList.add('floating-text-movement');
+    }
     element.textContent = message;
     element.style.color = style.color;
     element.style.fontSize = style.fontSize + 'px';
@@ -79,7 +82,7 @@ export function createFloatingTextSystem(
       if (root.isDisposed()) return;
       const world = root.getAbsolutePosition();
       return [world.x, world.y + config.actions.anchorHeight, world.z];
-    }, config.actions.style);
+    }, actionTextStyle(config, id as ActionSplashId));
   }
 
   function showDamage(event: DamageResolved): void {

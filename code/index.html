@@ -80,32 +80,56 @@
             <h2 id="floatingTextHeading">Floating Text</h2>
             <button class="module-close" type="button" aria-label="Fermer les textes flottants">×</button>
           </header>
+          <p id="floatingTextConfigSource" class="animation-note"></p>
           <label class="grid-toggle"><input id="floatingTextEnabled" type="checkbox" /> Afficher les textes flottants</label>
           <label class="grid-toggle"><input id="floatingActionsEnabled" type="checkbox" /> Messages d'action</label>
           <label class="grid-toggle"><input id="floatingDamageEnabled" type="checkbox" /> Chiffres de dégâts</label>
-          <div class="field-row"><label for="floatingActionDuration">Durée d'action (ms)</label><output id="floatingActionDurationValue"></output></div>
-          <input id="floatingActionDuration" type="range" min="150" max="2500" step="50" />
-          <div class="field-row"><label for="floatingDamageDuration">Durée dégâts (ms)</label><output id="floatingDamageDurationValue"></output></div>
-          <input id="floatingDamageDuration" type="range" min="150" max="2500" step="50" />
-          <div class="field-row"><label for="floatingActionSize">Police action (px)</label><output id="floatingActionSizeValue"></output></div>
-          <input id="floatingActionSize" type="range" min="10" max="48" step="1" />
-          <div class="field-row"><label for="floatingDamageSize">Police dégâts (px)</label><output id="floatingDamageSizeValue"></output></div>
-          <input id="floatingDamageSize" type="range" min="10" max="48" step="1" />
-          <div class="field-row"><label for="floatingTextRise">Montée action (px)</label><output id="floatingTextRiseValue"></output></div>
-          <input id="floatingTextRise" type="range" min="0" max="120" step="5" />
-          <div class="field-row"><label for="floatingTextScale">Agrandissement action</label><output id="floatingTextScaleValue"></output></div>
-          <input id="floatingTextScale" type="range" min="1" max="2.5" step="0.05" />
+          <h3 class="floating-group-title">Mouvements · WALK / SPRINT / DODGE</h3>
+          <div class="field-row"><label for="floatingMovementSize">Taille (px)</label><output id="floatingMovementSizeValue"></output></div>
+          <input id="floatingMovementSize" type="range" min="8" max="36" step="1" />
+          <div class="field-row"><label for="floatingMovementDuration">Durée de vie (ms)</label><output id="floatingMovementDurationValue"></output></div>
+          <input id="floatingMovementDuration" type="range" min="150" max="2500" step="50" />
+          <div class="field-row"><label for="floatingMovementRise">Montée (px)</label><output id="floatingMovementRiseValue"></output></div>
+          <input id="floatingMovementRise" type="range" min="0" max="120" step="5" />
+          <div class="field-row"><label for="floatingMovementScale">Agrandissement</label><output id="floatingMovementScaleValue"></output></div>
+          <input id="floatingMovementScale" type="range" min="1" max="2.5" step="0.05" />
+          <label>Couleur des mouvements<input id="floatingMovementColor" type="color" /></label>
           <div class="enemy-fields">
-            <label>Couleur normale<input id="floatingNormalColor" type="color" /></label>
-            <label>Couleur critique<input id="floatingCriticalColor" type="color" /></label>
+            <button type="button" id="floatingTestWalk" class="secondary">Tester WALK</button>
+            <button type="button" id="floatingTestSprint" class="secondary">Tester SPRINT</button>
+            <button type="button" id="floatingTestDodge" class="secondary">Tester DODGE</button>
+          </div>
+          <h3 class="floating-group-title">Attaque · ATTACK</h3>
+          <div class="field-row"><label for="floatingAttackSize">Taille (px)</label><output id="floatingAttackSizeValue"></output></div>
+          <input id="floatingAttackSize" type="range" min="8" max="36" step="1" />
+          <div class="field-row"><label for="floatingAttackDuration">Durée de vie (ms)</label><output id="floatingAttackDurationValue"></output></div>
+          <input id="floatingAttackDuration" type="range" min="150" max="2500" step="50" />
+          <div class="field-row"><label for="floatingAttackRise">Montée (px)</label><output id="floatingAttackRiseValue"></output></div>
+          <input id="floatingAttackRise" type="range" min="0" max="120" step="5" />
+          <div class="field-row"><label for="floatingAttackScale">Agrandissement</label><output id="floatingAttackScaleValue"></output></div>
+          <input id="floatingAttackScale" type="range" min="1" max="2.5" step="0.05" />
+          <label>Couleur de l'attaque<input id="floatingAttackColor" type="color" /></label>
+          <button type="button" id="floatingTestAttack" class="secondary wide">Tester ATTACK</button>
+          <h3 class="floating-group-title">Dégâts</h3>
+          <div class="field-row"><label for="floatingDamageSize">Taille normale (px)</label><output id="floatingDamageSizeValue"></output></div>
+          <input id="floatingDamageSize" type="range" min="8" max="48" step="1" />
+          <div class="field-row"><label for="floatingDamageDuration">Durée normale (ms)</label><output id="floatingDamageDurationValue"></output></div>
+          <input id="floatingDamageDuration" type="range" min="150" max="2500" step="50" />
+          <div class="enemy-fields">
+          <label>Couleur normale<input id="floatingNormalColor" type="color" /></label>
+          <label>Couleur critique<input id="floatingCriticalColor" type="color" /></label>
           </div>
           <div class="enemy-fields">
-            <button type="button" id="floatingTestAttack" class="secondary">Tester ATTACK</button>
-            <button type="button" id="floatingTestDodge" class="secondary">Tester DODGE</button>
             <button type="button" id="floatingTestDamage" class="secondary">Tester 120</button>
             <button type="button" id="floatingTestCritical" class="secondary">Tester critique</button>
           </div>
-          <button type="button" id="floatingTextReset" class="secondary wide">Réinitialiser les textes</button>
+          <h3 class="floating-group-title">Configuration JSON</h3>
+          <p class="animation-note">Les modifications restent locales. Exporter le fichier complet puis remplacer code/FLOATING_TEXT.json pour les versionner.</p>
+          <button type="button" id="floatingTextExport" class="secondary wide">Exporter FLOATING_TEXT.json</button>
+          <button type="button" id="floatingTextCopy" class="secondary wide">Copier le JSON complet</button>
+          <button type="button" id="floatingTextImport" class="secondary wide">Importer FLOATING_TEXT.json</button>
+          <input id="floatingTextImportFile" type="file" accept=".json,application/json" hidden />
+          <button type="button" id="floatingTextReset" class="secondary wide">Rétablir le JSON versionné</button>
           <p id="floatingTextStatus" class="animation-note" role="status"></p>
         </section>
         <section id="controlsModule" class="module-window enemy-tools" aria-labelledby="controlsHeading" hidden>

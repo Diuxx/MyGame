@@ -4,7 +4,7 @@ import { floatingTextFrame } from './floatingTextAnimation.ts';
 import { createFloatingTextConfig } from './floatingTextConfig.ts';
 
 test('messages grow, rise and fade before independent expiry', () => {
-  const style = createFloatingTextConfig().actions.style;
+  const style = createFloatingTextConfig().actions.styles.attack;
   const start = floatingTextFrame(0, style);
   const middle = floatingTextFrame(400, style);
   const end = floatingTextFrame(900, style);

@@ -13,7 +13,7 @@ import { createMapSystem } from "./world/maps/mapSystem";
 import { createHeroLifecycle } from "./character/heroLifecycle";
 import { createHeroHud } from "./ui/heroHud";
 import { createFloatingTextSystem } from "./ui/floatingTextSystem";
-import { loadFloatingTextConfig } from "./ui/floatingTextConfig";
+import { loadPlaygroundFloatingTextConfig } from "./ui/floatingTextConfig";
 import { bindFloatingTextTools } from "./playground/floatingTextTools";
 import { bindAttackTools } from "./playground/attackTools";
 import { bindTransitionTools } from "./playground/transitionTools";
@@ -58,7 +58,7 @@ export async function startPlayground(
   bindModuleWindows(signal);
   const { ground, grid, shadows, ambience } = createPlaygroundEnvironment(scene, character.root);
   const canvas = requireElement<HTMLCanvasElement>("renderCanvas");
-  const floatingText = createFloatingTextSystem(scene, canvas, loadFloatingTextConfig());
+  const floatingText = createFloatingTextSystem(scene, canvas, loadPlaygroundFloatingTextConfig());
   const enemies = createEnemyScene(scene, shadows, ground.position.y, floatingText.showDamage);
   const heroPosition = (): Position => [character.root.position.x, ground.position.y, character.root.position.z];
   const refreshEnemyHealth = await startEnemyTools(enemies, ground.position.y,
