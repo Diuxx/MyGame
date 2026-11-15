@@ -1,4 +1,4 @@
-import { applyDamage, intersectsSwing, regenerate, type Position, type SwordSwing } from "../combat/combat.ts";
+import { applyDamage, intersectsSwing, regenerate, type DamageResolved, type Position, type SwordSwing } from "../combat/combat.ts";
 import { intersectsMeleeHitbox } from "../combat/hitDetection.ts";
 import { resolveCircleMovement, type GroundStep } from "../combat/bodyCollision.ts";
 import type { EnemyDefinition } from "./enemyDefinitions.ts";
@@ -297,19 +297,28 @@ export function createMapEnemySimulation(
     checkWaves();
   }
 
-  function strike(origin: Position, yaw: number, swing: SwordSwing): boolean {
+  function strike(origin: Position, yaw: number, swing: SwordSwing,
+                  onDamage?: (event: DamageResolved) => void): boolean {
     let any = false;
     // Snapshot targets: a wave unlocked by this hit must not be hit by the same swing.
     const candidates = [...actors.values()].filter((actor) =>
       actor.state !== "inactive" && !actor.entity.defeated);
     for (const actor of candidates) {
-      if (intersectsSwing(origin, yaw, actor.entity.position,
-        actor.entity.definition.hurtbox, actor.yaw, swing) &&
-        applyDamage(actor.entity, swing.damage)) {
-        any = true;
-        if (actor.entity.defeated) recordDeath(actor);
-        else phaseChanges(actor);
-      }
+      if (!intersectsSwing(origin, yaw, actor.entity.position,
+        actor.entity.definition.hurtbox, actor.yaw, swing)) continue;
+      const before = actor.entity.health;
+      if (!applyDamage(actor.entity, swing.damage)) continue;
+      any = true;
+      const [offsetX, offsetY, offsetZ] = actor.entity.definition.hurtbox.offset;
+      onDamage?.({
+        targetId: actor.spec.id, finalDamage: before - actor.entity.health, isCritical: false,
+        hitPosition: [
+          actor.entity.position[0] + offsetX, actor.entity.position[1] + offsetY,
+          actor.entity.position[2] + offsetZ,
+        ],
+      });
+      if (actor.entity.defeated) recordDeath(actor);
+      else phaseChanges(actor);
     }
     return any;
   }

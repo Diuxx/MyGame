@@ -55,6 +55,7 @@
           <button type="button" aria-controls="worldEditorModule" aria-expanded="false">Éditeur de monde</button>
           <button type="button" aria-controls="cameraModule" aria-expanded="false">Caméra</button>
           <button type="button" aria-controls="modelModule" aria-expanded="false">Modèle chargé</button>
+          <button type="button" aria-controls="floatingTextModule" aria-expanded="false">Floating Text</button>
           <button type="button" aria-controls="controlsModule" aria-expanded="false">Commandes</button>
         </nav>
         <div class="debug-quick-controls" role="group" aria-label="Affichage rapide des hitboxes">
@@ -65,6 +66,39 @@
         </div>
       </aside>
       <div id="playgroundModules" class="module-dock" hidden>
+        <section id="floatingTextModule" class="module-window enemy-tools" aria-labelledby="floatingTextHeading" hidden>
+          <header class="module-header">
+            <h2 id="floatingTextHeading">Floating Text</h2>
+            <button class="module-close" type="button" aria-label="Fermer les textes flottants">×</button>
+          </header>
+          <label class="grid-toggle"><input id="floatingTextEnabled" type="checkbox" /> Afficher les textes flottants</label>
+          <label class="grid-toggle"><input id="floatingActionsEnabled" type="checkbox" /> Messages d'action</label>
+          <label class="grid-toggle"><input id="floatingDamageEnabled" type="checkbox" /> Chiffres de dégâts</label>
+          <div class="field-row"><label for="floatingActionDuration">Durée d'action (ms)</label><output id="floatingActionDurationValue"></output></div>
+          <input id="floatingActionDuration" type="range" min="150" max="2500" step="50" />
+          <div class="field-row"><label for="floatingDamageDuration">Durée dégâts (ms)</label><output id="floatingDamageDurationValue"></output></div>
+          <input id="floatingDamageDuration" type="range" min="150" max="2500" step="50" />
+          <div class="field-row"><label for="floatingActionSize">Police action (px)</label><output id="floatingActionSizeValue"></output></div>
+          <input id="floatingActionSize" type="range" min="10" max="48" step="1" />
+          <div class="field-row"><label for="floatingDamageSize">Police dégâts (px)</label><output id="floatingDamageSizeValue"></output></div>
+          <input id="floatingDamageSize" type="range" min="10" max="48" step="1" />
+          <div class="field-row"><label for="floatingTextRise">Montée action (px)</label><output id="floatingTextRiseValue"></output></div>
+          <input id="floatingTextRise" type="range" min="0" max="120" step="5" />
+          <div class="field-row"><label for="floatingTextScale">Agrandissement action</label><output id="floatingTextScaleValue"></output></div>
+          <input id="floatingTextScale" type="range" min="1" max="2.5" step="0.05" />
+          <div class="enemy-fields">
+            <label>Couleur normale<input id="floatingNormalColor" type="color" /></label>
+            <label>Couleur critique<input id="floatingCriticalColor" type="color" /></label>
+          </div>
+          <div class="enemy-fields">
+            <button type="button" id="floatingTestAttack" class="secondary">Tester ATTACK</button>
+            <button type="button" id="floatingTestDodge" class="secondary">Tester DODGE</button>
+            <button type="button" id="floatingTestDamage" class="secondary">Tester 120</button>
+            <button type="button" id="floatingTestCritical" class="secondary">Tester critique</button>
+          </div>
+          <button type="button" id="floatingTextReset" class="secondary wide">Réinitialiser les textes</button>
+          <p id="floatingTextStatus" class="animation-note" role="status"></p>
+        </section>
         <section id="controlsModule" class="module-window enemy-tools" aria-labelledby="controlsHeading" hidden>
           <header class="module-header">
             <h2 id="controlsHeading">Commandes</h2>

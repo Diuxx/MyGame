@@ -2,6 +2,14 @@ import { intersectsMeleeHitbox } from "./hitDetection.ts";
 
 export type Position = readonly [number, number, number];
 
+/** Damage actually removed from the target after mitigation, immortality and overkill. */
+export interface DamageResolved {
+  targetId: string;
+  finalDamage: number;
+  isCritical: boolean;
+  hitPosition: Position;
+}
+
 export type Hurtbox = { height: number; offset: Position } & (
   { shape: "cylinder"; radius: number } | { shape: "box"; width: number; depth: number }
 );

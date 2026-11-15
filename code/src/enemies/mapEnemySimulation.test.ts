@@ -239,3 +239,19 @@ test("per-instance movement, collision and hurtbox overrides do not mutate other
   assert.equal(definition.hurtbox.shape, "cylinder");
   if (definition.hurtbox.shape === "cylinder") assert.equal(definition.hurtbox.radius, 0.4);
 });
+
+test("map strike reports mitigated and overkill-capped damage", () => {
+  const game = sim({ enemySpawns: [{ ...spawn, position: [0, 0, 1], respawn: { mode: "never" } }] });
+  const enemy = game.list()[0].entity;
+  enemy.stats.defense = 5;
+  const losses: number[] = [];
+  const swing = { damage: 35, range: 2, radius: 0.5, height: 1 };
+  assert.equal(game.strike([0, 0, 0], 0, swing, (event) => losses.push(event.finalDamage)), true);
+  assert.equal(enemy.health, 70);
+  assert.equal(game.strike([0, 0, 0], 0, { ...swing, damage: 1000 },
+    (event) => losses.push(event.finalDamage)), true);
+  assert.deepEqual(losses, [30, 70]);
+  assert.equal(game.strike([0, 0, 0], 0, swing,
+    (event) => losses.push(event.finalDamage)), false);
+  assert.deepEqual(losses, [30, 70]);
+});

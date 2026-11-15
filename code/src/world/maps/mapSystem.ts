@@ -1,5 +1,5 @@
 import type { Scene, ShadowGenerator, TransformNode } from "@babylonjs/core";
-import type { Position, SwordSwing } from "../../combat/combat";
+import type { DamageResolved, Position, SwordSwing } from "../../combat/combat";
 import type { GroundStep } from "../../combat/bodyCollision";
 import { createMapEnemyScene } from "../../enemies/mapEnemyScene";
 import { clearMapProgress, readMapProgress, saveMapProgress } from "../../enemies/mapProgress";
@@ -36,6 +36,7 @@ export interface MapSystemOptions {
   applyEnvironment(value: EnvironmentSettings): void;
   isHeroAlive(): boolean;
   onHeroHit(damage: number): void;
+  onDamage?(event: DamageResolved): void;
   onEncounterEvent?(event: EnemyEvent): void;
   onWorldInteraction?(message: string): void;
 }
@@ -73,6 +74,7 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
           [options.hero.position.x, options.hero.position.y, options.hero.position.z],
         isHeroAlive: options.isHeroAlive,
         onHeroHit: options.onHeroHit,
+        onEnemyDamage: options.onDamage,
         onEvent: (event, progress) => {
           if ((event.type === "death" && event.persistent) || event.type === "waveCleared") {
             persist(map.id, progress);

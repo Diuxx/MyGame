@@ -11,6 +11,9 @@ import { bindWorldEditor } from "./playground/worldEditor";
 import { createMapSystem } from "./world/maps/mapSystem";
 import { createHeroLifecycle } from "./character/heroLifecycle";
 import { createHeroHud } from "./ui/heroHud";
+import { createFloatingTextSystem } from "./ui/floatingTextSystem";
+import { loadFloatingTextConfig } from "./ui/floatingTextConfig";
+import { bindFloatingTextTools } from "./playground/floatingTextTools";
 import { bindAttackTools } from "./playground/attackTools";
 import { bindTransitionTools } from "./playground/transitionTools";
 import { bindModuleWindows } from "./playground/moduleWindows";
@@ -52,7 +55,9 @@ export async function startPlayground(
   requireElement<HTMLElement>("movementHint").hidden = false;
   bindModuleWindows(signal);
   const { ground, grid, shadows, ambience } = createPlaygroundEnvironment(scene, character.root);
-  const enemies = createEnemyScene(scene, shadows, ground.position.y);
+  const canvas = requireElement<HTMLCanvasElement>("renderCanvas");
+  const floatingText = createFloatingTextSystem(scene, canvas, loadFloatingTextConfig());
+  const enemies = createEnemyScene(scene, shadows, ground.position.y, floatingText.showDamage);
   const heroPosition = (): Position => [character.root.position.x, ground.position.y, character.root.position.z];
   const refreshEnemyHealth = await startEnemyTools(enemies, ground.position.y,
     (definition) => enemies.findSpawnPosition(definition, heroPosition(), character.root.rotation.y, PLAYGROUND_MOVEMENT_LIMIT), signal);
@@ -69,6 +74,7 @@ export async function startPlayground(
     applyEnvironment: ambience.apply,
     isHeroAlive: () => vitals.isAlive,
     onHeroHit: (damage) => lifecycle.hit(damage, controller),
+    onDamage: floatingText.showDamage,
     onEncounterEvent: hud.event,
     onWorldInteraction: hud.announce,
   });
@@ -84,7 +90,7 @@ export async function startPlayground(
     objects: [], spawnPoints: [{ id: "hero", type: "player", position: [0, 0, 0], rotationY: 0 }],
   });
   bindMapTools(maps, character.root, cameraControls, signal);
-  const canvas = requireElement<HTMLCanvasElement>("renderCanvas");
+  bindFloatingTextTools(floatingText, character.root, signal);
   const worldEditor = bindWorldEditor(scene, canvas, maps, enemies, signal);
   const collisions = bindCollisionTools(scene, character.root, enemies, signal,
     (start, step, radius, height) => maps.world?.resolveMovement(start, step, radius, height) ?? step);
@@ -105,7 +111,8 @@ export async function startPlayground(
       return dummyHit || worldHit;
     },
     collisions.resolveMovement,
-    () => vitals.isAlive && !worldEditor.enabled);
+    () => vitals.isAlive && !worldEditor.enabled,
+    (actionId) => floatingText.showAction('hero', actionId, character.root));
   requireElement<HTMLButtonElement>("simulateHeroHit").addEventListener("click", controller.receiveHit, { signal });
   const simulateHeroDeath = requireElement<HTMLButtonElement>("simulateHeroDeath");
   simulateHeroDeath.addEventListener("click", () => {

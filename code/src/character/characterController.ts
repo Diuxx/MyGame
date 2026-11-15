@@ -27,10 +27,12 @@ export function createCharacterController(
   onAttackImpact: () => boolean = () => false,
   resolveMovement: (start: Position, step: GroundVector) => GroundVector = (_start, step) => step,
   isInputEnabled: () => boolean = () => true,
+  onActionStarted: (id: string) => void = () => {},
 ) {
   const groundPlane = new Plane(0, 1, 0, 0);
   let wasMoving = false;
   let wasSprinting = false;
+  let lastLocomotion: 'walk' | 'sprint' | undefined;
   let cursorYaw: number | undefined;
   let action: ActiveAction | undefined;
   let cooldown = 0;
@@ -71,6 +73,7 @@ export function createCharacterController(
     wasSprinting = false;
     action = next;
     animations.play(clip, true, next.kind === "attack");
+    if (next.kind === 'attack' || next.kind === 'dodge') onActionStarted(next.kind);
     onAnimationChange();
   }
 
@@ -147,6 +150,7 @@ export function createCharacterController(
     action = undefined;
     wasSprinting = false;
     wasMoving = false;
+    lastLocomotion = undefined;
     cooldown = 0;
     combatStanceRemaining = 0;
     cursorYaw = undefined;
@@ -160,6 +164,7 @@ export function createCharacterController(
     const { horizontal, vertical, running } = input.readMovement(!allowsLocomotion(action?.kind));
     if (animations.isPaused || document.hidden || !isInputEnabled()) {
       wasSprinting = false;
+      lastLocomotion = undefined;
       return;
     }
     const wantsMovement = horizontal !== 0 || vertical !== 0;
@@ -196,6 +201,9 @@ export function createCharacterController(
       }
     }
     const moving = !!(actual.x || actual.z);
+    const locomotion = moving ? (movement === HERO_ANIMATIONS.run ? 'sprint' : 'walk') : undefined;
+    if (locomotion && locomotion !== lastLocomotion) onActionStarted(locomotion);
+    lastLocomotion = locomotion;
     wasSprinting = moving && movement === HERO_ANIMATIONS.run && !action;
     if (moving || wasMoving || restChanged || attacking) {
       animations.updateLocomotion(moving ? movement.id : undefined, delta);

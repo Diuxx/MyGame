@@ -52,3 +52,24 @@ test("custom attack range and damage affect enemy health rather than only debug 
     { damage: 37, range: 4, radius: 0.3, height: 1 }), true);
   assert.equal(enemy.health, 63);
 });
+
+test("damage feedback reports health actually removed, including immortal floors", () => {
+  const manager = createEnemyManager();
+  const enemy = createEnemy("immortal", definition, [0, 0, 1], {
+    ...definition, stats: { ...definition.stats, defense: 5 },
+  });
+  enemy.health = 3;
+  manager.add(enemy);
+  const hits: number[] = [];
+  assert.equal(manager.strike([0, 0, 0], 0,
+    { damage: 100, range: 2, radius: 0.5, height: 1 },
+    (event) => {
+      assert.equal(event.targetId, "immortal");
+      assert.deepEqual(event.hitPosition, [0, 1, 1]);
+      hits.push(event.finalDamage);
+    }), true);
+  assert.equal(enemy.health, 1);
+  assert.deepEqual(hits, [2]);
+  manager.strike([0, 0, 0], 0, undefined, (event) => hits.push(event.finalDamage));
+  assert.deepEqual(hits, [2, 0]);
+});
