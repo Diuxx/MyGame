@@ -5,6 +5,16 @@ import { createTransitionSettings, type TransitionSettings } from "./transitionS
 type Window = { from: number; until: number };
 type AttackImpact = Window & { doubleHit: boolean; second: Window };
 export type ActionCancelSettings = Partial<Record<"runFrom" | "attackFrom" | "dodgeFrom", number>>;
+
+/** Attack chaining values live in ANIMATIONS.json, not in the controller. */
+export interface AttackComboSettings {
+  enabled: boolean;
+  maxChain: number;
+  inputBufferMs: number;
+  resetAfterMs: number;
+  chainWindow: Window;
+  followUp: { startProgress: number; blendSeconds: number };
+}
 const CANCEL_KEYS = ["runFrom", "attackFrom", "dodgeFrom"] as const;
 type Definition = AnimationSetting & {
   id: string;
@@ -23,6 +33,9 @@ export const ANIMATION_RANGES = {
   distance: { min: 0, max: 10, step: 0.1 },
   progress: { min: 0, max: 1, step: 0.01 },
   blend: { min: 0, max: 0.5, step: 0.01 },
+  comboChain: { min: 1, max: 6, step: 1 },
+  comboBuffer: { min: 0, max: 500, step: 10 },
+  comboReset: { min: 0, max: 3000, step: 50 },
 };
 
 export type AnimationSetting = {
@@ -32,6 +45,7 @@ export type AnimationSetting = {
   impact?: AttackImpact;
   cancel?: ActionCancelSettings;
   blendOutSeconds?: number;
+  combo?: AttackComboSettings;
 };
 export type AnimationSettings = Record<string, AnimationSetting>;
 
@@ -91,6 +105,10 @@ function readDefinition(clip: typeof animationManifest.animations[number]): Defi
     definition.blendOutSeconds = animationNumber(extra.blendOutSeconds,
       field + ".blendOutSeconds", ANIMATION_RANGES.blend.min, ANIMATION_RANGES.blend.max);
   }
+  if (extra.combo !== undefined) {
+    if (!definition.impact) throw new Error(`ANIMATIONS.json · ${field}.combo : animation sans impact.`);
+    definition.combo = validateComboSettings(extra.combo, definition.impact, field + ".combo");
+  }
   return definition;
 }
 
@@ -133,6 +151,52 @@ function record(value: unknown): Record<string, unknown> {
 
 function number(value: unknown, fallback: number, { min, max }: { min: number; max: number }): number {
   return typeof value === "number" && Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : fallback;
+}
+
+/** Validate playable combo windows, including the existing attack impact timeline. */
+function validateComboSettings(value: unknown, impact: AttackImpact, field: string): AttackComboSettings {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error(`ANIMATIONS.json · ${field} : objet attendu.`);
+  }
+  const input = record(value);
+  const chainWindow = animationWindow(input.chainWindow as Window, field + ".chainWindow");
+  const followUp = record(input.followUp);
+  const maxChain = animationNumber(input.maxChain, field + ".maxChain", 1, 6);
+  if (!Number.isInteger(maxChain)) throw new Error(`ANIMATIONS.json · ${field}.maxChain : entier attendu.`);
+  const inputBufferMs = animationNumber(input.inputBufferMs, field + ".inputBufferMs", 0, 500);
+  const resetAfterMs = animationNumber(input.resetAfterMs, field + ".resetAfterMs", 0, 3000);
+  const startProgress = animationNumber(followUp.startProgress, field + ".followUp.startProgress", 0, 1);
+  const blendSeconds = animationNumber(followUp.blendSeconds, field + ".followUp.blendSeconds", 0, 0.5);
+  const finalImpactUntil = impact.doubleHit ? Math.max(impact.until, impact.second.until) : impact.until;
+  if (chainWindow.from < finalImpactUntil) {
+    throw new Error(`ANIMATIONS.json · ${field}.chainWindow : la chaîne commence avant le dernier impact.`);
+  }
+  if (startProgress >= impact.from) {
+    throw new Error(`ANIMATIONS.json · ${field}.followUp.startProgress : doit précéder le premier impact.`);
+  }
+  return {
+    enabled: animationFlag(input.enabled, field + ".enabled"),
+    maxChain, inputBufferMs, resetAfterMs, chainWindow,
+    followUp: { startProgress, blendSeconds },
+  };
+}
+
+function comboSettings(value: unknown, defaults: AttackComboSettings, impact: AttackImpact): AttackComboSettings {
+  const source = record(value);
+  const chainWindow = windowSettings(source.chainWindow, defaults.chainWindow);
+  const finalImpactUntil = impact.doubleHit ? Math.max(impact.until, impact.second.until) : impact.until;
+  const followUp = record(source.followUp);
+  return {
+    enabled: typeof source.enabled === "boolean" ? source.enabled : defaults.enabled,
+    maxChain: Math.round(number(source.maxChain, defaults.maxChain, ANIMATION_RANGES.comboChain)),
+    inputBufferMs: number(source.inputBufferMs, defaults.inputBufferMs, ANIMATION_RANGES.comboBuffer),
+    resetAfterMs: number(source.resetAfterMs, defaults.resetAfterMs, ANIMATION_RANGES.comboReset),
+    chainWindow: { from: Math.max(chainWindow.from, finalImpactUntil), until: Math.max(chainWindow.until, chainWindow.from, finalImpactUntil) },
+    followUp: {
+      startProgress: Math.min(number(followUp.startProgress, defaults.followUp.startProgress, ANIMATION_RANGES.progress), Math.max(0, impact.from - 0.01)),
+      blendSeconds: number(followUp.blendSeconds, defaults.followUp.blendSeconds, ANIMATION_RANGES.blend),
+    },
+  };
 }
 
 function windowSettings(value: unknown, defaults: Window): Window {
@@ -186,6 +250,9 @@ export function createAnimationSettings(saved?: unknown, resetAttackTiming = fal
     }
     if (definition.blendOutSeconds !== undefined) {
       settings.blendOutSeconds = number(value.blendOutSeconds, definition.blendOutSeconds, ANIMATION_RANGES.blend);
+    }
+    if (definition.combo && settings.impact) {
+      settings.combo = comboSettings(value.combo, definition.combo, settings.impact);
     }
     return [definition.id, settings];
   }));
@@ -284,6 +351,17 @@ export function parseAnimationManifest(value: unknown): {
       }
       checkNumber(entry.blendOutSeconds, field + ".blendOutSeconds",
         ANIMATION_RANGES.blend.min, ANIMATION_RANGES.blend.max);
+    }
+    if (entry.combo !== undefined) {
+      if (!definition.combo || !definition.impact) {
+        throw new Error(`ANIMATIONS.json · ${field}.combo : non supporté.`);
+      }
+      const impact = record(entry.impact);
+      validateComboSettings(entry.combo, {
+        ...animationWindow(impact as Window, field + ".impact"),
+        doubleHit: animationFlag(impact.doubleHit, field + ".impact.doubleHit"),
+        second: animationWindow(impact.second as Window, field + ".impact.second"),
+      }, field + ".combo");
     }
   }
   const transitionValues = record(input.transitions);
