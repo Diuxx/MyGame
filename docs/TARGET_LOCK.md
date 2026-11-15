@@ -8,7 +8,7 @@ Le **Target Lock** est un mode expérimental de déplacement et de visée. Il es
 2. Ouvrir **Ciblage / Target Lock** dans les modules Playground.
 3. Cocher **Activer le verrouillage automatique** et vérifier qu'une cible d'entraînement à portée est entourée d'un anneau rouge.
 4. Se déplacer avec ZQSD : le héros regarde la cible tout en bougeant. Avec la référence **Caméra**, ZQSD correspond aux directions de la vue. Avec **Cible**, Z/S avancent ou reculent par rapport à l'ennemi et Q/D permettent de tourner autour.
-5. Désactiver le mode pour restaurer immédiatement le déplacement relatif à la souris. Lorsqu'aucune cible n'est disponible, le déplacement existant sert de repli.
+5. Désactiver le mode pour revenir immédiatement au ZQSD relatif à la caméra. Sans cible, ce déplacement classique reste actif. Le curseur ne dirige jamais le personnage ; les clics déclenchent seulement l'attaque et l'esquive.
 
 Les ennemis d'entraînement et les ennemis mobiles de la map active sont éligibles. Les morts, les ennemis inactifs et ceux hors de portée ne le sont pas. Une cible déjà sélectionnée est conservée jusqu'au **rayon de perte** (supérieur au **rayon de détection**) pour éviter les changements incessants.
 
