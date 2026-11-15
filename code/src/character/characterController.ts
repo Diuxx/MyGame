@@ -5,6 +5,7 @@ import { clamp } from "../world/cameraMath";
 import type { Position } from "../combat/combat";
 import { bindHeroInput } from "./heroInput";
 import { canCancelAction, type CancelTarget } from "./actionCancelling.ts";
+import { canBufferComboInput, canStartBufferedCombo, followUpStartProgress } from "./attackCombo.ts";
 import { allowsLocomotion } from "./animationLayers";
 import { HERO_TUNING } from "./heroTuning";
 import { aimYaw, calculateMovementStep, consumeImpactWindow, dodgeDirection, dodgeInvulnerable, dodgeTravelProgress, mouseRelativeDirection, type GroundVector } from "./movement";
@@ -40,6 +41,15 @@ export function createCharacterController(
   let combatStanceRemaining = 0;
   let settings = createAnimationSettings();
   let selectedMovement = HERO_ANIMATIONS.walk;
+  let comboCount = 0;
+  let comboResetRemaining = 0;
+  let queuedComboRemaining = 0;
+
+  function resetCombo(): void {
+    comboCount = 0;
+    comboResetRemaining = 0;
+    queuedComboRemaining = 0;
+  }
 
   function updateCursorYaw(): number | undefined {
     const pointer = input.pointer;
@@ -86,26 +96,56 @@ export function createCharacterController(
     return isInputEnabled() && !animations.isPaused && canInterrupt(target);
   }
 
-  function beginAction(clip: string, next: ActiveAction): void {
-    if (action) finishAction(actionBlendOut());
+  function beginAction(
+    clip: string, next: ActiveAction, startProgress = 0, comboBlendSeconds?: number,
+  ): void {
+    if (action) finishAction(comboBlendSeconds ?? actionBlendOut());
     wasSprinting = false;
     action = next;
-    animations.play(clip, true, next.kind === "attack" && HERO_TUNING.attack.allowMovement);
-    if (next.kind === 'attack' || next.kind === 'dodge') onActionStarted(next.kind);
+    animations.play(clip, true, next.kind === "attack" && HERO_TUNING.attack.allowMovement,
+      startProgress, comboBlendSeconds);
+    if (next.kind === "attack" || next.kind === "dodge") onActionStarted(next.kind);
     onAnimationChange();
   }
 
-  function attack(): void {
-    if (!canStartAction("attack")) return;
+  function startAttack(chained: boolean): void {
+    const attackSettings = settings[ATTACK_ANIMATION];
+    const combo = attackSettings.combo;
+    const startProgress = chained && combo
+      ? followUpStartProgress(combo, attackSettings.impact!.from) : 0;
+    const blendSeconds = chained ? combo?.followUp.blendSeconds : undefined;
     const yaw = updateCursorYaw() ?? root.rotation.y;
     turn(Math.sin(yaw), Math.cos(yaw), 1, Infinity);
-    beginAction(ATTACK_ANIMATION, { kind: "attack", progress: 0, hits: createAttackHits(settings[ATTACK_ANIMATION].impact!) });
+    comboCount = chained ? comboCount + 1 : 1;
+    comboResetRemaining = 0;
+    queuedComboRemaining = 0;
+    beginAction(ATTACK_ANIMATION, {
+      kind: "attack", progress: startProgress,
+      hits: createAttackHits(attackSettings.impact!),
+    }, startProgress, blendSeconds);
+  }
+
+  function attack(): void {
+    if (!isInputEnabled() || animations.isPaused) return;
+    const combo = settings[ATTACK_ANIMATION].combo;
+    if (action?.kind === "attack" && combo?.enabled) {
+      const progress = animations.actionProgress;
+      if (!canBufferComboInput(progress, animations.duration(ATTACK_ANIMATION) ?? 0, combo, comboCount)) return;
+      if (canStartBufferedCombo(progress, combo)) startAttack(true);
+      else queuedComboRemaining = combo.inputBufferMs / 1000;
+      return;
+    }
+    if (!canStartAction("attack")) return;
+    const chained = !!combo?.enabled && !action &&
+      comboCount > 0 && comboCount < combo.maxChain && comboResetRemaining > 0;
+    startAttack(chained);
   }
 
   function startDodge(): void {
     if (!canStartAction("dodge") || cooldown > 0) return;
     const direction = dodgeDirection(root.rotation.y);
     cooldown = HERO_TUNING.dodge.cooldown;
+    resetCombo();
     beginAction(DODGE_ANIMATION, { kind: "dodge", direction, progress: 0, distance: settings[DODGE_ANIMATION].dodge!.distance });
   }
 
@@ -152,8 +192,21 @@ export function createCharacterController(
         }
       }
       active.progress = progress;
+      const combo = settings[ATTACK_ANIMATION].combo;
+      if (combo?.enabled && queuedComboRemaining > 0 && comboCount < combo.maxChain &&
+          canStartBufferedCombo(progress, combo)) {
+        startAttack(true);
+        return;
+      }
     }
-    if (progress >= 1) finishAction(actionBlendOut());
+    if (progress >= 1) {
+      if (active.kind === "attack") {
+        comboResetRemaining = settings[ATTACK_ANIMATION].combo?.enabled
+          ? settings[ATTACK_ANIMATION].combo!.resetAfterMs / 1000 : 0;
+      }
+      queuedComboRemaining = 0;
+      finishAction(actionBlendOut());
+    }
   }
 
   function finishAction(blendOutSeconds = 0): void {
@@ -173,6 +226,7 @@ export function createCharacterController(
     combatStanceRemaining = 0;
     cursorYaw = undefined;
     input.clearInput();
+    resetCombo();
     animations.setCombatIdle(false);
     animations.play(clip);
     onAnimationChange();
@@ -190,10 +244,19 @@ export function createCharacterController(
     const delta = scene.getEngine().getDeltaTime() / 1000;
     cooldown = Math.max(0, cooldown - delta);
     combatStanceRemaining = Math.max(0, combatStanceRemaining - delta);
+    if (!action && comboResetRemaining > 0) {
+      comboResetRemaining = Math.max(0, comboResetRemaining - delta);
+      if (!comboResetRemaining) resetCombo();
+    }
     if (action?.kind === "stop" && wantsMovement) finishAction();
     if (action) updateAction(action);
+    // A click buffered shortly before the chain window is consumed only once.
+    if (queuedComboRemaining > 0) queuedComboRemaining = Math.max(0, queuedComboRemaining - delta);
     // Read held movement even while dodging, then cancel on the first permitted frame.
-    if (action && wantsMovement && canInterrupt("run")) finishAction(actionBlendOut());
+    if (action && wantsMovement && canInterrupt("run")) {
+      if (action.kind === "attack") resetCombo();
+      finishAction(actionBlendOut());
+    }
 
     const attacking = action?.kind === "attack";
     const facingLocked = attacking && HERO_TUNING.attack.lockFacing;
@@ -251,11 +314,13 @@ export function createCharacterController(
     restartAnimationPreview(id: string) {
       if (!isInputEnabled() || animations.isPaused || getAnimationDefinition(id)?.category !== "action") return;
       if (action) finishAction();
+      resetCombo();
       beginAction(id, { kind: "preview" });
     },
     preview(id: string) {
       if (!isInputEnabled() || animations.isPaused || (action && action.kind !== "stop")) return;
       if (action?.kind === "stop") finishAction();
+      resetCombo();
       if (getAnimationDefinition(id)?.category === "action") {
         beginAction(id, { kind: id === HERO_ANIMATIONS.stop.id ? "stop" : "preview" });
         return;
@@ -271,6 +336,7 @@ export function createCharacterController(
     },
     setAnimationSettings(value: AnimationSettings) {
       settings = value;
+      resetCombo();
       animations.setSettings(value);
     },
     setBindings: input.setBindings,
