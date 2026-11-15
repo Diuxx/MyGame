@@ -34,8 +34,17 @@
           <span id="renderFps" class="render-fps"></span>
         </div>
         <div id="heroHud" class="hero-hud" hidden>
-          <div class="hero-hud-heading"><strong>HÉROS</strong><output id="heroLife">PV 100 / 100</output></div>
-          <div class="hero-hud-track"><div id="heroLifeFill"></div></div>
+          <div class="hero-hud-main">
+            <div class="hero-hud-weapon" aria-label="Arme équipée">
+              <img id="heroWeaponIcon" alt="" hidden />
+              <span id="heroWeaponFallback" aria-hidden="true">—</span>
+            </div>
+            <div class="hero-hud-details">
+              <div class="hero-hud-heading"><strong>HÉROS</strong><output id="heroLife">PV 100 / 100</output></div>
+              <div class="hero-hud-track"><div id="heroLifeFill"></div></div>
+              <p id="heroWeaponName" class="hero-hud-weapon-name">Sans arme</p>
+            </div>
+          </div>
           <p id="worldInteractionPrompt" class="interaction-prompt" hidden></p>
           <p id="encounterMessage" role="status" aria-live="polite"></p>
         </div>
@@ -212,7 +221,8 @@
             <label>Portée de la lame (u)<input id="attackRange" type="number" min="0.1" max="8" step="0.05" value="1.8" /></label>
             <label>Rayon de la zone (u)<input id="attackRadius" type="number" min="0.05" max="3" step="0.05" value="0.55" /></label>
             <label>Hauteur du coup (u)<input id="attackHeight" type="number" min="0" max="4" step="0.05" value="1" /></label>
-            <label>Dégâts de base<input id="attackDamage" type="number" min="1" max="10000" step="1" value="25" /></label>
+            <label class="grid-toggle"><input id="attackDamageOverrideEnabled" type="checkbox" /> Forcer les dégâts (test)</label>
+            <label>Dégâts (calculés ou forcés)<input id="attackDamage" type="number" min="1" max="10000" step="1" value="25" disabled /></label>
           </div>
           <button id="attackHitboxReset" class="secondary wide" type="button">Rétablir l'attaque par défaut</button>
           <p class="animation-note">La zone orange suit la direction du héros et indique la portée utilisée pour calculer les coups pendant l’attaque.</p>

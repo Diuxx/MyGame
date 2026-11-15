@@ -3,6 +3,7 @@ import { type AnimationPlayer } from "./character/animations";
 import type { LoadedCharacter } from "./character/character";
 import { createCharacterController } from "./character/characterController";
 import type { Position } from "./combat/combat";
+import type { HeroState } from "./character/heroState";
 import { createEnemyScene } from "./enemies/enemyScene";
 import { startEnemyTools } from "./playground/enemyTools";
 import { bindCollisionTools } from "./playground/collisionTools";
@@ -51,6 +52,7 @@ export async function startPlayground(
   character: LoadedCharacter,
   animationPlayer: AnimationPlayer,
   signal: AbortSignal,
+  heroState: HeroState,
 ): Promise<void> {
   requireElement<HTMLElement>("movementHint").hidden = false;
   bindModuleWindows(signal);
@@ -65,9 +67,10 @@ export async function startPlayground(
   gridToggle.checked = false;
   gridToggle.addEventListener("change", () => grid.setEnabled(gridToggle.checked), { signal });
 
-  const lifecycle = createHeroLifecycle(character.root, cameraControls, animationPlayer);
+  const lifecycle = createHeroLifecycle(character.root, cameraControls, animationPlayer, heroState.stats.maxHealth);
   const { vitals } = lifecycle;
   const hud = createHeroHud();
+  hud.setEquipment(heroState.equipment.mainHand);
   let controller: ReturnType<typeof createCharacterController> | undefined;
   const maps = createMapSystem(scene, {
     hero: character.root, shadows,
@@ -94,7 +97,7 @@ export async function startPlayground(
   const worldEditor = bindWorldEditor(scene, canvas, maps, enemies, signal);
   const collisions = bindCollisionTools(scene, character.root, enemies, signal,
     (start, step, radius, height) => maps.world?.resolveMovement(start, step, radius, height) ?? step);
-  const attackTools = bindAttackTools(scene, character.root, signal);
+  const attackTools = bindAttackTools(scene, character.root, signal, () => heroState.stats.attack);
   const facingInput = requireElement<HTMLInputElement>("facing");
   const facingOutput = requireElement<HTMLOutputElement>("facingOutput");
   controller = createCharacterController(scene, canvas, character.root,

@@ -8,6 +8,8 @@ import { createGameplayEnvironment, PLAYGROUND_MOVEMENT_LIMIT } from "./world/en
 import { createCamera } from "./world/scene";
 import { createMapSystem } from "./world/maps/mapSystem";
 import { SWORD_SWING } from "./combat/combat";
+import { resolveHeroSwing } from "./combat/heroAttack";
+import { loadHeroState } from "./character/heroState";
 import { createHeroHud } from "./ui/heroHud";
 import { createFloatingTextSystem } from "./ui/floatingTextSystem";
 import { loadFloatingTextConfig } from "./ui/floatingTextConfig";
@@ -36,6 +38,7 @@ async function start(): Promise<void> {
     const scene = new Scene(engine);
     scene.onDisposeObservable.addOnce(() => listeners.abort());
 
+    const heroState = await loadHeroState();
     const character = await loadCharacter(scene);
     const animationPlayer = new AnimationPlayer(character.animationGroups, scene);
     animationPlayer.play(IDLE_ANIMATION);
@@ -45,13 +48,14 @@ async function start(): Promise<void> {
     const camera = createCamera(scene, canvas, signal);
     if (mode === "playground") {
       const { startPlayground } = await import("./playground");
-      await startPlayground(scene, camera, character, animationPlayer, signal);
+      await startPlayground(scene, camera, character, animationPlayer, signal, heroState);
     } else {
       const floatingText = createFloatingTextSystem(scene, canvas, loadFloatingTextConfig());
       const { shadows, ambience } = createGameplayEnvironment(scene, character.root);
-      const lifecycle = createHeroLifecycle(character.root, camera, animationPlayer);
+      const lifecycle = createHeroLifecycle(character.root, camera, animationPlayer, heroState.stats.maxHealth);
       const { vitals } = lifecycle;
       const hud = createHeroHud();
+      hud.setEquipment(heroState.equipment.mainHand);
       let controller: ReturnType<typeof createCharacterController> | undefined;
       const maps = createMapSystem(scene, {
         hero: character.root, shadows,
@@ -74,7 +78,7 @@ async function start(): Promise<void> {
         undefined, undefined,
         () => maps.active?.strike([
           character.root.position.x, character.root.position.y, character.root.position.z,
-        ], character.root.rotation.y, SWORD_SWING) ?? false,
+        ], character.root.rotation.y, resolveHeroSwing(SWORD_SWING, heroState.stats.attack)) ?? false,
         (start, step) => maps.active?.resolveMovement(start, step, 0.4) ?? step,
         () => vitals.isAlive,
         (actionId) => floatingText.showAction('hero', actionId, character.root));

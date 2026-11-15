@@ -7,10 +7,12 @@ import type { createCharacterController } from "./characterController";
 
 type Controller = ReturnType<typeof createCharacterController>;
 
-export function createHeroLifecycle(root: TransformNode, camera: CameraControls, animations: AnimationPlayer) {
+export function createHeroLifecycle(
+  root: TransformNode, camera: CameraControls, animations: AnimationPlayer, maxHealth = 100,
+) {
   const duration = animations.duration(DEATH_ANIMATION);
   if (!duration || !Number.isFinite(duration)) throw new Error("Durée du clip de mort invalide.");
-  const vitals = createHeroVitals(100, Math.max(2, duration + 0.5));
+  const vitals = createHeroVitals(maxHealth, Math.max(2, duration + 0.5));
   const initialPosition = root.position.clone();
   const initialYaw = root.rotation.y;
 

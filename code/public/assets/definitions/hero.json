@@ -1,0 +1,15 @@
+{
+  "id": "hero",
+  "startingLevel": 1,
+  "baseStats": {
+    "maxHealth": 100,
+    "attack": 5,
+    "strength": 10,
+    "defense": 0,
+    "agility": 5,
+    "intelligence": 5
+  },
+  "startingEquipment": {
+    "mainHand": "blade"
+  }
+}

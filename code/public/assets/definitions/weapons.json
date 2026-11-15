@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "weapons": [
+    {
+      "id": "blade",
+      "name": "Lame de départ",
+      "type": "dagger",
+      "slot": "mainHand",
+      "icon": "/assets/weapons/icons/blade.webp",
+      "stats": {
+        "attack": 15
+      }
+    }
+  ]
+}
