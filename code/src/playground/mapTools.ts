@@ -30,6 +30,7 @@ export function bindMapTools(
     dojo: "Cour du dojo", forest: "Clairière",
     "prototype-forest": "Prototype — Forêt",
     "prototype-arena": "Prototype — Arène",
+    "nature-showcase": "Nature — Forêt stylisée",
   };
   for (const id of AVAILABLE_MAPS) selection.add(new Option(labels[id] ?? id, id));
   selection.value = maps.active?.definition.id ?? "playground";
@@ -71,8 +72,8 @@ export function bindMapTools(
       if (!loaded) return;
       const absent = loaded.missingModels;
       status.textContent = loaded.definition.name + " (" + loaded.definition.id + ") chargée. " +
-        (absent.length ? "GLB absents (" + absent.length + ") remplacés par des volumes : " +
-          absent.map((path) => path.split("/").at(-1)).join(", ") : "Tous les modèles GLB sont présents.");
+        (absent.length ? "Modèles 3D absents (" + absent.length + ") remplacés par des volumes : " +
+          absent.map((path) => path.split("/").at(-1)).join(", ") : "Tous les modèles 3D sont présents.");
     } catch (error) {
       status.textContent = "Map inchangée — erreur : " + (error instanceof Error ? error.message : String(error));
     } finally {
