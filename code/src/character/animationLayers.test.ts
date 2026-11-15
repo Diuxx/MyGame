@@ -146,3 +146,40 @@ test("cancelled dodge keeps its outgoing animation until the return-to-run fade 
   player.updateLocomotion("run", 0.075);
   assert.equal(layer("run-lower").weight, 1);
 });
+
+
+test("combo follow-up starts at the configured frame while fading out the first slash", (t) => {
+  const { player, layer } = createPlayer(t);
+  player.play("attack", true, true);
+  layer("attack-upper").goToFrame(45);
+  player.updateLocomotion(undefined, 0.2);
+
+  player.finishAction(0.08);
+  player.play("attack", true, true, 0.25, 0.08);
+  const incoming = layer("attack-upper-combo");
+  const outgoing = layer("attack-upper");
+  assert.equal(incoming.isStarted, true);
+  assert.equal(outgoing.isStarted, true);
+  assert.ok(Math.abs(player.actionProgress - 0.25) < 0.01);
+
+  player.updateLocomotion(undefined, 0.04);
+  assert.ok(incoming.weight > 0);
+  assert.ok(outgoing.weight > 0);
+  assert.ok(incoming.weight + outgoing.weight <= 1.000001);
+  player.play("dying");
+  assert.equal(incoming.isStarted, false);
+  assert.equal(outgoing.isStarted, false);
+});
+
+test("a third chained slash can reuse the first layer after the first fade", (t) => {
+  const { player, layer } = createPlayer(t);
+  player.play("attack", true, true);
+  player.updateLocomotion(undefined, 0.2);
+  player.finishAction(0.08);
+  player.play("attack", true, true, 0.25, 0.08);
+  player.updateLocomotion(undefined, 0.2);
+  player.finishAction(0.08);
+  player.play("attack", true, true, 0.25, 0.08);
+  assert.equal(layer("attack-upper").isStarted, true);
+  assert.equal(layer("attack-upper-combo").isStarted, true);
+});
