@@ -135,6 +135,208 @@
       "model": "/assets/models/objects/flowers.glb",
       "blocksNavigation": false,
       "colliders": []
+    },
+    "nature_pine_1": {
+      "name": "Nature MegaKit — Pine 1",
+      "model": "/assets/models/nature-megakit/Pine_1.gltf",
+      "blocksNavigation": true,
+      "colliders": [
+        {
+          "type": "cylinder",
+          "position": [
+            0,
+            1.7,
+            0
+          ],
+          "radius": 0.62,
+          "height": 3.4
+        }
+      ]
+    },
+    "nature_pine_3": {
+      "name": "Nature MegaKit — Pine 3",
+      "model": "/assets/models/nature-megakit/Pine_3.gltf",
+      "blocksNavigation": true,
+      "colliders": [
+        {
+          "type": "cylinder",
+          "position": [
+            0,
+            1.7,
+            0
+          ],
+          "radius": 0.62,
+          "height": 3.4
+        }
+      ]
+    },
+    "nature_pine_5": {
+      "name": "Nature MegaKit — Pine 5",
+      "model": "/assets/models/nature-megakit/Pine_5.gltf",
+      "blocksNavigation": true,
+      "colliders": [
+        {
+          "type": "cylinder",
+          "position": [
+            0,
+            1.95,
+            0
+          ],
+          "radius": 0.75,
+          "height": 3.9
+        }
+      ]
+    },
+    "nature_common_tree_1": {
+      "name": "Nature MegaKit — CommonTree 1",
+      "model": "/assets/models/nature-megakit/CommonTree_1.gltf",
+      "blocksNavigation": true,
+      "colliders": [
+        {
+          "type": "cylinder",
+          "position": [
+            0,
+            1.7,
+            0
+          ],
+          "radius": 0.65,
+          "height": 3.4
+        }
+      ]
+    },
+    "nature_common_tree_3": {
+      "name": "Nature MegaKit — CommonTree 3",
+      "model": "/assets/models/nature-megakit/CommonTree_3.gltf",
+      "blocksNavigation": true,
+      "colliders": [
+        {
+          "type": "cylinder",
+          "position": [
+            0,
+            1.95,
+            0
+          ],
+          "radius": 0.75,
+          "height": 3.9
+        }
+      ]
+    },
+    "nature_twisted_tree_2": {
+      "name": "Nature MegaKit — TwistedTree 2",
+      "model": "/assets/models/nature-megakit/TwistedTree_2.gltf",
+      "blocksNavigation": true,
+      "colliders": [
+        {
+          "type": "cylinder",
+          "position": [
+            0,
+            2.25,
+            0
+          ],
+          "radius": 0.95,
+          "height": 4.5
+        }
+      ]
+    },
+    "nature_rock_medium_1": {
+      "name": "Nature MegaKit — Rock Medium 1",
+      "model": "/assets/models/nature-megakit/Rock_Medium_1.gltf",
+      "blocksNavigation": true,
+      "colliders": [
+        {
+          "type": "cylinder",
+          "position": [
+            0,
+            1,
+            0
+          ],
+          "radius": 1,
+          "height": 2
+        }
+      ]
+    },
+    "nature_rock_medium_2": {
+      "name": "Nature MegaKit — Rock Medium 2",
+      "model": "/assets/models/nature-megakit/Rock_Medium_2.gltf",
+      "blocksNavigation": true,
+      "colliders": [
+        {
+          "type": "cylinder",
+          "position": [
+            0,
+            1,
+            0
+          ],
+          "radius": 0.9,
+          "height": 2
+        }
+      ]
+    },
+    "nature_grass_common_short": {
+      "name": "Nature MegaKit — Grass Common Short",
+      "model": "/assets/models/nature-megakit/Grass_Common_Short.gltf",
+      "blocksNavigation": false,
+      "colliders": []
+    },
+    "nature_grass_common_tall": {
+      "name": "Nature MegaKit — Grass Common Tall",
+      "model": "/assets/models/nature-megakit/Grass_Common_Tall.gltf",
+      "blocksNavigation": false,
+      "colliders": []
+    },
+    "nature_grass_wispy_short": {
+      "name": "Nature MegaKit — Grass Wispy Short",
+      "model": "/assets/models/nature-megakit/Grass_Wispy_Short.gltf",
+      "blocksNavigation": false,
+      "colliders": []
+    },
+    "nature_fern_1": {
+      "name": "Nature MegaKit — Fern 1",
+      "model": "/assets/models/nature-megakit/Fern_1.gltf",
+      "blocksNavigation": false,
+      "colliders": []
+    },
+    "nature_flower_3_group": {
+      "name": "Nature MegaKit — Flower 3 Group",
+      "model": "/assets/models/nature-megakit/Flower_3_Group.gltf",
+      "blocksNavigation": false,
+      "colliders": []
+    },
+    "nature_bush_common": {
+      "name": "Nature MegaKit — Bush Common",
+      "model": "/assets/models/nature-megakit/Bush_Common.gltf",
+      "blocksNavigation": false,
+      "colliders": []
+    },
+    "nature_bush_common_flowers": {
+      "name": "Nature MegaKit — Bush Common Flowers",
+      "model": "/assets/models/nature-megakit/Bush_Common_Flowers.gltf",
+      "blocksNavigation": false,
+      "colliders": []
+    },
+    "nature_mushroom_common": {
+      "name": "Nature MegaKit — Mushroom Common",
+      "model": "/assets/models/nature-megakit/Mushroom_Common.gltf",
+      "blocksNavigation": false,
+      "colliders": []
+    },
+    "nature_clover_1": {
+      "name": "Nature MegaKit — Clover 1",
+      "model": "/assets/models/nature-megakit/Clover_1.gltf",
+      "blocksNavigation": false,
+      "colliders": []
+    },
+    "nature_rockpath_round_small_1": {
+      "name": "Nature MegaKit — RockPath Round Small 1",
+      "model": "/assets/models/nature-megakit/RockPath_Round_Small_1.gltf",
+      "blocksNavigation": false,
+      "colliders": []
+    },
+    "nature_pebble_round_1": {
+      "name": "Nature MegaKit — Pebble Round 1",
+      "model": "/assets/models/nature-megakit/Pebble_Round_1.gltf",
+      "blocksNavigation": false,
+      "colliders": []
     }
   },
   "enemies": [
