@@ -27,34 +27,35 @@ function squaredDistance(a: TargetPosition, b: TargetPosition): number {
   return dx * dx + dz * dz;
 }
 
-/**
- * Preserve the current target within the release radius (hysteresis).
- * Only acquire a new target inside the smaller detection radius.
- * Stable IDs avoid retargeting repeatedly when enemies cross paths.
- */
+/** A target remains locked only while alive and inside the larger release radius. */
 export function selectTarget(
   origin: TargetPosition,
   candidates: readonly TargetCandidate[],
   currentId: string | undefined,
   settings: TargetingSettings,
 ): TargetCandidate | undefined {
+  if (!settings.enabled || !currentId) return undefined;
+  return candidates.find((candidate) =>
+    candidate.id === currentId && candidate.alive &&
+    Number.isFinite(candidate.x) && Number.isFinite(candidate.z) &&
+    squaredDistance(origin, candidate) <= settings.releaseRadius ** 2);
+}
+
+/** W acquires the nearest eligible target, then cycles deterministically through nearby enemies. */
+export function cycleTarget(
+  origin: TargetPosition,
+  candidates: readonly TargetCandidate[],
+  currentId: string | undefined,
+  settings: TargetingSettings,
+): TargetCandidate | undefined {
   if (!settings.enabled) return undefined;
-  const available = candidates.filter((candidate) =>
-    candidate.alive && Number.isFinite(candidate.x) && Number.isFinite(candidate.z));
-  if (currentId) {
-    const current = available.find((candidate) => candidate.id === currentId);
-    if (current && squaredDistance(origin, current) <= settings.releaseRadius ** 2) return current;
-  }
-  let nearest: TargetCandidate | undefined;
-  let distance = settings.acquireRadius ** 2;
-  for (const candidate of available) {
-    const nextDistance = squaredDistance(origin, candidate);
-    if (nextDistance <= distance && (!nearest || nextDistance < distance || candidate.id < nearest.id)) {
-      nearest = candidate;
-      distance = nextDistance;
-    }
-  }
-  return nearest;
+  const nearby = candidates.filter((candidate) =>
+    candidate.alive && Number.isFinite(candidate.x) && Number.isFinite(candidate.z) &&
+    squaredDistance(origin, candidate) <= settings.acquireRadius ** 2);
+  nearby.sort((a, b) => squaredDistance(origin, a) - squaredDistance(origin, b) || a.id.localeCompare(b.id));
+  if (!nearby.length) return undefined;
+  const currentIndex = nearby.findIndex((candidate) => candidate.id === currentId);
+  return nearby[(currentIndex + 1) % nearby.length];
 }
 
 export function targetYaw(origin: TargetPosition, target: TargetPosition): number {
