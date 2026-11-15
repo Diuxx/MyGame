@@ -1,7 +1,7 @@
 import type { TransformNode } from '@babylonjs/core';
 import type { createFloatingTextSystem } from '../ui/floatingTextSystem.ts';
 import {
-  createFloatingTextConfig, parseFloatingTextManifest,
+  createFloatingTextConfig, FLOATING_TEXT_SETTINGS_KEY, parseFloatingTextManifest,
   resetPlaygroundFloatingTextConfig, savePlaygroundFloatingTextConfig,
   serializeFloatingTextManifest,
 } from '../ui/floatingTextConfig.ts';
@@ -23,15 +23,17 @@ export function bindFloatingTextTools(
       : 'Source : code/FLOATING_TEXT.json · valeurs versionnées.';
   }
 
-  function apply(): void {
+  function apply(): boolean {
     floating.updateConfig(config);
     setSource(true);
     try {
       savePlaygroundFloatingTextConfig(config);
       status.textContent = 'Réglages appliqués et enregistrés localement.';
+      return true;
     } catch (error) {
       status.textContent = 'Réglages appliqués pour cette session, mais stockage indisponible.';
       console.warn('Cannot save floating text settings:', error);
+      return false;
     }
   }
 
@@ -103,7 +105,7 @@ export function bindFloatingTextTools(
 
   refresh();
   try {
-    setSource(localStorage.getItem('mon-rpg.playground.floating-text.v2') !== null);
+    setSource(localStorage.getItem(FLOATING_TEXT_SETTINGS_KEY) !== null);
   } catch (error) {
     console.warn('Cannot inspect floating text local settings:', error);
     setSource(false);
@@ -148,10 +150,13 @@ export function bindFloatingTextTools(
     const file = importFile.files?.[0];
     if (!file) return;
     try {
+      if (file.size > 128 * 1024) throw new Error('Fichier JSON trop volumineux.');
       config = parseFloatingTextManifest(JSON.parse(await file.text()));
-      apply();
+      const saved = apply();
       refresh();
-      status.textContent = 'Configuration importée pour le Playground. Exporter pour la versionner.';
+      status.textContent = saved
+        ? 'Configuration importée pour le Playground. Exporter pour la versionner.'
+        : 'Configuration importée pour cette session seulement : stockage indisponible.';
     } catch (error) {
       status.textContent = 'Import refusé : ' + (error instanceof Error ? error.message : String(error));
     } finally {
