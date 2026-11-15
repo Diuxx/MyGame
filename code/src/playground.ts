@@ -62,7 +62,11 @@ export async function startPlayground(
   const { ground, grid, shadows, ambience } = createPlaygroundEnvironment(scene, character.root);
   const canvas = requireElement<HTMLCanvasElement>("renderCanvas");
   const floatingText = createFloatingTextSystem(scene, canvas, loadPlaygroundFloatingTextConfig());
-  const enemies = createEnemyScene(scene, shadows, ground.position.y, floatingText.showDamage);
+  let targetLock: ReturnType<typeof createTargetLockSystem> | undefined;
+  const enemies = createEnemyScene(scene, shadows, ground.position.y, (damage) => {
+    floatingText.showDamage(damage);
+    targetLock?.lockOnHit("practice:" + damage.targetId);
+  });
   const heroPosition = (): Position => [character.root.position.x, ground.position.y, character.root.position.z];
   const refreshEnemyHealth = await startEnemyTools(enemies, ground.position.y,
     (definition) => enemies.findSpawnPosition(definition, heroPosition(), character.root.rotation.y, PLAYGROUND_MOVEMENT_LIMIT), signal);
@@ -80,7 +84,10 @@ export async function startPlayground(
     applyEnvironment: ambience.apply,
     isHeroAlive: () => vitals.isAlive,
     onHeroHit: (damage) => lifecycle.hit(damage, controller),
-    onDamage: floatingText.showDamage,
+    onDamage: (damage) => {
+      floatingText.showDamage(damage);
+      targetLock?.lockOnHit("map:" + damage.targetId);
+    },
     onEncounterEvent: hud.event,
     onWorldInteraction: hud.announce,
   });
@@ -101,7 +108,7 @@ export async function startPlayground(
   const collisions = bindCollisionTools(scene, character.root, enemies, signal,
     (start, step, radius, height) => maps.world?.resolveMovement(start, step, radius, height) ?? step);
   const attackTools = bindAttackTools(scene, character.root, signal, () => heroState.stats.attack);
-  const targetLock = createTargetLockSystem(scene, character.root,
+  targetLock = createTargetLockSystem(scene, character.root,
     () => collectTargetCandidates(enemies.list(), maps.world?.simulation.list() ?? []),
     () => vitals.isAlive && !worldEditor.enabled && !maps.isEditing,
     signal);
@@ -127,7 +134,11 @@ export async function startPlayground(
       hud.flashSpell(actionId);
       floatingText.showAction('hero', actionId, character.root);
     }, maps.interact);
-  controller.setTargetingProvider(() => targetLock.motion);
+  controller.setTargetingProvider(() => targetLock?.motion);
+  controller.setTargetingActions({
+    cycle: () => targetLock?.cycleTarget(),
+    cancel: () => targetLock?.clearTarget(),
+  });
   requireElement<HTMLButtonElement>("simulateHeroHit").addEventListener("click", controller.receiveHit, { signal });
   const simulateHeroDeath = requireElement<HTMLButtonElement>("simulateHeroDeath");
   simulateHeroDeath.addEventListener("click", () => {
