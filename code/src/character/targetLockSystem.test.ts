@@ -8,6 +8,11 @@ import type { TargetCandidate } from "./targetSelection.ts";
 const enemy = (id: string, x: number): TargetCandidate =>
   ({ id, x, z: 0, alive: true, radius: 0.8, groundY: 0 });
 
+// Read the getter through a fresh call so static narrowing never assumes it cannot change.
+function targetId(lock: ReturnType<typeof createTargetLockSystem>): string | undefined {
+  return lock.target?.id;
+}
+
 test("lock requires W or a confirmed hit and never reacquires simply on proximity", (t) => {
   const engine = new NullEngine();
   const scene = new Scene(engine);
@@ -24,19 +29,19 @@ test("lock requires W or a confirmed hit and never reacquires simply on proximit
   assert.equal(lock.motion, undefined);
 
   lock.cycleTarget();
-  assert.equal(lock.target?.id, "practice:one");
+  assert.equal(targetId(lock), "practice:one");
   assert.ok(lock.motion);
   lock.cycleTarget();
-  assert.equal(lock.target?.id, "map:two");
+  assert.equal(targetId(lock), "map:two");
   lock.clearTarget();
   tick();
   assert.equal(lock.target, undefined);
   assert.equal(lock.motion, undefined);
 
   lock.lockOnHit("map:two");
-  assert.equal(lock.target?.id, "map:two", "a confirmed strike locks the specific hit target");
+  assert.equal(targetId(lock), "map:two", "a confirmed strike locks the specific hit target");
   lock.lockOnHit("practice:one");
-  assert.equal(lock.target?.id, "map:two", "additional hits cannot replace an existing lock");
+  assert.equal(targetId(lock), "map:two", "additional hits cannot replace an existing lock");
 
   enemies[1].x = 10.5;
   tick();
@@ -46,7 +51,7 @@ test("lock requires W or a confirmed hit and never reacquires simply on proximit
   tick();
   assert.equal(lock.target, undefined, "returning inside radius does not cause reacquisition");
   lock.lockOnHit("practice:one");
-  assert.equal(lock.target?.id, "practice:one");
+  assert.equal(targetId(lock), "practice:one");
 
   enemies[0].alive = false;
   tick();
@@ -69,7 +74,7 @@ test("disabled lock and unavailable hero cannot be activated through W or hit", 
   assert.equal(lock.target, undefined);
   available = true;
   lock.lockOnHit("target");
-  assert.equal(lock.target?.id, "target");
+  assert.equal(targetId(lock), "target");
   lock.setSettings({ ...createTargetingSettings(), enabled: false });
   assert.equal(lock.target, undefined);
   lock.cycleTarget();
