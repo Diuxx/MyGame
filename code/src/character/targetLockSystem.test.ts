@@ -80,3 +80,51 @@ test("disabled lock and unavailable hero cannot be activated through W or hit", 
   lock.cycleTarget();
   assert.equal(lock.target, undefined);
 });
+
+test("clicking an in-range enemy replaces the lock without an attack", (t) => {
+  const engine = new NullEngine();
+  const scene = new Scene(engine);
+  const hero = new TransformNode("hero", scene);
+  const abort = new AbortController();
+  t.after(() => { abort.abort(); engine.dispose(); });
+  const candidates = [enemy("first", 1), enemy("second", 3), enemy("out", 6)];
+  const lock = createTargetLockSystem(scene, hero, () => candidates, () => true, abort.signal);
+  lock.setSettings({ ...createTargetingSettings(), enabled: true, acquireRadius: 4, releaseRadius: 5 });
+
+  assert.equal(lock.lockOnClick("first"), true);
+  assert.equal(targetId(lock), "first");
+  assert.equal(lock.lockOnClick("second"), true, "a second click replaces an existing target");
+  assert.equal(targetId(lock), "second");
+
+  assert.equal(lock.lockOnClick("out"), false);
+  assert.equal(targetId(lock), "second", "invalid click must preserve the previous target");
+  assert.equal(lock.lockOnClick("missing"), false);
+  candidates[0].alive = false;
+  assert.equal(lock.lockOnClick("first"), false);
+
+  const ray = {
+    origin: { x: 0, y: 1, z: -10 },
+    direction: { x: 0, y: 0, z: 1 },
+  };
+  assert.equal(lock.lockFromRay(ray), false, "a ray missing the enemy volumes cannot target");
+  lock.clearTarget();
+  assert.equal(lock.motion, undefined);
+
+  candidates[1].x = 5;
+  assert.equal(lock.lockOnClick("second"), false);
+});
+
+test("click target is disabled during editing, when dead or when targeting is disabled", (t) => {
+  const engine = new NullEngine();
+  const scene = new Scene(engine);
+  const hero = new TransformNode("hero", scene);
+  const abort = new AbortController();
+  t.after(() => { abort.abort(); engine.dispose(); });
+  let available = false;
+  const lock = createTargetLockSystem(scene, hero, () => [enemy("a", 1)], () => available, abort.signal);
+  lock.setSettings({ ...createTargetingSettings(), enabled: true });
+  assert.equal(lock.lockOnClick("a"), false);
+  available = true;
+  lock.setSettings({ ...createTargetingSettings(), enabled: false });
+  assert.equal(lock.lockOnClick("a"), false);
+});
