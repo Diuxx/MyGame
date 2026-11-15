@@ -260,6 +260,11 @@ export class AnimationPlayer {
     this.actionSource = null;
     if (this.fullBody) this.fadeGroup(this.fullBody, fadeSeconds);
     this.fullBody = selected;
+    this.fadingGroups = this.fadingGroups.filter((fade) => {
+      if (fade.group !== selected) return true;
+      fade.group.stop(true);
+      return false;
+    });
     this.action = controlled ? selected : null;
     this.actionSource = controlled ? selected : null;
     this.actionControlled = controlled;
@@ -407,7 +412,7 @@ export class AnimationPlayer {
 
   duration(name: string): number | undefined {
     const group = this.animations.find((animation) => animation.name === name);
-    if (group) return group.getLength() * group.speedRatio / this.playbackSpeed(name);
+    if (group) return group.getLength() / this.playbackSpeed(name);
   }
 
   setTransitions(settings: TransitionSettings): void {
