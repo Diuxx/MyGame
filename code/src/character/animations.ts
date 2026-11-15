@@ -48,6 +48,9 @@ export class AnimationPlayer {
   private readonly combatLegsPlaybackRate: number;
   private readonly attackUpper: AnimationGroup;
   private readonly attackLower: AnimationGroup;
+  private readonly comboUpper: AnimationGroup;
+  private readonly comboLower: AnimationGroup;
+  private attackFadeInSeconds = HERO_TUNING.blending.attackFadeSeconds;
   private locomotion = new Map<BodyLayers, number>();
   private primary: BodyLayers | null = null;
   private fullBody: AnimationGroup | null = null;
@@ -65,7 +68,10 @@ export class AnimationPlayer {
   private fadingGroups: FadingGroup[] = [];
   private fadeIn: FadingGroup | null = null;
   private locomotionActionFade: { duration: number; elapsed: number } | null = null;
-  private finishingAttack: { duration: number; elapsed: number; weight: number } | null = null;
+  private finishingAttack: {
+    upper: AnimationGroup; lower: AnimationGroup;
+    duration: number; elapsed: number; weight: number;
+  } | null = null;
 
   constructor(animations: AnimationGroup[], scene: Scene) {
     this.animations = animations;
@@ -103,16 +109,23 @@ export class AnimationPlayer {
     const attack = this.requireClip(ATTACK_ANIMATION);
     this.attackUpper = createBodyLayer(scene, attack, true);
     this.attackLower = createBodyLayer(scene, attack, false);
+    // Two independent instances allow a follow-up to blend without resetting the outgoing pose.
+    this.comboUpper = createBodyLayer(scene, attack, true, "attack-upper-combo");
+    this.comboLower = createBodyLayer(scene, attack, false, "attack-lower-combo");
     if (!this.attackUpper.targetedAnimations.length) {
       throw new Error("Le clip " + ATTACK_ANIMATION + " n'anime aucun os du haut du corps.");
     }
-    this.attackUpper.onAnimationGroupEndObservable.add(() => {
-      if (this.action === this.attackUpper) this.actionCompleted = true;
-    });
+    for (const upper of [this.attackUpper, this.comboUpper]) {
+      upper.onAnimationGroupEndObservable.add(() => {
+        if (this.action === upper) this.actionCompleted = true;
+      });
+    }
     scene.onBeforeRenderObservable.add(() => this.updateFades(scene.getEngine().getDeltaTime() / 1000));
     scene.onDisposeObservable.addOnce(() => {
       this.attackUpper.dispose();
       this.attackLower.dispose();
+      this.comboUpper.dispose();
+      this.comboLower.dispose();
       this.combatWalk.lower.dispose();
       for (const { lower, upper } of this.bodyLayers.values()) {
         lower.dispose();
@@ -178,7 +191,15 @@ export class AnimationPlayer {
 
   private updateFades(delta: number): void {
     if (!Number.isFinite(delta) || delta <= 0 || this.paused) return;
-    if (this.finishingAttack) this.updateAttackBlend(delta);
+    if (this.finishingAttack) {
+      const fade = this.finishingAttack;
+      fade.elapsed = Math.min(fade.duration, fade.elapsed + delta);
+      if (fade.elapsed >= fade.duration) {
+        this.finishingAttack = null;
+        this.stopAttackPair(fade.upper, fade.lower);
+      }
+      if (!this.attackLowerFor(this.action)) this.applyLayerWeights(0);
+    }
     for (const fade of this.fadingGroups) {
       fade.elapsed = Math.min(fade.duration, fade.elapsed + delta);
       fade.group.weight = fade.startingWeight * (1 - fade.elapsed / fade.duration);
@@ -204,42 +225,62 @@ export class AnimationPlayer {
     this.locomotionActionFade = null;
   }
 
+  private attackLowerFor(upper: AnimationGroup | null): AnimationGroup | null {
+    if (upper === this.attackUpper) return this.attackLower;
+    if (upper === this.comboUpper) return this.comboLower;
+    return null;
+  }
+
+  private stopAttackPair(upper: AnimationGroup, lower: AnimationGroup): void {
+    upper.stop(true);
+    lower.stop(true);
+  }
+
   private stopActionPlayback(): void {
-    if (this.action === this.attackUpper) this.attackLower.stop(true);
+    const lower = this.attackLowerFor(this.action);
+    if (lower) lower.stop(true);
     this.action?.stop(true);
   }
 
-  private startLayeredAttack(source: AnimationGroup): void {
+  private startLayeredAttack(
+    source: AnimationGroup,
+    startProgress = 0,
+    fadeInSeconds = HERO_TUNING.blending.attackFadeSeconds,
+  ): void {
     const fadeSeconds = this.fadingGroups.reduce((duration, fade) => Math.max(duration, fade.duration - fade.elapsed), 0);
     if (this.fullBody) this.fadeGroup(this.fullBody, fadeSeconds);
     this.fullBody = null;
     this.stopActionPlayback();
-    // Replaying the same attack clip must not reuse a stale fading layer.
-    this.finishingAttack = null;
+    const nextUpper = this.finishingAttack?.upper === this.attackUpper ? this.comboUpper : this.attackUpper;
+    const nextLower = this.attackLowerFor(nextUpper)!;
     this.fadingGroups = this.fadingGroups.filter((fade) => {
-      if (fade.group === this.attackUpper || fade.group === this.attackLower) {
-        fade.group.stop(true);
-        return false;
-      }
-      return true;
+      if (fade.group !== nextUpper && fade.group !== nextLower) return true;
+      fade.group.stop(true);
+      return false;
     });
-    this.action = this.attackUpper;
+    this.stopAttackPair(nextUpper, nextLower);
+    this.action = nextUpper;
     this.actionSource = source;
     this.actionControlled = true;
     this.actionCompleted = false;
     this.overlayElapsed = 0;
+    this.attackFadeInSeconds = fadeInSeconds;
     const speed = this.playbackSpeed(source.name);
-    for (const layer of [this.attackUpper, this.attackLower]) {
+    const firstFrame = source.from + (source.to - source.from) * startProgress;
+    for (const layer of [nextUpper, nextLower]) {
       layer.weight = 0;
-      layer.start(false, speed, source.from, source.to);
+      layer.start(false, speed, firstFrame, source.to);
     }
   }
 
   /** Full-body actions (including dodge) preempt both animation layers. */
-  play(name: string, controlled = false, layered = false): void {
+  play(
+    name: string, controlled = false, layered = false,
+    startProgress = 0, comboFadeSeconds?: number,
+  ): void {
     const selected = this.requireClip(name);
     if (name === ATTACK_ANIMATION && controlled && layered) {
-      this.startLayeredAttack(selected);
+      this.startLayeredAttack(selected, startProgress, comboFadeSeconds);
       return;
     }
     if (name === DEATH_ANIMATION) {
@@ -247,12 +288,15 @@ export class AnimationPlayer {
       this.fadingGroups = [];
       this.finishingAttack = null;
       this.fadeIn = null;
+      this.stopAttackPair(this.attackUpper, this.attackLower);
+      this.stopAttackPair(this.comboUpper, this.comboLower);
     }
     let fadeSeconds = this.fadingGroups.reduce((duration, fade) => Math.max(duration, fade.duration - fade.elapsed), 0);
     if (this.finishingAttack) {
-      fadeSeconds = Math.max(fadeSeconds, this.finishingAttack.duration - this.finishingAttack.elapsed);
-      this.fadeGroup(this.attackUpper, fadeSeconds);
-      this.fadeGroup(this.attackLower, fadeSeconds);
+      const outgoing = this.finishingAttack;
+      fadeSeconds = Math.max(fadeSeconds, outgoing.duration - outgoing.elapsed);
+      this.fadeGroup(outgoing.upper, fadeSeconds);
+      this.fadeGroup(outgoing.lower, fadeSeconds);
       this.finishingAttack = null;
     }
     this.stopLocomotion(fadeSeconds);
@@ -283,12 +327,20 @@ export class AnimationPlayer {
   finishAction(blendOutSeconds = 0): void {
     const seconds = Math.max(0, blendOutSeconds);
     const previous = this.action;
-    if (previous === this.attackUpper && seconds > 0) {
-      this.finishingAttack = { duration: seconds, elapsed: 0, weight: this.attackUpper.weight };
+    const lower = this.attackLowerFor(previous);
+    if (this.finishingAttack && lower) {
+      this.stopAttackPair(this.finishingAttack.upper, this.finishingAttack.lower);
+      this.finishingAttack = null;
+    }
+    if (previous && lower && seconds > 0) {
+      this.finishingAttack = {
+        upper: previous, lower, duration: seconds, elapsed: 0,
+        weight: previous.weight < 0 ? 1 : previous.weight,
+      };
     } else if (previous) {
       this.fadeGroup(previous, seconds);
     }
-    if (previous === this.attackUpper && seconds <= 0) this.attackLower.stop(true);
+    if (lower && seconds <= 0) lower.stop(true);
     if (this.fullBody === previous) this.fullBody = null;
     this.action = null;
     this.actionSource = null;
@@ -296,51 +348,48 @@ export class AnimationPlayer {
     this.actionCompleted = false;
     this.overlayElapsed = 0;
     if (!this.finishingAttack) this.applyLayerWeights(0);
-    if (previous && previous !== this.attackUpper && seconds > 0) {
+    if (previous && !lower && seconds > 0) {
       this.locomotionActionFade = { elapsed: 0, duration: seconds };
     }
   }
 
   private applyLayerWeights(attackWeight: number): void {
-    let lowerAttackWeight = 0;
+    const outgoing = this.finishingAttack;
+    const outgoingWeight = outgoing
+      ? Math.min(1 - attackWeight, outgoing.weight * (1 - outgoing.elapsed / outgoing.duration))
+      : 0;
+    const totalWeight = Math.min(1, attackWeight + outgoingWeight);
+    let idleLegWeight = 0;
     let sharedStanceWeight = 0;
     for (const [layers, weight] of this.locomotion) {
       const isIdle = layers !== this.combatWalk &&
         (layers.name === IDLE_ANIMATION || layers.name === COMBAT_STANCE_ANIMATION);
-      const replacement = isIdle ? weight * attackWeight : 0;
-      lowerAttackWeight += replacement;
-      layers.lower.weight = weight - replacement;
-      const upperWeight = weight * (1 - attackWeight);
+      if (isIdle) idleLegWeight += weight;
+      layers.lower.weight = isIdle ? weight * (1 - totalWeight) : weight;
+      const upperWeight = weight * (1 - totalWeight);
       if (layers.upper === this.combatWalk.upper) sharedStanceWeight += upperWeight;
       else layers.upper.weight = upperWeight;
     }
     this.combatWalk.upper.weight = sharedStanceWeight;
-    if (this.action === this.attackUpper || this.finishingAttack) {
-      this.attackUpper.weight = attackWeight;
-      this.attackLower.weight = lowerAttackWeight;
+    const activeLower = this.attackLowerFor(this.action);
+    if (activeLower && this.action) {
+      this.action.weight = attackWeight;
+      activeLower.weight = idleLegWeight * attackWeight;
+    }
+    if (outgoing) {
+      outgoing.upper.weight = outgoingWeight;
+      outgoing.lower.weight = idleLegWeight * outgoingWeight;
     }
   }
 
   private updateAttackBlend(delta: number): void {
-    if (this.action !== this.attackUpper) {
-      if (!this.finishingAttack) {
-        this.applyLayerWeights(0);
-        return;
-      }
-      const fade = this.finishingAttack;
-      fade.elapsed = Math.min(fade.duration, fade.elapsed + delta);
-      this.applyLayerWeights(fade.weight * (1 - fade.elapsed / fade.duration));
-      if (fade.elapsed >= fade.duration) {
-        this.finishingAttack = null;
-        this.attackUpper.stop(true);
-        this.attackLower.stop(true);
-        this.applyLayerWeights(0);
-      }
+    if (!this.attackLowerFor(this.action)) {
+      this.applyLayerWeights(0);
       return;
     }
     this.overlayElapsed += delta;
     const remaining = (1 - this.actionProgress) * (this.duration(ATTACK_ANIMATION) ?? 0);
-    this.applyLayerWeights(attackLayerWeight(this.overlayElapsed, remaining));
+    this.applyLayerWeights(attackLayerWeight(this.overlayElapsed, remaining, this.attackFadeInSeconds));
   }
 
   updateLocomotion(movementClip: string | undefined, delta: number): void {
@@ -397,7 +446,7 @@ export class AnimationPlayer {
     for (const layer of fadedLayers) layer.stop(true);
     this.primary = primary;
     if (returning && returning.elapsed >= returning.duration) this.locomotionActionFade = null;
-    if (!this.finishingAttack) this.updateAttackBlend(delta);
+    this.updateAttackBlend(delta);
   }
 
   private playbackSpeed(name: string): number {
@@ -428,7 +477,8 @@ export class AnimationPlayer {
     }
     if (this.action && this.actionSource) {
       this.action.speedRatio = this.playbackSpeed(this.actionSource.name);
-      if (this.action === this.attackUpper) this.attackLower.speedRatio = this.action.speedRatio;
+      const lower = this.attackLowerFor(this.action);
+      if (lower) lower.speedRatio = this.action.speedRatio;
     } else if (this.fullBody) this.fullBody.speedRatio = this.playbackSpeed(this.fullBody.name);
   }
 
@@ -440,7 +490,12 @@ export class AnimationPlayer {
       groups.add(layers.upper);
     }
     if (this.action) groups.add(this.action);
-    if (this.action === this.attackUpper) groups.add(this.attackLower);
+    const activeAttackLower = this.attackLowerFor(this.action);
+    if (activeAttackLower) groups.add(activeAttackLower);
+    if (this.finishingAttack) {
+      groups.add(this.finishingAttack.upper);
+      groups.add(this.finishingAttack.lower);
+    }
     if (this.fullBody) groups.add(this.fullBody);
     if (!groups.size) return false;
     for (const group of groups) {
