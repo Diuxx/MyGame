@@ -124,9 +124,9 @@ export async function startPlayground(
     hud.refresh(vitals);
   }, { signal });
   bindControlSettings(controller.setBindings, signal);
-  const getTransitions = bindTransitionTools(animationPlayer, signal);
+  const transitions = bindTransitionTools(animationPlayer, signal);
   const updateActiveAnimation = bindAnimationTools(animationPlayer, controller,
-    new Set(character.animationGroups.map(({ name }) => name)), getTransitions, signal);
+    new Set(character.animationGroups.map(({ name }) => name)), transitions, signal);
   for (const animation of character.animationGroups) {
     animation.onAnimationGroupEndObservable.add(() => queueMicrotask(updateActiveAnimation));
   }
