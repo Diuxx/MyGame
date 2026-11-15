@@ -104,7 +104,7 @@ export async function startPlayground(
     },
     objects: [], spawnPoints: [{ id: "hero", type: "player", position: [0, 0, 0], rotationY: 0 }],
   });
-  const transitions = createMapTransitions({
+  const zoneTransitions = createMapTransitions({
     maps, hero: character.root, camera: cameraControls, signal,
     onStatus: hud.announce,
     onMapChanged: (id) => {
@@ -113,7 +113,7 @@ export async function startPlayground(
       requireElement("mapStatus").textContent = "Zone active : " + id;
     },
   });
-  bindMapTools(maps, character.root, cameraControls, signal, transitions);
+  bindMapTools(maps, character.root, cameraControls, signal, zoneTransitions);
   bindFloatingTextTools(floatingText, character.root, signal);
   const worldEditor = bindWorldEditor(scene, canvas, maps, enemies, signal);
   const collisions = bindCollisionTools(scene, character.root, enemies, signal,
@@ -143,11 +143,11 @@ export async function startPlayground(
       return dummyHit || worldHit;
     },
     collisions.resolveMovement,
-    () => vitals.isAlive && !worldEditor.enabled && !transitions.isBusy,
+    () => vitals.isAlive && !worldEditor.enabled && !zoneTransitions.isBusy,
     (actionId) => {
       hud.flashSpell(actionId);
       floatingText.showAction('hero', actionId, character.root);
-    }, transitions.interact);
+    }, zoneTransitions.interact);
   controller.setTargetingProvider(() => targetLock?.motion);
   controller.setTargetingActions({
     cycle: () => targetLock?.cycleTarget(),
@@ -169,7 +169,7 @@ export async function startPlayground(
   }
   const mapEnemyCount = requireElement("mapEnemyCount");
   scene.onBeforeRenderObservable.add(() => {
-    transitions.update();
+    zoneTransitions.update();
     const delta = scene.getEngine().getDeltaTime() / 1000;
     enemies.update(document.hidden ? 0 : delta);
     updateTargetLockUi();
