@@ -4,6 +4,8 @@ import { createTransitionSettings, type TransitionSettings } from "./transitionS
 
 type Window = { from: number; until: number };
 type AttackImpact = Window & { doubleHit: boolean; second: Window };
+export type ActionCancelSettings = Partial<Record<"runFrom" | "attackFrom" | "dodgeFrom", number>>;
+const CANCEL_KEYS = ["runFrom", "attackFrom", "dodgeFrom"] as const;
 type Definition = AnimationSetting & {
   id: string;
   displayName: string;
@@ -20,6 +22,7 @@ export const ANIMATION_RANGES = {
   movement: { min: 0.5, max: 8, step: 0.1 },
   distance: { min: 0, max: 10, step: 0.1 },
   progress: { min: 0, max: 1, step: 0.01 },
+  blend: { min: 0, max: 0.5, step: 0.01 },
 };
 
 export type AnimationSetting = {
@@ -27,6 +30,8 @@ export type AnimationSetting = {
   movement?: { speed: number; sync: boolean };
   dodge?: { distance: number; window: Window };
   impact?: AttackImpact;
+  cancel?: ActionCancelSettings;
+  blendOutSeconds?: number;
 };
 export type AnimationSettings = Record<string, AnimationSetting>;
 
@@ -68,6 +73,23 @@ function readDefinition(clip: typeof animationManifest.animations[number]): Defi
       doubleHit: animationFlag(settings.impact.doubleHit, field + ".impact.doubleHit"),
       second: animationWindow(settings.impact.second, field + ".impact.second"),
     };
+  }
+  const extra = record(settings);
+  if (extra.cancel !== undefined) {
+    if (!extra.cancel || typeof extra.cancel !== "object" || Array.isArray(extra.cancel)) {
+      throw new Error(`ANIMATIONS.json · ${field}.cancel : objet attendu.`);
+    }
+    const cancel = record(extra.cancel);
+    definition.cancel = {};
+    for (const key of CANCEL_KEYS) {
+      if (cancel[key] !== undefined) {
+        definition.cancel[key] = animationNumber(cancel[key], `${field}.cancel.${key}`, 0, 1);
+      }
+    }
+  }
+  if (extra.blendOutSeconds !== undefined) {
+    definition.blendOutSeconds = animationNumber(extra.blendOutSeconds,
+      field + ".blendOutSeconds", ANIMATION_RANGES.blend.min, ANIMATION_RANGES.blend.max);
   }
   return definition;
 }
@@ -153,6 +175,18 @@ export function createAnimationSettings(saved?: unknown, resetAttackTiming = fal
         second: windowSettings(impact.second, definition.impact.second),
       };
     }
+    if (definition.cancel) {
+      const cancel = record(value.cancel);
+      settings.cancel = {};
+      for (const key of CANCEL_KEYS) {
+        if (definition.cancel[key] !== undefined) {
+          settings.cancel[key] = number(cancel[key], definition.cancel[key]!, ANIMATION_RANGES.progress);
+        }
+      }
+    }
+    if (definition.blendOutSeconds !== undefined) {
+      settings.blendOutSeconds = number(value.blendOutSeconds, definition.blendOutSeconds, ANIMATION_RANGES.blend);
+    }
     return [definition.id, settings];
   }));
 }
@@ -176,4 +210,88 @@ export function serializeAnimationManifest(settings: AnimationSettings, transiti
     settings: createAnimationSettings(settings),
     transitions: createTransitionSettings(transitions),
   }, null, 2) + "\n";
+}
+
+/** Imports only validated tuning values; metadata and asset paths remain version-controlled. */
+export function parseAnimationManifest(value: unknown): {
+  settings: AnimationSettings;
+  transitions: TransitionSettings;
+} {
+  const input = record(value);
+  if (!Array.isArray(input.animations)) {
+    throw new Error("ANIMATIONS.json · animations : liste attendue.");
+  }
+  const expected = animationManifest.animations.map((animation) => animation.name);
+  const received = input.animations.map((animation: unknown) => record(animation).name);
+  if (received.length !== expected.length || received.some((name: unknown, index: number) => name !== expected[index])) {
+    throw new Error("ANIMATIONS.json · clips incompatibles avec le héros actuel.");
+  }
+  if (!input.settings || typeof input.settings !== "object" || Array.isArray(input.settings)) {
+    throw new Error("ANIMATIONS.json · settings : objet attendu.");
+  }
+  const imported = record(input.settings);
+  const checkNumber = (value: unknown, field: string, min: number, max: number): void => {
+    animationNumber(value, field, min, max);
+  };
+  const checkWindow = (value: unknown, field: string): void => {
+    const window = record(value);
+    const from = animationNumber(window.from, field + ".from", 0, 1);
+    animationNumber(window.until, field + ".until", from, 1);
+  };
+
+  for (const definition of ANIMATION_DEFINITIONS) {
+    const value = imported[definition.id];
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+      throw new Error(`ANIMATIONS.json · settings.${definition.id} : objet attendu.`);
+    }
+    const entry = record(value);
+    const field = "settings." + definition.id;
+    checkNumber(entry.playbackSpeed, field + ".playbackSpeed",
+      ANIMATION_RANGES.playback.min, ANIMATION_RANGES.playback.max);
+    if (definition.movement) {
+      const movement = record(entry.movement);
+      checkNumber(movement.speed, field + ".movement.speed",
+        ANIMATION_RANGES.movement.min, ANIMATION_RANGES.movement.max);
+      animationFlag(movement.sync, field + ".movement.sync");
+    }
+    if (definition.dodge) {
+      const dodge = record(entry.dodge);
+      checkNumber(dodge.distance, field + ".dodge.distance",
+        ANIMATION_RANGES.distance.min, ANIMATION_RANGES.distance.max);
+      checkWindow(dodge.window, field + ".dodge.window");
+    }
+    if (definition.impact) {
+      const impact = record(entry.impact);
+      checkWindow(impact, field + ".impact");
+      animationFlag(impact.doubleHit, field + ".impact.doubleHit");
+      checkWindow(impact.second, field + ".impact.second");
+    }
+    if (entry.cancel !== undefined) {
+      if (!definition.cancel || !entry.cancel || typeof entry.cancel !== "object" || Array.isArray(entry.cancel)) {
+        throw new Error(`ANIMATIONS.json · ${field}.cancel : valeur incompatible.`);
+      }
+      const cancel = record(entry.cancel);
+      for (const key of CANCEL_KEYS) {
+        if (cancel[key] !== undefined) {
+          if (definition.cancel[key] === undefined) throw new Error(`ANIMATIONS.json · ${field}.cancel.${key} : interruption non supportée.`);
+          checkNumber(cancel[key], `${field}.cancel.${key}`, 0, 1);
+        }
+      }
+    }
+    if (entry.blendOutSeconds !== undefined) {
+      if (definition.blendOutSeconds === undefined) {
+        throw new Error(`ANIMATIONS.json · ${field}.blendOutSeconds : transition non supportée.`);
+      }
+      checkNumber(entry.blendOutSeconds, field + ".blendOutSeconds",
+        ANIMATION_RANGES.blend.min, ANIMATION_RANGES.blend.max);
+    }
+  }
+  const transitionValues = record(input.transitions);
+  for (const key of ["move", "idle", "slowDown"] as const) {
+    checkNumber(transitionValues[key], "transitions." + key, 0.03, 1);
+  }
+  return {
+    settings: createAnimationSettings(imported),
+    transitions: createTransitionSettings(input.transitions),
+  };
 }
