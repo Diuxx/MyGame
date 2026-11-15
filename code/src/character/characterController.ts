@@ -247,6 +247,12 @@ export function createCharacterController(
     receiveHit() {
       if (HERO_TUNING.combatStance.onHitReceived && !isInvulnerable()) refreshCombatStance();
     },
+    /** Playground-only preview: restarts a clip without altering real combat cooldowns. */
+    restartAnimationPreview(id: string) {
+      if (!isInputEnabled() || animations.isPaused || getAnimationDefinition(id)?.category !== "action") return;
+      if (action) finishAction();
+      beginAction(id, { kind: "preview" });
+    },
     preview(id: string) {
       if (!isInputEnabled() || animations.isPaused || (action && action.kind !== "stop")) return;
       if (action?.kind === "stop") finishAction();
