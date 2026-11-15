@@ -63,9 +63,17 @@ export function bindAnimationTools(
       const parsed = parseAnimationManifest(JSON.parse(await file.text()));
       settings = parsed.settings;
       transitions.set(parsed.transitions);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+      let saveWarning: string | undefined;
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+      } catch (error) {
+        saveWarning = error instanceof Error ? error.message : String(error);
+      }
       hasLocalOverrides = true;
       applySettings();
+      if (saveWarning) {
+        refreshSource(`Configuration appliquée pour cette session uniquement : ${saveWarning}`);
+      }
       refreshSource("Configuration importée et appliquée dans le Playground. Exporter pour la versionner.");
     } catch (error) {
       refreshSource(`Import refusé : ${error instanceof Error ? error.message : String(error)}`);
@@ -77,14 +85,16 @@ export function bindAnimationTools(
   requireElement<HTMLButtonElement>("resetAnimationManifest").addEventListener("click", () => {
     settings = createAnimationSettings();
     transitions.reset();
+    let resetWarning: string | undefined;
     try {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem("mon-rpg.playground.animations.v1");
-      hasLocalOverrides = false;
     } catch (error) {
-      refreshSource(`Stockage non réinitialisé : ${error instanceof Error ? error.message : String(error)}`);
+      resetWarning = error instanceof Error ? error.message : String(error);
     }
+    hasLocalOverrides = false;
     applySettings();
+    if (resetWarning) refreshSource(`Configuration réinitialisée pour cette session : ${resetWarning}`);
   }, { signal });
 
   for (const category of ["movement", "action"] as const) {
@@ -266,8 +276,9 @@ export function bindAnimationTools(
         if (config.impact) {
           lanes.push({ label: "Premier impact", kind: "impact",
             from: () => config.impact!.from, until: () => config.impact!.until });
-          if (config.impact.doubleHit) lanes.push({ label: "Deuxième impact", kind: "impact",
-            from: () => config.impact!.second.from, until: () => config.impact!.second.until });
+          lanes.push({ label: "Deuxième impact", kind: "impact",
+            from: () => config.impact!.doubleHit ? config.impact!.second.from : 0,
+            until: () => config.impact!.doubleHit ? config.impact!.second.until : 0 });
         }
         if (config.cancel) {
           for (const [key, label] of [
@@ -288,11 +299,9 @@ export function bindAnimationTools(
         const replay = document.createElement("button");
         replay.type = "button";
         replay.className = "secondary wide";
-        replay.textContent = "Rejouer l’action";
+        replay.textContent = "Rejouer l’animation (prévisualisation)";
         replay.addEventListener("click", () => {
-          if (config.impact) controller.attack();
-          else if (config.dodge) controller.dodge();
-          else controller.preview(clip.id);
+          controller.restartAnimationPreview(clip.id);
           updateStatus();
         }, { signal });
         fields.append(replay);
