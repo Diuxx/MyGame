@@ -77,7 +77,8 @@ export class MapModelRegistry {
   }
 
   async instantiate(path: string, parent: TransformNode,
-                    externalClips: Readonly<Record<string, string>> = {}): Promise<InstantiatedEntries | null> {
+                    externalClips: Readonly<Record<string, string>> = {},
+                     cloneMeshes = false): Promise<InstantiatedEntries | null> {
     const source = await this.getSource(path);
     if (this.disposed) throw new Error("Registre libéré pendant l'instanciation.");
     if (!source) return null;
@@ -91,7 +92,7 @@ export class MapModelRegistry {
         ({ name, url, source: await this.getSource(url) })));
       if (this.disposed) throw new Error("Registre libéré pendant le chargement des animations.");
       placed = source.instantiateModelsToScene(clips.length ? (name) => name : undefined,
-        false, { doNotInstantiate: false });
+        false, { doNotInstantiate: cloneMeshes });
       if (!placed.rootNodes.length) {
         placed.dispose();
         return null;
