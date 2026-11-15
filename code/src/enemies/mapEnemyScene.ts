@@ -2,7 +2,7 @@ import {
   Color3, DynamicTexture, Mesh, MeshBuilder, StandardMaterial, TransformNode,
   type AbstractMesh, type Scene, type ShadowGenerator,
 } from "@babylonjs/core";
-import type { Position, SwordSwing } from "../combat/combat";
+import type { DamageResolved, Position, SwordSwing } from "../combat/combat";
 import type { MapModelRegistry } from "../world/maps/modelRegistry";
 import { createEditableModel } from "../world/maps/editableModel";
 import type { VisualOverride } from "../world/maps/editorSchema";
@@ -30,6 +30,7 @@ interface MapEnemyOptions {
   progress: SavedMapProgress;
   onEvent: (event: EnemyEvent, progress: SavedMapProgress) => void;
   onHeroHit: (damage: number) => void;
+  onEnemyDamage?: (event: DamageResolved) => void;
   getHeroPosition: () => Position;
   isHeroAlive: () => boolean;
 }
@@ -336,7 +337,7 @@ export async function createMapEnemyScene(
       refreshVisuals();
     },
     strike(origin: Position, yaw: number, swing: SwordSwing): boolean {
-      const hit = simulation.strike(origin, yaw, swing);
+      const hit = simulation.strike(origin, yaw, swing, options.onEnemyDamage);
       refreshVisuals();
       dispatchEvents();
       return hit;
