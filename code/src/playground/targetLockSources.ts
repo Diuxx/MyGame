@@ -16,6 +16,8 @@ export function collectTargetCandidates(
       id: "practice:" + enemy.id,
       x: enemy.position[0], z: enemy.position[2], groundY: enemy.position[1],
       radius: collision.radius, alive: true,
+      clickHeight: enemy.definition.hurtbox.height,
+      clickOffsetY: enemy.definition.hurtbox.offset[1],
     });
   }
   targets.push(...collectMapTargetCandidates(encounters));

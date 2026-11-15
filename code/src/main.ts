@@ -17,6 +17,7 @@ import { createHeroHud } from "./ui/heroHud";
 import { createFloatingTextSystem } from "./ui/floatingTextSystem";
 import { loadFloatingTextConfig } from "./ui/floatingTextConfig";
 import { createTargetLockSystem } from "./character/targetLockSystem";
+import { createTargetClickHandler } from "./character/targetClickHandler";
 import { createTargetingSettings } from "./character/targetingSettings";
 import { collectMapTargetCandidates } from "./enemies/targetCandidates";
 
@@ -116,6 +117,7 @@ async function start(): Promise<void> {
         cycle: () => targetLock?.cycleTarget(),
         cancel: () => targetLock?.clearTarget(),
       });
+      controller.setTargetClickHandler(createTargetClickHandler(scene, canvas, targetLock));
       scene.onBeforeRenderObservable.add(() => {
         transitions.update();
         lifecycle.update(scene.getEngine().getDeltaTime() / 1000, controller,

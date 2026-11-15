@@ -48,6 +48,7 @@ export function createCharacterController(
   let queuedComboRemaining = 0;
   let readTargeting: () => TargetingMotion | undefined = () => undefined;
   let targetActions: { cycle(): void; cancel(): void } | undefined;
+  let tryTargetClick: (event: PointerEvent) => boolean = () => false;
 
   function resetCombo(): void {
     comboCount = 0;
@@ -218,6 +219,16 @@ export function createCharacterController(
     if (isInputEnabled() && !animations.isPaused) targetActions?.cycle();
   }, () => {
     if (isInputEnabled() && !animations.isPaused) targetActions?.cancel();
+  }, (event) => {
+    if (!isInputEnabled() || animations.isPaused || document.hidden || !tryTargetClick(event)) return false;
+    const lock = readTargeting();
+    if (lock && allowsLocomotion(action?.kind)) {
+      // Explicit pointer selection feels responsive; later movement continues
+      // to track the enemy at the configured turn speed.
+      const yaw = targetYaw(root.position, lock.target);
+      turn(Math.sin(yaw), Math.cos(yaw), 1, Infinity);
+    }
+    return true;
   });
   function resetForLifeChange(clip: string): void {
     action = undefined;
@@ -370,6 +381,9 @@ export function createCharacterController(
     },
     setTargetingActions(actions: { cycle(): void; cancel(): void }) {
       targetActions = actions;
+    },
+    setTargetClickHandler(handler: (event: PointerEvent) => boolean) {
+      tryTargetClick = handler;
     },
     get isActing() { return !!action || animations.activeName === DEATH_ANIMATION; },
     get isAttacking() { return action?.kind === "attack"; },

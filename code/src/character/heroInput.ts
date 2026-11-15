@@ -24,6 +24,7 @@ export function bindHeroInput(
   interact: () => void,
   nextTarget: () => void = () => {},
   cancelTarget: () => void = () => {},
+  tryTargetClick: (event: PointerEvent) => boolean = () => false,
 ) {
   const pressed = new Set<string>();
   const taps = new Set<string>();
@@ -42,8 +43,9 @@ export function bindHeroInput(
   canvas.addEventListener("pointerdown", (event) => {
     if (event.pointerType !== "mouse" || (event.button !== 0 && event.button !== 2)) return;
     canvas.focus({ preventScroll: true });
-    if (event.button === 0) attack();
-    else dodge();
+    if (event.button === 0) {
+      if (!tryTargetClick(event)) attack();
+    } else dodge();
   }, options);
   window.addEventListener("blur", clearInput, options);
   document.addEventListener("visibilitychange", () => {

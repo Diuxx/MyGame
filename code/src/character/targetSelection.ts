@@ -7,6 +7,9 @@ export interface TargetCandidate {
   alive: boolean;
   radius: number;
   groundY: number;
+  /** Click-selection vertical hurtbox, relative to the enemy's ground position. */
+  clickHeight?: number;
+  clickOffsetY?: number;
 }
 
 export interface TargetPosition {
