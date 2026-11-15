@@ -43,7 +43,7 @@ export function bindControlSettings(setBindings: (keys: HeroKeys) => void, signa
     setBindings(keys);
     for (const { action, field } of fields) field.value = keys[action];
     const directions = [keys.forward, keys.left, keys.backward, keys.right].map(label).join(" ");
-    hint.textContent = `${directions} · Déplacement relatif à la souris | ${label(keys.run)} · Course`;
+    hint.textContent = `${directions} · Déplacement relatif à la caméra | ${label(keys.run)} · Course`;
     if (!save) return;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(keys));
