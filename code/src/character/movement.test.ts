@@ -13,7 +13,7 @@ test("aim keeps its heading near the hero and turns across the shortest arc", ()
   assert.ok(target > 0 && target < Math.PI);
 });
 
-test("forward and backward follow the cursor axis while left and right follow its perpendicular", () => {
+test("forward and backward follow the reference axis while left and right follow its perpendicular", () => {
   assert.equal(relativeMovementDirection(0, 1, 0).z, 1);
   assert.equal(relativeMovementDirection(0, -1, 0).z, -1);
   assert.equal(relativeMovementDirection(-1, 0, 0).x, -1);
