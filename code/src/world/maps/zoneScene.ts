@@ -1,0 +1,115 @@
+import {
+  Color3, MeshBuilder, StandardMaterial,
+  type AbstractMesh, type Scene, type ShadowGenerator, type TransformNode,
+} from "@babylonjs/core";
+import type { MapDefinition, MapPosition } from "./types.ts";
+import type { MapPrimitive } from "./zoneContent.ts";
+
+/** Temporary blockout visuals; does not import GLB assets or create tiled terrain. */
+export function createZoneScene(
+  scene: Scene, root: TransformNode, map: MapDefinition, shadows?: ShadowGenerator,
+) {
+  const materials = new Map<string, StandardMaterial>();
+  const meshes: AbstractMesh[] = [];
+  const casters: AbstractMesh[] = [];
+  const debug: AbstractMesh[] = [];
+
+  function material(color: string): StandardMaterial {
+    let existing = materials.get(color);
+    if (existing) return existing;
+    existing = new StandardMaterial("zone-material:" + color, scene);
+    existing.diffuseColor = Color3.FromHexString(color);
+    existing.specularColor = Color3.Black();
+    materials.set(color, existing);
+    return existing;
+  }
+
+  function track(mesh: AbstractMesh, color: string, castsShadow = false): AbstractMesh {
+    mesh.parent = root;
+    mesh.material = material(color);
+    mesh.isPickable = false;
+    meshes.push(mesh);
+    if (castsShadow && shadows) {
+      shadows.addShadowCaster(mesh, false);
+      casters.push(mesh);
+    }
+    return mesh;
+  }
+
+  function box(name: string, position: MapPosition, size: MapPosition, color: string): AbstractMesh {
+    const mesh = track(MeshBuilder.CreateBox(name, {
+      width: size[0], height: size[1], depth: size[2],
+    }, scene), color, true);
+    mesh.position.set(...position);
+    return mesh;
+  }
+
+  function primitive(item: MapPrimitive): void {
+    const name = "zone-primitive:" + item.id;
+    let mesh: AbstractMesh;
+    if (item.kind === "box") {
+      mesh = MeshBuilder.CreateBox(name, {
+        width: item.size[0], height: item.size[1], depth: item.size[2],
+      }, scene);
+    } else if (item.kind === "cylinder") {
+      mesh = MeshBuilder.CreateCylinder(name, {
+        diameterTop: item.size[0], diameterBottom: item.size[0],
+        height: item.size[1], tessellation: 12,
+      }, scene);
+      mesh.scaling.z = item.size[2] / item.size[0];
+    } else {
+      mesh = MeshBuilder.CreateSphere(name, { diameter: 1, segments: 12 }, scene);
+      mesh.scaling.set(...item.size);
+    }
+    track(mesh, item.color, true);
+    mesh.position.set(...item.position);
+    mesh.rotation.y = item.rotationY * Math.PI / 180;
+  }
+
+  function exitArch(id: string, position: MapPosition): void {
+    const [x, y, z] = position;
+    const accent = "#67C4B1";
+    box("exit-left:" + id, [x - 1.45, y + 1.25, z], [0.55, 2.5, 0.6], "#536C77");
+    box("exit-right:" + id, [x + 1.45, y + 1.25, z], [0.55, 2.5, 0.6], "#536C77");
+    box("exit-beam:" + id, [x, y + 2.65, z], [3.45, 0.4, 0.6], accent);
+    const marker = track(MeshBuilder.CreateCylinder("exit-marker:" + id, {
+      diameter: 2.2, height: 0.035, tessellation: 32,
+    }, scene), accent);
+    marker.position.set(x, y + 0.025, z);
+  }
+
+  function debugSpawn(position: MapPosition, id: string): void {
+    const marker = track(MeshBuilder.CreateCylinder("spawn-debug:" + id, {
+      diameter: 1, height: 0.06, tessellation: 24,
+    }, scene), "#F8D47D");
+    marker.position.set(position[0], position[1] + 0.05, position[2]);
+    debug.push(marker);
+    marker.setEnabled(false);
+  }
+
+  if (map.terrain.primitiveGround) {
+    const width = map.terrain.tiles[0].length * map.tileSize;
+    const depth = map.terrain.tiles.length * map.tileSize;
+    const [x, y, z] = map.terrain.origin;
+    const ground = track(MeshBuilder.CreateGround("zone-ground:" + map.id, { width, height: depth }, scene),
+      map.terrain.primitiveGround.color);
+    ground.position.set(x + width / 2, y - 0.01, z + depth / 2);
+    ground.receiveShadows = true;
+  }
+  for (const item of map.primitives ?? []) primitive(item);
+  for (const exit of map.exits ?? []) exitArch(exit.id, exit.position);
+  for (const spawn of map.spawnPoints) {
+    if (spawn.type === "player") debugSpawn(spawn.position, spawn.id);
+  }
+
+  return {
+    setDebug(visible: boolean): void {
+      for (const marker of debug) marker.setEnabled(visible);
+    },
+    dispose(): void {
+      for (const mesh of casters) shadows?.removeShadowCaster(mesh, false);
+      for (const mesh of meshes) mesh.dispose();
+      for (const value of materials.values()) value.dispose();
+    },
+  };
+}
