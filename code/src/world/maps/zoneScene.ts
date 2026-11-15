@@ -89,12 +89,15 @@ export function createZoneScene(
     }
 
     // One readable corridor through the forest, leaving a combat clearing in the middle.
-    context.lineCap = "round";
     context.lineJoin = "round";
     context.beginPath();
-    context.moveTo(512, 1024);
-    context.bezierCurveTo(565, 760, 430, 690, 512, 500);
-    context.bezierCurveTo(620, 330, 455, 180, 512, 0);
+    for (let step = 0; step <= 48; step++) {
+      const y = 1050 - step * 23;
+      const bend = 55 * Math.sin(step * 0.28) * Math.min(1, Math.abs(y - 512) / 450);
+      const x = 512 + bend;
+      if (step === 0) context.moveTo(x, y);
+      else context.lineTo(x, y);
+    }
     context.strokeStyle = "#7a7854";
     context.lineWidth = 120;
     context.stroke();
