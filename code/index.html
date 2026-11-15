@@ -54,7 +54,7 @@
           <p id="worldInteractionPrompt" class="interaction-prompt" hidden></p>
           <p id="encounterMessage" role="status" aria-live="polite"></p>
         </div>
-        <div id="movementHint" class="stage-footnote" hidden><span id="keyboardHint">ZQSD · Déplacement relatif à la souris | Maj · Course</span> | Clic gauche · Attaque | Clic droit · Esquive</div>
+        <div id="movementHint" class="stage-footnote" hidden><span id="keyboardHint">ZQSD · Déplacement relatif à la caméra | Maj · Course</span> | W · Cible suivante | X · Annuler | Clic gauche · Attaque | Clic droit · Esquive</div>
       </section>
       <aside id="playgroundPanel" class="panel" aria-label="Contrôles du playground" hidden>
         <header class="panel-header">
@@ -151,6 +151,8 @@
             <label>Aller à droite<select id="keyRight"></select></label>
             <label>Courir<select id="keyRun"></select></label>
             <label>Interagir<select id="keyInteract"></select></label>
+            <label>Cible suivante<select id="keyNextTarget"></select></label>
+            <label>Annuler la cible<select id="keyCancelTarget"></select></label>
             <label>Spell 1<select id="keySpell1"></select></label>
             <label>Spell 2<select id="keySpell2"></select></label>
             <label>Spell 3<select id="keySpell3"></select></label>
@@ -198,9 +200,9 @@
             <button class="module-close" type="button" aria-label="Fermer le module Target Lock">×</button>
           </header>
           <p id="targetLockSource" class="animation-note"></p>
-          <label class="grid-toggle"><input id="targetLockEnabled" type="checkbox" /> Activer le verrouillage automatique</label>
+          <label class="grid-toggle"><input id="targetLockEnabled" type="checkbox" /> Activer le ciblage au combat (attaque réussie / W)</label>
           <p id="targetLockCurrentTarget" class="animation-note" role="status">Mode libre — verrouillage désactivé</p>
-          <div class="field-row"><label for="targetLockAcquireRadius">Rayon de détection</label><output id="targetLockAcquireRadiusValue"></output></div>
+          <div class="field-row"><label for="targetLockAcquireRadius">Rayon de sélection (W)</label><output id="targetLockAcquireRadiusValue"></output></div>
           <input id="targetLockAcquireRadius" type="range" min="2" max="20" step="0.5" />
           <div class="field-row"><label for="targetLockReleaseRadius">Rayon de perte de cible</label><output id="targetLockReleaseRadiusValue"></output></div>
           <input id="targetLockReleaseRadius" type="range" min="2" max="25" step="0.5" />
@@ -214,7 +216,7 @@
           </label>
           <label class="grid-toggle"><input id="targetLockShowRing" type="checkbox" /> Cercle rouge sous la cible</label>
           <label class="grid-toggle"><input id="targetLockShowRadius" type="checkbox" /> Cercle de détection (debug)</label>
-          <p class="animation-note">Avec une cible : le héros regarde l'ennemi même en se déplaçant. Sans cible : commandes habituelles. Les animations latérales dédiées viendront ensuite.</p>
+          <p class="animation-note">W : sélectionner/changer de cible. X : annuler. Un coup qui touche une cible vivante la verrouille. Sans cible ou hors rayon de perte : ZQSD normal. Les animations latérales dédiées viendront ensuite.</p>
           <button id="targetLockExport" type="button" class="secondary wide">Exporter TARGETING.json</button>
           <button id="targetLockImport" type="button" class="secondary wide">Importer TARGETING.json</button>
           <input id="targetLockImportFile" type="file" accept=".json,application/json" hidden />

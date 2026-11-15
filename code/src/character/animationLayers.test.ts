@@ -222,3 +222,147 @@ test("a third chained slash can reuse the first layer after the first fade", (t)
   assert.equal(layer("attack-upper").isStarted, true);
   assert.equal(layer("attack-upper-combo").isStarted, true);
 });
+
+/**
+ * Real controller/input integration with Babylon NullEngine.
+ * Pointer movement deliberately has no aiming API or picking surface.
+ */
+function createManualInputFixture(t: TestContext) {
+  const originals = ["window", "document", "HTMLElement", "HTMLInputElement"].map((name) => ({
+    name, descriptor: Object.getOwnPropertyDescriptor(globalThis, name),
+  }));
+  const keyboard = new EventTarget();
+  const document = Object.assign(new EventTarget(), { hidden: false });
+  Object.defineProperties(globalThis, {
+    window: { value: keyboard, configurable: true },
+    document: { value: document, configurable: true },
+    HTMLElement: { value: class MockElement {}, configurable: true },
+    HTMLInputElement: { value: class MockInputElement {}, configurable: true },
+  });
+  t.after(() => {
+    for (const { name, descriptor } of originals) {
+      if (descriptor) Object.defineProperty(globalThis, name, descriptor);
+      else Reflect.deleteProperty(globalThis, name);
+    }
+  });
+  const canvas = Object.assign(new EventTarget(), { focus() {} }) as HTMLCanvasElement;
+  function key(value: string, type: "keydown" | "keyup"): void {
+    keyboard.dispatchEvent(Object.assign(new Event(type, { cancelable: true }), {
+      key: value, code: "Key" + value.toUpperCase(),
+      ctrlKey: false, altKey: false, metaKey: false, repeat: false,
+    }));
+  }
+  function pointer(type: "pointermove" | "pointerdown", button = 0): void {
+    canvas.dispatchEvent(Object.assign(new Event(type), {
+      pointerType: "mouse", button, clientX: 500, clientY: 400,
+    }));
+  }
+  return { canvas, key, pointer };
+}
+
+test("normal ZQSD follows camera, keeps last facing and attacks without mouse aim", (t) => {
+  const { player, scene } = createPlayer(t);
+  const { canvas, key, pointer } = createManualInputFixture(t);
+  const root = new TransformNode("hero", scene);
+  const camera = { alpha: 0, follow() {} };
+  const controller = createCharacterController(
+    scene, canvas, root, 20, camera, player, new AbortController().signal,
+  );
+  player.play("idle");
+  t.mock.method(scene.getEngine(), "getDeltaTime", () => 16);
+  // Any cursor-based raycast would fail the test immediately.
+  t.mock.method(scene, "createPickingRay", () => { throw new Error("Cursor aiming is disabled"); });
+
+  key("z", "keydown");
+  scene.onBeforeRenderObservable.notifyObservers(scene);
+  assert.ok(root.position.x < -0.01, "Z moves toward the top of the camera (world -X)");
+  assert.ok(Math.abs(root.position.z) < 1e-6);
+  assert.ok(root.rotation.y < 0, "hero rotates toward the direction of travel");
+
+  key("z", "keyup");
+  const facingAtRest = root.rotation.y;
+  const positionAtRest = root.position.clone();
+  pointer("pointermove");
+  scene.onBeforeRenderObservable.notifyObservers(scene);
+  assert.equal(root.rotation.y, facingAtRest, "idle facing must not track the pointer");
+  assert.ok(root.position.equals(positionAtRest));
+
+  pointer("pointerdown", 0);
+  assert.equal(controller.isAttacking, true);
+  assert.equal(root.rotation.y, facingAtRest, "attack uses the last movement facing");
+});
+
+test("changing camera angle changes ZQSD direction without requiring a cursor", (t) => {
+  const { player, scene } = createPlayer(t);
+  const { canvas, key } = createManualInputFixture(t);
+  const root = new TransformNode("hero", scene);
+  const camera = { alpha: Math.PI / 2, follow() {} };
+  createCharacterController(scene, canvas, root, 20, camera, player, new AbortController().signal);
+  player.play("idle");
+  t.mock.method(scene.getEngine(), "getDeltaTime", () => 16);
+  key("z", "keydown");
+  scene.onBeforeRenderObservable.notifyObservers(scene);
+  assert.ok(root.position.z < -0.01, "camera rotated 90°: Z now moves along world -Z");
+  assert.ok(Math.abs(root.position.x) < 1e-6);
+});
+
+test("Target Lock keeps enemy facing and falls back to camera ZQSD when switched off", (t) => {
+  const { player, scene } = createPlayer(t);
+  const { canvas, key } = createManualInputFixture(t);
+  const root = new TransformNode("hero", scene);
+  const camera = { alpha: 0, follow() {} };
+  const controller = createCharacterController(
+    scene, canvas, root, 20, camera, player, new AbortController().signal,
+  );
+  player.play("idle");
+  t.mock.method(scene.getEngine(), "getDeltaTime", () => 16);
+  let locked = true;
+  let movementReference: "camera" | "target" = "target";
+  controller.setTargetingProvider(() => locked
+    ? { target: { x: 0, z: 5 }, movementReference, turnSpeed: 25 }
+    : undefined);
+  key("z", "keydown");
+  scene.onBeforeRenderObservable.notifyObservers(scene);
+  assert.ok(root.position.z > 0, "target-relative Z approaches the enemy");
+  assert.ok(Math.abs(root.position.x) < 1e-6);
+
+  // Same key, camera reference: movement changes direction but facing stays on enemy.
+  movementReference = "camera";
+  const previousX = root.position.x;
+  scene.onBeforeRenderObservable.notifyObservers(scene);
+  assert.ok(root.position.x < previousX, "camera-relative Z follows the camera instead of the target");
+  assert.ok(root.rotation.y > 0, "hero faces the target, not its movement direction");
+
+  // Switching off Target Lock immediately restores normal camera movement and facing.
+  locked = false;
+  const facingBeforeUnlock = root.rotation.y;
+  scene.onBeforeRenderObservable.notifyObservers(scene);
+  assert.ok(root.rotation.y < facingBeforeUnlock, "hero now rotates toward camera-relative movement");
+  key("z", "keyup");
+  const facingAfterStop = root.rotation.y;
+  scene.onBeforeRenderObservable.notifyObservers(scene);
+  assert.equal(root.rotation.y, facingAfterStop, "without movement or lock, facing remains stable");
+});
+
+test("W cycles targets and X cancels the lock through the same hero input controller", (t) => {
+  const { player, scene } = createPlayer(t);
+  const { canvas, key } = createManualInputFixture(t);
+  const hero = new TransformNode("hero", scene);
+  const controller = createCharacterController(
+    scene, canvas, hero, 20, { alpha: 0, follow() {} },
+    player, new AbortController().signal,
+  );
+  let cycles = 0;
+  let cancels = 0;
+  controller.setTargetingActions({
+    cycle: () => { cycles++; },
+    cancel: () => { cancels++; },
+  });
+
+  key("w", "keydown");
+  key("x", "keydown");
+  assert.equal(cycles, 1);
+  assert.equal(cancels, 1);
+  assert.equal(hero.position.x, 0, "target shortcuts must not alter normal movement");
+  assert.equal(hero.position.z, 0);
+});

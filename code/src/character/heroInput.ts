@@ -1,6 +1,7 @@
 export const DEFAULT_HERO_KEYS = {
   forward: "z", left: "q", backward: "s", right: "d", run: "shift",
   spell1: "a", spell2: "e", spell3: "r", spell4: "1", interact: "f",
+  nextTarget: "w", cancelTarget: "x",
 };
 export type HeroKeys = typeof DEFAULT_HERO_KEYS;
 export const HERO_SPELL_SLOTS = ["spell1", "spell2", "spell3", "spell4"] as const;
@@ -21,31 +22,25 @@ export function bindHeroInput(
   signal: AbortSignal,
   spell: (slot: HeroSpellSlot) => void,
   interact: () => void,
+  nextTarget: () => void = () => {},
+  cancelTarget: () => void = () => {},
 ) {
   const pressed = new Set<string>();
   const taps = new Set<string>();
   let bindings = DEFAULT_HERO_KEYS;
-  let pointer: { clientX: number; clientY: number } | undefined;
   const options = { signal };
-  const clearAim = () => { pointer = undefined; };
   const clearInput = () => {
     pressed.clear();
     taps.clear();
-    clearAim();
   };
   const axis = (positive: string, negative: string, heldOnly: boolean) => {
     const keys = heldOnly || pressed.has(positive) || pressed.has(negative) ? pressed : taps;
     return Number(keys.has(positive)) - Number(keys.has(negative));
   };
 
-  canvas.addEventListener("pointermove", (event) => {
-    if (event.pointerType === "mouse") pointer = event;
-  }, options);
-  canvas.addEventListener("pointerleave", clearAim, options);
   canvas.addEventListener("contextmenu", (event) => event.preventDefault(), options);
   canvas.addEventListener("pointerdown", (event) => {
     if (event.pointerType !== "mouse" || (event.button !== 0 && event.button !== 2)) return;
-    pointer = event;
     canvas.focus({ preventScroll: true });
     if (event.button === 0) attack();
     else dodge();
@@ -59,6 +54,15 @@ export function bindHeroInput(
     if (event.target instanceof HTMLElement &&
         (event.target.isContentEditable || event.target.matches("input:not([type=range]):not([type=checkbox]), textarea, select"))) return;
     const key = bindingKey(event);
+    if (key === bindings.nextTarget || key === bindings.cancelTarget) {
+      if (event.target instanceof HTMLInputElement) return;
+      event.preventDefault();
+      if (!event.repeat) {
+        if (key === bindings.nextTarget) nextTarget();
+        else cancelTarget();
+      }
+      return;
+    }
     const slot = HERO_SPELL_SLOTS.find((id) => bindings[id] === key);
     if (slot || key === bindings.interact) {
       if (event.target instanceof HTMLInputElement) return;
@@ -83,14 +87,12 @@ export function bindHeroInput(
   window.addEventListener("keyup", (event) => pressed.delete(bindingKey(event)), options);
 
   return {
-    clearAim,
     clearInput,
     setBindings(next: HeroKeys) {
       bindings = next;
       pressed.clear();
       taps.clear();
     },
-    get pointer() { return pointer; },
     readMovement(heldOnly = false) {
       const horizontal = axis(bindings.right, bindings.left, heldOnly);
       const vertical = axis(bindings.forward, bindings.backward, heldOnly);

@@ -13,6 +13,9 @@ import { loadHeroState } from "./character/heroState";
 import { createHeroHud } from "./ui/heroHud";
 import { createFloatingTextSystem } from "./ui/floatingTextSystem";
 import { loadFloatingTextConfig } from "./ui/floatingTextConfig";
+import { createTargetLockSystem } from "./character/targetLockSystem";
+import { createTargetingSettings } from "./character/targetingSettings";
+import { collectMapTargetCandidates } from "./enemies/targetCandidates";
 
 async function start(): Promise<void> {
   const overlay = requireElement<HTMLDivElement>("loadingOverlay");
@@ -57,12 +60,16 @@ async function start(): Promise<void> {
       const hud = createHeroHud(signal);
       hud.setEquipment(heroState.equipment.mainHand);
       let controller: ReturnType<typeof createCharacterController> | undefined;
+      let targetLock: ReturnType<typeof createTargetLockSystem> | undefined;
       const maps = createMapSystem(scene, {
         hero: character.root, shadows,
         applyEnvironment: ambience.apply,
         isHeroAlive: () => vitals.isAlive,
         onHeroHit: (damage) => lifecycle.hit(damage, controller),
-        onDamage: floatingText.showDamage,
+        onDamage: (damage) => {
+          floatingText.showDamage(damage);
+          targetLock?.lockOnHit("map:" + damage.targetId);
+        },
         onEncounterEvent: hud.event,
         onWorldInteraction: hud.announce,
       });
@@ -73,6 +80,10 @@ async function start(): Promise<void> {
         character.root.rotation.y = spawn.rotationY * Math.PI / 180;
         camera.follow(character.root.position.x, character.root.position.z);
       }
+      targetLock = createTargetLockSystem(scene, character.root,
+        () => collectMapTargetCandidates(maps.world?.simulation.list() ?? []),
+        () => vitals.isAlive, signal);
+      targetLock.setSettings(createTargetingSettings());
       controller = createCharacterController(scene, canvas, character.root,
         PLAYGROUND_MOVEMENT_LIMIT, camera, animationPlayer, signal,
         undefined, undefined,
@@ -85,6 +96,11 @@ async function start(): Promise<void> {
           hud.flashSpell(actionId);
           floatingText.showAction('hero', actionId, character.root);
         }, maps.interact);
+      controller.setTargetingProvider(() => targetLock?.motion);
+      controller.setTargetingActions({
+        cycle: () => targetLock?.cycleTarget(),
+        cancel: () => targetLock?.clearTarget(),
+      });
       scene.onBeforeRenderObservable.add(() => {
         lifecycle.update(scene.getEngine().getDeltaTime() / 1000, controller,
           maps.active?.definition.spawnPoints.find((entry) => entry.type === "player"));

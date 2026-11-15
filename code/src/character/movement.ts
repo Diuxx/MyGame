@@ -15,8 +15,8 @@ export function aimYaw(yaw: number, dx: number, dz: number, delta: number, speed
   return Math.atan2(Math.sin(angle), Math.cos(angle));
 }
 
-/** Normalized ground direction relative to the cursor heading (+Z at yaw zero). */
-export function mouseRelativeDirection(horizontal: number, vertical: number, yaw: number): GroundVector {
+/** Normalized ground movement relative to a chosen heading (camera or locked target). */
+export function relativeMovementDirection(horizontal: number, vertical: number, yaw: number): GroundVector {
   const length = Math.hypot(horizontal, vertical);
   if (length === 0) return { x: 0, z: 0 };
   const cos = Math.cos(yaw);

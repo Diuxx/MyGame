@@ -6,6 +6,7 @@ const KEYS = [..."abcdefghijklmnopqrstuvwxyz0123456789", "shift", "arrowup", "ar
 const FIELDS = {
   forward: "keyForward", backward: "keyBackward", left: "keyLeft", right: "keyRight", run: "keyRun",
   spell1: "keySpell1", spell2: "keySpell2", spell3: "keySpell3", spell4: "keySpell4", interact: "keyInteract",
+  nextTarget: "keyNextTarget", cancelTarget: "keyCancelTarget",
 } satisfies Record<keyof HeroKeys, string>;
 const ACTIONS = Object.keys(FIELDS) as (keyof HeroKeys)[];
 
@@ -43,7 +44,7 @@ export function bindControlSettings(setBindings: (keys: HeroKeys) => void, signa
     setBindings(keys);
     for (const { action, field } of fields) field.value = keys[action];
     const directions = [keys.forward, keys.left, keys.backward, keys.right].map(label).join(" ");
-    hint.textContent = `${directions} · Déplacement relatif à la souris | ${label(keys.run)} · Course`;
+    hint.textContent = `${directions} · Déplacement relatif à la caméra | ${label(keys.run)} · Course`;
     if (!save) return;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(keys));

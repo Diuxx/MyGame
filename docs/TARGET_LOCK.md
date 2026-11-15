@@ -1,40 +1,43 @@
-# Playground — Target Lock (POC)
+# Target Lock — verrouillage de cible (POC)
 
-Le **Target Lock** est un mode expérimental de déplacement et de visée. Il est **désactivé par défaut** dans `code/TARGETING.json`, afin de préserver le comportement de déplacement existant.
+Le Target Lock utilise un **ZQSD relatif à la caméra par défaut**, sans suivi du curseur. Lorsqu'une cible est verrouillée, le héros se tourne vers elle tout en conservant ses commandes de déplacement. Le verrouillage est **autorisé par défaut** dans `code/TARGETING.json`, mais **aucune cible n'est acquise par proximité**.
 
-## Tester
+## Déclenchement et annulation
 
-1. Depuis `code/`, lancer `npm run dev-playground`.
-2. Ouvrir **Ciblage / Target Lock** dans les modules Playground.
-3. Cocher **Activer le verrouillage automatique** et vérifier qu'une cible d'entraînement à portée est entourée d'un anneau rouge.
-4. Se déplacer avec ZQSD : le héros regarde la cible tout en bougeant. Avec la référence **Caméra**, ZQSD correspond aux directions de la vue. Avec **Cible**, Z/S avancent ou reculent par rapport à l'ennemi et Q/D permettent de tourner autour.
-5. Désactiver le mode pour restaurer immédiatement le déplacement relatif à la souris. Lorsqu'aucune cible n'est disponible, le déplacement existant sert de repli.
+1. Depuis `code/`, lancer `npm run dev-playground` ou `npm run dev-gameplay`.
+2. **Coup réussi :** la première cible vivante réellement touchée est verrouillée si aucune cible n'est encore sélectionnée. Une attaque ratée ne déclenche rien.
+3. **W :** sélectionner l'ennemi vivant le plus proche dans le rayon d'acquisition, puis parcourir les autres cibles à portée.
+4. **X :** annuler immédiatement le ciblage et revenir au ZQSD classique.
+5. **Cible trop éloignée :** au-delà du rayon de perte, elle est automatiquement libérée. Même si elle revient dans la zone, aucune nouvelle cible n'est choisie avant un prochain coup réussi ou un appui sur W.
+6. **Mort / suppression / inactivité de la cible :** déverrouillage immédiat sans nouveau ciblage automatique.
 
-Les ennemis d'entraînement et les ennemis mobiles de la map active sont éligibles. Les morts, les ennemis inactifs et ceux hors de portée ne le sont pas. Une cible déjà sélectionnée est conservée jusqu'au **rayon de perte** (supérieur au **rayon de détection**) pour éviter les changements incessants.
+En mode normal, la direction des touches ZQSD dépend de la caméra et le héros regarde le sens du mouvement ; à l'arrêt, il garde sa dernière orientation. La souris ne détermine jamais la direction des mouvements ou des attaques. Avec un verrouillage, le héros regarde sa cible, que le référentiel de déplacement sélectionné soit **Caméra** (ZQSD dans les directions visibles) ou **Cible** (Z/S avancent/reculent et Q/D tournent autour).
 
-La sélection est temporairement désactivée si le héros est mort ou si l'éditeur de monde est actif. L'indicateur rouge est un torus Babylon.js non sélectionnable, sans modification de la simulation de combat. Le cercle de rayon est une aide de développement facultative.
+Le verrouillage automatique par attaque réussie, l'annulation X et la sélection W sont disponibles dans le Playground **et** dans le mode Gameplay. Le Playground permet en plus de modifier à chaud les paramètres et de remapper W/X dans **Commandes**. Une case permet de désactiver complètement le ciblage pour tester le mode libre.
 
 ## Configuration
 
-`code/TARGETING.json` est la seule source des valeurs versionnées :
+`code/TARGETING.json` est la source versionnée :
 
-- `enabled` — active ou non le mode.
-- `acquireRadius` — recherche des nouveaux ennemis.
-- `releaseRadius` — distance à laquelle la cible existante est relâchée.
-- `turnSpeed` — vitesse de rotation du héros.
+- `enabled` — autoriser l'acquisition sur coup réussi et via W.
+- `acquireRadius` — rayon dans lequel W peut sélectionner les cibles.
+- `releaseRadius` — distance maximale de conservation de la cible, même si l'ennemi recule.
+- `turnSpeed` — vitesse de rotation du héros vers sa cible.
 - `movementReference` — `camera` ou `target`.
-- `showTargetRing` — anneau rouge sous l'ennemi sélectionné.
-- `showDebugRadius` — rayon de détection au sol (debug uniquement).
+- `showTargetRing` — anneau rouge sous l'ennemi verrouillé.
+- `showDebugRadius` — indication du rayon de sélection (debug).
 
-Le Playground applique les modifications immédiatement et les mémorise dans `localStorage` sous `mon-rpg.playground.target-lock.v1`. Utiliser **Exporter TARGETING.json** pour enregistrer les réglages définitifs dans le dépôt ; **Importer** vérifie les champs et **Rétablir** efface les surcharges locales.
+Dans le Playground, les changements sont appliqués immédiatement et mémorisés sous `mon-rpg.playground.target-lock.v1`. Utiliser **Exporter TARGETING.json** pour enregistrer les paramètres dans le dépôt, **Importer** pour charger une configuration validée et **Rétablir** pour effacer les surcharges locales. Une ancienne surcharge locale avec `enabled: false` continue de désactiver le mode : la réinitialiser ou cocher **Activer le ciblage au combat** pour tester le nouveau défaut.
 
-## Architecture et limites du POC
+## Architecture et limites
 
-- `character/targetSelection.ts` : sélection pure, conservation de cible et orientation, sans Babylon.js.
-- `character/targetingSettings.ts` : validation stricte du manifeste et valeurs éditables.
-- `character/targetLockSystem.ts` : état courant, indicateurs 3D et cycle de vie.
-- `playground/targetLockSources.ts` : adaptation des deux sources d'ennemis existantes.
-- `playground/targetLockTools.ts` : interface et import/export JSON.
-- `characterController.ts` : applique une orientation distincte de la direction de déplacement lorsqu'une cible est présente.
+- `character/targetSelection.ts` : conservation de cible, cycle des cibles, orientation et calculs indépendants du moteur 3D.
+- `character/targetingSettings.ts` : validation du manifeste et valeurs éditables.
+- `character/targetLockSystem.ts` : état actif, acquisition explicite, perte de cible, indicateurs Babylon.js et nettoyage.
+- `enemies/targetCandidates.ts` : adaptation des ennemis mobiles des maps, utilisée par les deux modes.
+- `playground/targetLockSources.ts` : ajout des cibles d'entraînement du Playground.
+- `playground/targetLockTools.ts` : réglages et import/export JSON.
+- `character/heroInput.ts` : actions clavier W/X configurables et entrées existantes.
+- `character/characterController.ts` : déplacement normal ZQSD et orientation indépendante lorsque la cible est verrouillée.
 
-Les animations locomotrices actuelles sont conservées : reculer et aller latéralement peuvent donner une impression de glissement, car aucune animation dédiée aux strafes n'est encore intégrée. Le mouvement reste manuel et les règles de collision/combat existantes sont inchangées. Le mode est câblé au Playground seulement ; le gameplay normal reste inchangé.
+Le déplacement reste manuel : **le Target Lock ne déplace pas le héros automatiquement vers l'ennemi**. Les règles de combat, les collisions et les animations existantes sont conservées ; une animation de strafe dédiée peut être ajoutée ensuite pour éviter les glissements visuels des jambes.
