@@ -11,6 +11,13 @@ export const ATTACK_ANIMATION = HERO_ANIMATIONS.attack.id;
 export const DODGE_ANIMATION = HERO_ANIMATIONS.dodge.id;
 export const DEATH_ANIMATION = HERO_ANIMATIONS.dying.id;
 
+interface FadingGroup {
+  group: AnimationGroup;
+  startingWeight: number;
+  duration: number;
+  elapsed: number;
+}
+
 interface BodyLayers {
   name: string;
   lower: AnimationGroup;
@@ -55,6 +62,10 @@ export class AnimationPlayer {
   private transitions = createTransitionSettings();
   private transitionDuration = this.transitions.move;
   private combatIdle = false;
+  private fadingGroups: FadingGroup[] = [];
+  private fadeIn: FadingGroup | null = null;
+  private locomotionActionFade: { duration: number; elapsed: number } | null = null;
+  private finishingAttack: { duration: number; elapsed: number; weight: number } | null = null;
 
   constructor(animations: AnimationGroup[], scene: Scene) {
     this.animations = animations;
@@ -98,6 +109,7 @@ export class AnimationPlayer {
     this.attackUpper.onAnimationGroupEndObservable.add(() => {
       if (this.action === this.attackUpper) this.actionCompleted = true;
     });
+    scene.onBeforeRenderObservable.add(() => this.updateFades(scene.getEngine().getDeltaTime() / 1000));
     scene.onDisposeObservable.addOnce(() => {
       this.attackUpper.dispose();
       this.attackLower.dispose();
@@ -152,14 +164,42 @@ export class AnimationPlayer {
     return group;
   }
 
-  private stopLocomotion(): void {
+  private fadeGroup(group: AnimationGroup, seconds: number): void {
+    this.fadingGroups = this.fadingGroups.filter((entry) => entry.group !== group);
+    if (seconds <= 0 || !group.isStarted) {
+      group.stop(true);
+      return;
+    }
+    const startingWeight = group.weight < 0 ? 1 : group.weight;
+    group.weight = startingWeight;
+    this.fadingGroups.push({ group, startingWeight, elapsed: 0, duration: seconds });
+  }
+
+  private updateFades(delta: number): void {
+    if (!Number.isFinite(delta) || delta <= 0 || this.paused) return;
+    for (const fade of this.fadingGroups) {
+      fade.elapsed = Math.min(fade.duration, fade.elapsed + delta);
+      fade.group.weight = fade.startingWeight * (1 - fade.elapsed / fade.duration);
+      if (fade.elapsed >= fade.duration) fade.group.stop(true);
+    }
+    this.fadingGroups = this.fadingGroups.filter((fade) => fade.elapsed < fade.duration);
+    if (this.fadeIn) {
+      const fade = this.fadeIn;
+      fade.elapsed = Math.min(fade.duration, fade.elapsed + delta);
+      fade.group.weight = fade.elapsed / fade.duration;
+      if (fade.elapsed >= fade.duration) this.fadeIn = null;
+    }
+  }
+
+  private stopLocomotion(fadeSeconds = 0): void {
     for (const layers of this.locomotion.keys()) {
-      layers.lower.stop(true);
-      layers.upper.stop(true);
+      this.fadeGroup(layers.lower, fadeSeconds);
+      this.fadeGroup(layers.upper, fadeSeconds);
     }
     this.locomotion.clear();
     this.primary = null;
     this.transitioning = false;
+    this.locomotionActionFade = null;
   }
 
   private stopActionPlayback(): void {
@@ -168,9 +208,19 @@ export class AnimationPlayer {
   }
 
   private startLayeredAttack(source: AnimationGroup): void {
-    this.fullBody?.stop(true);
+    const fadeSeconds = this.fadingGroups.reduce((duration, fade) => Math.max(duration, fade.duration - fade.elapsed), 0);
+    if (this.fullBody) this.fadeGroup(this.fullBody, fadeSeconds);
     this.fullBody = null;
     this.stopActionPlayback();
+    // Replaying the same attack clip must not reuse a stale fading layer.
+    this.finishingAttack = null;
+    this.fadingGroups = this.fadingGroups.filter((fade) => {
+      if (fade.group === this.attackUpper || fade.group === this.attackLower) {
+        fade.group.stop(true);
+        return false;
+      }
+      return true;
+    });
     this.action = this.attackUpper;
     this.actionSource = source;
     this.actionControlled = true;
@@ -190,11 +240,23 @@ export class AnimationPlayer {
       this.startLayeredAttack(selected);
       return;
     }
-    this.stopLocomotion();
+    if (name === DEATH_ANIMATION) {
+      for (const fade of this.fadingGroups) fade.group.stop(true);
+      this.fadingGroups = [];
+      this.finishingAttack = null;
+      this.fadeIn = null;
+    }
+    const fadeSeconds = this.fadingGroups.reduce((duration, fade) => Math.max(duration, fade.duration - fade.elapsed), 0);
+    if (this.finishingAttack) {
+      this.fadeGroup(this.attackUpper, fadeSeconds || this.finishingAttack.duration);
+      this.fadeGroup(this.attackLower, fadeSeconds || this.finishingAttack.duration);
+      this.finishingAttack = null;
+    }
+    this.stopLocomotion(fadeSeconds);
     this.stopActionPlayback();
     this.action = null;
     this.actionSource = null;
-    this.fullBody?.stop(true);
+    if (this.fullBody) this.fadeGroup(this.fullBody, fadeSeconds);
     this.fullBody = selected;
     this.action = controlled ? selected : null;
     this.actionSource = controlled ? selected : null;
@@ -202,21 +264,33 @@ export class AnimationPlayer {
     this.actionCompleted = false;
     this.paused = false;
     selected.enableBlending = true;
-    selected.weight = -1;
+    // Blending belongs to visual playback, independently from action permissions.
+    selected.weight = fadeSeconds > 0 ? 0 : -1;
     const loop = !controlled && (getAnimationDefinition(name)?.loop ?? false);
     selected.start(loop, this.playbackSpeed(name), selected.from, selected.to);
+    if (fadeSeconds > 0) this.fadeIn = { group: selected, startingWeight: 0, elapsed: 0, duration: fadeSeconds };
   }
 
-  /** Called by the controller once a one-shot finishes or is interrupted. */
-  finishAction(): void {
-    this.stopActionPlayback();
-    if (this.fullBody === this.action) this.fullBody = null;
+  /** Gameplay ends immediately; outgoing visual pose may persist for its blend duration. */
+  finishAction(blendOutSeconds = 0): void {
+    const seconds = Math.max(0, blendOutSeconds);
+    const previous = this.action;
+    if (previous === this.attackUpper && seconds > 0) {
+      this.finishingAttack = { duration: seconds, elapsed: 0, weight: this.attackUpper.weight };
+    } else if (previous) {
+      this.fadeGroup(previous, seconds);
+    }
+    if (previous === this.attackUpper && seconds <= 0) this.attackLower.stop(true);
+    if (this.fullBody === previous) this.fullBody = null;
     this.action = null;
     this.actionSource = null;
     this.actionControlled = false;
     this.actionCompleted = false;
     this.overlayElapsed = 0;
-    this.applyLayerWeights(0);
+    if (!this.finishingAttack) this.applyLayerWeights(0);
+    if (previous && previous !== this.attackUpper && seconds > 0) {
+      this.locomotionActionFade = { elapsed: 0, duration: seconds };
+    }
   }
 
   private applyLayerWeights(attackWeight: number): void {
@@ -233,7 +307,7 @@ export class AnimationPlayer {
       else layers.upper.weight = upperWeight;
     }
     this.combatWalk.upper.weight = sharedStanceWeight;
-    if (this.action === this.attackUpper) {
+    if (this.action === this.attackUpper || this.finishingAttack) {
       this.attackUpper.weight = attackWeight;
       this.attackLower.weight = lowerAttackWeight;
     }
@@ -241,7 +315,19 @@ export class AnimationPlayer {
 
   private updateAttackBlend(delta: number): void {
     if (this.action !== this.attackUpper) {
-      this.applyLayerWeights(0);
+      if (!this.finishingAttack) {
+        this.applyLayerWeights(0);
+        return;
+      }
+      const fade = this.finishingAttack;
+      fade.elapsed = Math.min(fade.duration, fade.elapsed + delta);
+      this.applyLayerWeights(fade.weight * (1 - fade.elapsed / fade.duration));
+      if (fade.elapsed >= fade.duration) {
+        this.finishingAttack = null;
+        this.attackUpper.stop(true);
+        this.attackLower.stop(true);
+        this.applyLayerWeights(0);
+      }
       return;
     }
     this.overlayElapsed += delta;
@@ -277,12 +363,15 @@ export class AnimationPlayer {
     for (const [layers, current] of this.locomotion) {
       difference += Math.abs(Number(layers === primary) - current);
     }
-    const fraction = entering || difference < 1e-8
+    const returning = this.locomotionActionFade;
+    if (returning) returning.elapsed = Math.min(returning.duration, returning.elapsed + delta);
+    const actionBlend = returning ? returning.elapsed / returning.duration : 1;
+    const fraction = returning || entering || difference < 1e-8
       ? 1 : Math.min(1, (2 * delta) / (this.transitionDuration * difference));
-    this.transitioning = fraction < 1;
+    this.transitioning = actionBlend < 1 || fraction < 1;
     const fadedLayers = new Set<AnimationGroup>();
     for (const [layers, current] of this.locomotion) {
-      const desired = Number(layers === primary);
+      const desired = Number(layers === primary) * actionBlend;
       const weight = current + (desired - current) * fraction;
       if (weight === 0 && layers !== primary) {
         fadedLayers.add(layers.lower);
@@ -299,6 +388,7 @@ export class AnimationPlayer {
     }
     for (const layer of fadedLayers) layer.stop(true);
     this.primary = primary;
+    if (returning && returning.elapsed >= returning.duration) this.locomotionActionFade = null;
     this.updateAttackBlend(delta);
   }
 
