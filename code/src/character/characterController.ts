@@ -1,4 +1,4 @@
-import { Plane, type Scene, type TransformNode } from "@babylonjs/core";
+import { type Scene, type TransformNode } from "@babylonjs/core";
 import { ATTACK_ANIMATION, DEATH_ANIMATION, DODGE_ANIMATION, IDLE_ANIMATION, type AnimationPlayer } from "./animations.ts";
 import { createAnimationSettings, createAttackHits, getAnimationDefinition, HERO_ANIMATIONS, type AnimationSettings } from "./animationSettings.ts";
 import { clamp } from "../world/cameraMath.ts";
@@ -9,7 +9,7 @@ import { canBufferComboInput, canStartBufferedCombo, followUpStartProgress } fro
 import { allowsLocomotion } from "./animationLayers.ts";
 import { HERO_TUNING } from "./heroTuning.ts";
 import { cameraMovementYaw, targetYaw, type TargetingMotion } from "./targetSelection.ts";
-import { aimYaw, calculateMovementStep, consumeImpactWindow, dodgeDirection, dodgeInvulnerable, dodgeTravelProgress, mouseRelativeDirection, type GroundVector } from "./movement.ts";
+import { aimYaw, calculateMovementStep, consumeImpactWindow, dodgeDirection, dodgeInvulnerable, dodgeTravelProgress, relativeMovementDirection, type GroundVector } from "./movement.ts";
 import type { CameraControls } from "../world/scene";
 
 type ActiveAction =
@@ -33,11 +33,9 @@ export function createCharacterController(
   onActionStarted: (id: string) => void = () => {},
   onInteract: () => void = () => {},
 ) {
-  const groundPlane = new Plane(0, 1, 0, 0);
   let wasMoving = false;
   let wasSprinting = false;
   let lastLocomotion: 'walk' | 'sprint' | undefined;
-  let cursorYaw: number | undefined;
   let action: ActiveAction | undefined;
   let cooldown = 0;
   let combatStanceRemaining = 0;
@@ -52,24 +50,6 @@ export function createCharacterController(
     comboCount = 0;
     comboResetRemaining = 0;
     queuedComboRemaining = 0;
-  }
-
-  function updateCursorYaw(): number | undefined {
-    const pointer = input.pointer;
-    if (!pointer) return;
-    const bounds = canvas.getBoundingClientRect();
-    const x = pointer.clientX - bounds.left;
-    const y = pointer.clientY - bounds.top;
-    if (x < 0 || y < 0 || x >= bounds.width || y >= bounds.height) return;
-    const ray = scene.createPickingRay(x, y, null, scene.activeCamera);
-    groundPlane.d = -root.position.y;
-    const distance = ray.intersectsPlane(groundPlane);
-    if (distance === null) return;
-    const dx = ray.origin.x + ray.direction.x * distance - root.position.x;
-    const dz = ray.origin.z + ray.direction.z * distance - root.position.z;
-    if (Math.hypot(dx, dz) < HERO_TUNING.aimDeadZone) return;
-    cursorYaw = Math.atan2(dx, dz);
-    return cursorYaw;
   }
 
   function turn(dx: number, dz: number, delta: number, speed = HERO_TUNING.turnSpeed): void {
@@ -118,8 +98,12 @@ export function createCharacterController(
       ? followUpStartProgress(combo, attackSettings.impact!.from) : 0;
     const blendSeconds = chained ? combo?.followUp.blendSeconds : undefined;
     const lock = readTargeting();
-    const yaw = lock ? targetYaw(root.position, lock.target) : updateCursorYaw() ?? root.rotation.y;
-    turn(Math.sin(yaw), Math.cos(yaw), 1, Infinity);
+    // Normal attacks inherit the hero's last movement heading, not the pointer location.
+    // Target Lock retains its precise enemy-facing attack direction.
+    if (lock) {
+      const yaw = targetYaw(root.position, lock.target);
+      turn(Math.sin(yaw), Math.cos(yaw), 1, Infinity);
+    }
     comboCount = chained ? comboCount + 1 : 1;
     comboResetRemaining = 0;
     queuedComboRemaining = 0;
@@ -232,7 +216,6 @@ export function createCharacterController(
     lastLocomotion = undefined;
     cooldown = 0;
     combatStanceRemaining = 0;
-    cursorYaw = undefined;
     input.clearInput();
     resetCombo();
     animations.setCombatIdle(false);
@@ -269,14 +252,12 @@ export function createCharacterController(
     const attacking = action?.kind === "attack";
     const lock = readTargeting();
     const facingLocked = attacking && HERO_TUNING.attack.lockFacing;
-    // Lock-on controls facing independently from locomotion and from mouse aiming.
-    // Do not rotate a full-body dodge/preview midway through its animation.
+    // When a target is locked, facing follows that enemy independently of ZQSD.
+    // Otherwise, only movement input changes facing (never the mouse position).
+    // Do not rotate a full-body dodge or preview midway through its animation.
     if (lock && allowsLocomotion(action?.kind)) {
       const yaw = targetYaw(root.position, lock.target);
       turn(Math.sin(yaw), Math.cos(yaw), delta, lock.turnSpeed);
-    } else if (attacking && !facingLocked) {
-      const aim = updateCursorYaw() ?? cursorYaw;
-      if (aim !== undefined) turn(Math.sin(aim), Math.cos(aim), delta);
     }
     if (!allowsLocomotion(action?.kind)) return;
     const inCombat = combatStanceRemaining > 0;
@@ -291,19 +272,19 @@ export function createCharacterController(
     }
     let actual: GroundVector = { x: 0, z: 0 };
     if (wantsMovement) {
-      if (!attacking && !lock) cursorYaw = updateCursorYaw() ?? cursorYaw ?? root.rotation.y;
-      const directionYaw = lock
-        ? lock.movementReference === "target"
-          ? targetYaw(root.position, lock.target)
-          : cameraMovementYaw(camera.alpha)
-        : facingLocked ? root.rotation.y : cursorYaw ?? root.rotation.y;
-      const direction = mouseRelativeDirection(horizontal, vertical, directionYaw);
+      // A single camera-relative ZQSD baseline is used with or without target lock.
+      // Target-relative strafing changes only the movement reference when selected.
+      const directionYaw = lock?.movementReference === "target"
+        ? targetYaw(root.position, lock.target)
+        : cameraMovementYaw(camera.alpha);
+      const direction = relativeMovementDirection(horizontal, vertical, directionYaw);
       const speed = settings[movement.id].movement!.speed;
       actual = move(calculateMovementStep(direction, delta, speed));
       if (lock) {
         const yaw = targetYaw(root.position, lock.target);
         turn(Math.sin(yaw), Math.cos(yaw), delta, lock.turnSpeed);
-      } else if (!attacking) {
+      } else if (!facingLocked) {
+        // Keep the last heading when keys are released; attacks can lock that heading.
         const yaw = Math.atan2(direction.x, direction.z) + (movement.movement?.facingOffset ?? 0);
         turn(Math.sin(yaw), Math.cos(yaw), delta);
       }
@@ -364,10 +345,6 @@ export function createCharacterController(
     /** Optional gameplay adapter; Playground can switch lock-on without changing manual inputs. */
     setTargetingProvider(provider: () => TargetingMotion | undefined) {
       readTargeting = provider;
-    },
-    clearAim() {
-      cursorYaw = undefined;
-      input.clearAim();
     },
     get isActing() { return !!action || animations.activeName === DEATH_ANIMATION; },
     get isAttacking() { return action?.kind === "attack"; },
