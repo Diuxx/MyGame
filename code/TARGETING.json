@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "enabled": false,
+  "enabled": true,
   "acquireRadius": 8,
   "releaseRadius": 10,
   "turnSpeed": 12,
