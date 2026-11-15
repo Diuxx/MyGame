@@ -45,6 +45,7 @@ export function createCharacterController(
   let comboResetRemaining = 0;
   let queuedComboRemaining = 0;
   let readTargeting: () => TargetingMotion | undefined = () => undefined;
+  let targetActions: { cycle(): void; cancel(): void } | undefined;
 
   function resetCombo(): void {
     comboCount = 0;
@@ -208,6 +209,10 @@ export function createCharacterController(
     if (isInputEnabled() && !animations.isPaused) onActionStarted(slot);
   }, () => {
     if (isInputEnabled()) onInteract();
+  }, () => {
+    if (isInputEnabled() && !animations.isPaused) targetActions?.cycle();
+  }, () => {
+    if (isInputEnabled() && !animations.isPaused) targetActions?.cancel();
   });
   function resetForLifeChange(clip: string): void {
     action = undefined;
@@ -345,6 +350,9 @@ export function createCharacterController(
     /** Optional gameplay adapter; Playground can switch lock-on without changing manual inputs. */
     setTargetingProvider(provider: () => TargetingMotion | undefined) {
       readTargeting = provider;
+    },
+    setTargetingActions(actions: { cycle(): void; cancel(): void }) {
+      targetActions = actions;
     },
     get isActing() { return !!action || animations.activeName === DEATH_ANIMATION; },
     get isAttacking() { return action?.kind === "attack"; },
