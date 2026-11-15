@@ -186,7 +186,6 @@ export async function startPlayground(
       facingOutput.textContent = `${facingInput.value}°`;
       return;
     }
-    controller.clearAim();
     character.root.rotation.y = degreesToRadians(n);
   }, signal);
 
