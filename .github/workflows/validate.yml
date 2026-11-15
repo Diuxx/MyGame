@@ -24,4 +24,5 @@ jobs:
       - name: Test rules and geometry
         run: npm test
       - name: Type-check and build
+        if: always()
         run: npm run build

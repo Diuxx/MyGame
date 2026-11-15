@@ -84,3 +84,24 @@ test("editing one placed collider changes only that object's collision footprint
   assert.equal(after[0].type, "box");
   if (after[0].type === "box") assert.equal(after[0].width, 4);
 });
+
+test("primitive walls and columns block movement while decorative crowns do not", () => {
+  const world: MapDefinition = {
+    ...level,
+    objects: [],
+    primitives: [
+      { id: "wall", kind: "box", position: [4, 1, 0], size: [1, 2, 8],
+        rotationY: 0, color: "#AAAAAA", blocksMovement: true },
+      { id: "pillar", kind: "cylinder", position: [0, 1, 4], size: [2, 2, 2],
+        rotationY: 0, color: "#AAAAAA", blocksMovement: true },
+      { id: "crown", kind: "sphere", position: [0, 6, 0], size: [4, 3, 4],
+        rotationY: 0, color: "#00FF00", blocksMovement: false },
+    ],
+  };
+  const obstacles = buildMapObstacles(world, assets);
+  assert.equal(obstacles.length, 2);
+  const wallStep = resolveMapMovement([0, 0, 0], { x: 8, z: 0 }, 0.4, obstacles);
+  assert.ok(wallStep.x > 3 && wallStep.x < 3.2);
+  const pillarStep = resolveMapMovement([0, 0, 0], { x: 0, z: 8 }, 0.4, obstacles);
+  assert.ok(pillarStep.z > 2 && pillarStep.z < 3);
+});

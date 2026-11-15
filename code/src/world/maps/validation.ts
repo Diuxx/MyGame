@@ -1,6 +1,7 @@
 import { parseEnvironmentSettings } from "./environmentSettings.ts";
 import { parseVisualOverride, parseWorldInteractions } from "./editorSchema.ts";
 import { parseMapEncounters } from "../../enemies/mapEnemyConfig.ts";
+import { parseMapExits, parseMapPrimitives, parsePrimitiveGround } from "./zoneContent.ts";
 import type {
   MapAssets, MapCollider, MapDefinition, MapPosition, MapBounds,
 } from "./types.ts";
@@ -211,8 +212,10 @@ export function validateMapDefinition(
   const encounters = parseMapEncounters(input, knownEnemyIds ?? discovered);
   return {
     version: 1, id, name: input.name,
-    tileSize, terrain: { origin, tiles, groundCollider: { enabled: ground.enabled, thickness } },
-    objects, spawnPoints, environment: parseEnvironmentSettings(input.environment), enemyCatalog,
+    tileSize, terrain: { origin, tiles, groundCollider: { enabled: ground.enabled, thickness },
+      primitiveGround: parsePrimitiveGround(terrain.primitiveGround) },
+    objects, spawnPoints, primitives: parseMapPrimitives(input.primitives),
+    exits: parseMapExits(input.exits), environment: parseEnvironmentSettings(input.environment), enemyCatalog,
     ...encounters, interactions: parseWorldInteractions(input.interactions),
   };
 }

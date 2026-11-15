@@ -3,8 +3,11 @@ import type { MapAssets, MapDefinition } from "./types";
 import { loadEnemyDefinitions } from "../../enemies/enemyDefinitions.ts";
 
 const MAPS = {
+  playground: "/assets/maps/playground.json",
   dojo: "/assets/maps/dojo.json",
   forest: "/assets/maps/forest.json",
+  "prototype-forest": "/assets/maps/prototype-forest.json",
+  "prototype-arena": "/assets/maps/prototype-arena.json",
 } as const;
 export type MapId = keyof typeof MAPS;
 export const AVAILABLE_MAPS: readonly MapId[] = Object.keys(MAPS) as MapId[];

@@ -7,6 +7,9 @@ import { requireElement } from "./ui/dom";
 import { createGameplayEnvironment, PLAYGROUND_MOVEMENT_LIMIT } from "./world/environments";
 import { createCamera } from "./world/scene";
 import { createMapSystem } from "./world/maps/mapSystem";
+import { isMapId } from "./world/maps/dataLoader";
+import { terrainBounds } from "./world/maps/validation";
+import { createMapTransitions } from "./world/maps/zoneTransitions";
 import { SWORD_SWING } from "./combat/combat";
 import { resolveHeroSwing } from "./combat/heroAttack";
 import { loadHeroState } from "./character/heroState";
@@ -73,7 +76,9 @@ async function start(): Promise<void> {
         onEncounterEvent: hud.event,
         onWorldInteraction: hud.announce,
       });
-      const loadedMap = await maps.load("dojo");
+      const requestedMap = new URLSearchParams(window.location.search).get("map");
+      const initialMap = requestedMap && isMapId(requestedMap) ? requestedMap : "dojo";
+      const loadedMap = await maps.load(initialMap);
       const spawn = loadedMap?.definition.spawnPoints.find((point) => point.type === "player");
       if (spawn) {
         character.root.position.set(...spawn.position);
@@ -84,28 +89,40 @@ async function start(): Promise<void> {
         () => collectMapTargetCandidates(maps.world?.simulation.list() ?? []),
         () => vitals.isAlive, signal);
       targetLock.setSettings(createTargetingSettings());
+      const transitions = createMapTransitions({
+        maps, hero: character.root, camera, signal,
+        onStatus: hud.announce,
+        onBusyChange: (busy) => {
+          if (busy) controller?.interruptForZoneChange();
+        },
+      });
       controller = createCharacterController(scene, canvas, character.root,
-        PLAYGROUND_MOVEMENT_LIMIT, camera, animationPlayer, signal,
+        () => maps.active ? terrainBounds(maps.active.definition) : {
+          minX: -PLAYGROUND_MOVEMENT_LIMIT, maxX: PLAYGROUND_MOVEMENT_LIMIT,
+          minZ: -PLAYGROUND_MOVEMENT_LIMIT, maxZ: PLAYGROUND_MOVEMENT_LIMIT,
+        }, camera, animationPlayer, signal,
         undefined, undefined,
         () => maps.active?.strike([
           character.root.position.x, character.root.position.y, character.root.position.z,
         ], character.root.rotation.y, resolveHeroSwing(SWORD_SWING, heroState.stats.attack)) ?? false,
         (start, step) => maps.active?.resolveMovement(start, step, 0.4) ?? step,
-        () => vitals.isAlive,
+        () => vitals.isAlive && !transitions.isBusy,
         (actionId) => {
           hud.flashSpell(actionId);
           floatingText.showAction('hero', actionId, character.root);
-        }, maps.interact);
+        }, transitions.interact);
       controller.setTargetingProvider(() => targetLock?.motion);
       controller.setTargetingActions({
         cycle: () => targetLock?.cycleTarget(),
         cancel: () => targetLock?.clearTarget(),
       });
       scene.onBeforeRenderObservable.add(() => {
+        transitions.update();
         lifecycle.update(scene.getEngine().getDeltaTime() / 1000, controller,
           maps.active?.definition.spawnPoints.find((entry) => entry.type === "player"));
         hud.refresh(vitals);
-        hud.nearby(maps.active?.nearInteraction()?.label);
+        const exit = maps.active?.nearExit();
+        hud.nearby(exit?.activation === "interact" ? exit.label : maps.active?.nearInteraction()?.label);
       });
       requireElement("movementHint").hidden = false;
     }

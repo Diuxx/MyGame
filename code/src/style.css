@@ -150,3 +150,18 @@ input[type=range] { accent-color:#a4c49e; display:block; width:100%; margin:0 0 
 
 .action-timeline-segment.combo { background: #d176a8; }
 .action-timeline-segment.skip { background: #8a919f; }
+
+/* A single screen-space curtain is reused during each zone swap. */
+.zone-transition-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: #101a18;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 170ms ease-in-out;
+}
+.zone-transition-overlay.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}

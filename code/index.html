@@ -312,11 +312,13 @@
           <select id="mapSelect"></select>
           <div class="enemy-fields">
             <button id="mapLoad" class="secondary" type="button">Charger / remplacer</button>
-            <button id="mapUnload" class="secondary" type="button">Décharger</button>
+            <button id="mapUnload" class="secondary" type="button">Retour Playground</button>
           </div>
           <button id="mapPlaceHero" class="secondary wide" type="button">Placer le héros au spawn</button>
           <label class="grid-toggle"><input id="mapShowColliders" type="checkbox" /> Afficher les colliders de la map (jaune)</label>
           <label class="grid-toggle"><input id="mapShowAggro" type="checkbox" /> Afficher les zones d'aggro des ennemis</label>
+           <label class="grid-toggle"><input id="mapShowZonePoints" type="checkbox" /> Afficher les spawns de zone</label>
+           <p class="animation-note">Map active : <strong id="mapActiveId">playground</strong></p>
           <button id="mapResetProgress" class="secondary wide" type="button">Réinitialiser les ennemis et boss</button>
           <p id="mapEnemyCount" class="animation-note"></p>
           <p class="animation-note">Les modèles GLB manquants sont remplacés par leur forme de collision avec leur nom. Les maps se trouvent dans public/assets/maps.</p>

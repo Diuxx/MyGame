@@ -8,7 +8,6 @@ import { requireElement } from "../ui/dom";
 
 export async function startEnemyTools(
   enemies: ReturnType<typeof createEnemyScene>,
-  groundY: number,
   spawnNearHero: (definition: Enemy["definition"]) => Position,
   signal: AbortSignal,
 ): Promise<() => void> {
@@ -87,11 +86,8 @@ export async function startEnemyTools(
     list.add(new Option(`${enemy.definition.name} · ${enemy.id}`, enemy.id));
   }
 
-  for (const [index, id] of ["dummy-straw", "dummy-knight", "target-wood"].entries()) {
-    const definition = definitions.find((item) => item.id === id);
-    if (!definition) throw new Error(`Définition manquante : ${id}`);
-    add(await enemies.spawn(definition, definition, [3 - index * 3, groundY, 4]));
-  }
+  // The initial target and goblins now come from playground.json.
+  // This editor still allows additional practice targets on demand.
   syncSelection();
   list.addEventListener("change", syncSelection, options);
   type.addEventListener("change", syncSelection, options);

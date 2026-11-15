@@ -43,3 +43,22 @@ test("late older load is discarded without replacing the current level", async (
   await session.dispose();
   assert.deepEqual(events.at(-1), "dispose fast");
 });
+
+test("invalid target spawn leaves active map and disposes candidate", async () => {
+  const events: string[] = [];
+  const session = createMapSession(async (id) => ({
+    id,
+    activate() { events.push("activate " + id); },
+    dispose() { events.push("dispose " + id); },
+  }));
+  await session.load("forest");
+  await assert.rejects(
+    () => session.load("arena", (candidate) => {
+      if (candidate.id === "arena") throw new Error("spawn missing");
+    }),
+    /spawn missing/,
+  );
+  assert.equal(session.active?.id, "forest");
+  assert.deepEqual(events, ["activate forest", "dispose arena"]);
+  await session.dispose();
+});

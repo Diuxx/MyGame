@@ -13,6 +13,7 @@ import { MapModelRegistry } from "./modelRegistry";
 import type { MapEditorKind, MapPlacementKind, VisualOverride } from "./editorSchema";
 import type { MapDefinition, MapPosition } from "./types";
 import { findTerrainCell, MAX_MAP_OBJECTS } from "./validation";
+import { nearestExit } from "./zoneExits";
 
 const DEFAULT_PLACED_ENEMY_AI: AISettings = {
   profile: "guard", aggroRadius: 6, attackRange: 1.5, leashRadius: 10,
@@ -46,6 +47,7 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
   const registry = new MapModelRegistry(scene);
   let showCollisionDebug = false;
   let showAggroDebug = false;
+  let showZoneDebug = false;
   let disposed = false;
   let editing = false;
 
@@ -102,6 +104,7 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
           enemies.setVisible(visible);
         },
         setColliderDebug(visible: boolean): void { level.setColliderDebug(visible); },
+        setZoneDebug(visible: boolean): void { level.setZoneDebug(visible); },
         showAggro(visible: boolean): void { enemies.showAggro(visible); },
         setEditorEnabled(visible: boolean): void {
           level.setEditorEnabled(visible);
@@ -159,6 +162,11 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
           },
           importGlb: (file: File) => registry.registerLocalFile(file),
         },
+        nearExit() {
+          return nearestExit(map.exits ?? [], [
+            options.hero.position.x, options.hero.position.y, options.hero.position.z,
+          ]);
+        },
         nearInteraction() {
           return level.nearbyInteraction([
             options.hero.position.x, options.hero.position.y, options.hero.position.z,
@@ -213,14 +221,25 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
     base.setVisible(!session.active);
     base.setColliderDebug(showCollisionDebug);
     base.showAggro(showAggroDebug);
+    base.setZoneDebug(showZoneDebug);
   }
 
-  async function load(id: MapId) {
+  async function load(id: MapId, spawnId?: string) {
     if (disposed) throw new Error("Système de maps fermé.");
-    const result = await session.load(id);
+    const result = await session.load(id, (candidate) => {
+      if (spawnId && !candidate.definition.spawnPoints.some(
+        (spawn) => spawn.id === spawnId && spawn.type === "player",
+      )) {
+        throw new Error("Point d'apparition introuvable : " + spawnId);
+      }
+      if (!candidate.definition.spawnPoints.some((spawn) => spawn.type === "player")) {
+        throw new Error("La map ne contient aucun spawn joueur : " + id);
+      }
+    });
     if (result) base?.setVisible(false);
     result?.setColliderDebug(showCollisionDebug);
     result?.showAggro(showAggroDebug);
+    result?.setZoneDebug(showZoneDebug);
     return result;
   }
 
@@ -241,6 +260,7 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
     base?.setEditorEnabled(editing);
     base?.setColliderDebug(showCollisionDebug);
     base?.showAggro(showAggroDebug);
+    base?.setZoneDebug(showZoneDebug);
     options.applyEnvironment(DEFAULT_ENVIRONMENT);
   }
 
@@ -267,6 +287,10 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
     showAggro(visible: boolean): void {
       showAggroDebug = visible;
       world()?.showAggro(visible);
+    },
+    showZonePoints(visible: boolean): void {
+      showZoneDebug = visible;
+      world()?.setZoneDebug(visible);
     },
     dispose,
   };
