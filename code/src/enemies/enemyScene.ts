@@ -2,7 +2,7 @@ import {
   Color3, Mesh, MeshBuilder, StandardMaterial, TransformNode,
   type Scene, type ShadowGenerator,
 } from "@babylonjs/core";
-import { MapModelRegistry } from "../world/maps/modelRegistry";
+import { MapModelRegistry } from "../world/maps/modelRegistry.ts";
 import type { Hurtbox, Position, SwordSwing } from "../combat/combat";
 import type { EnemyDefinition, EnemySettings } from "./enemyDefinitions";
 import { createEnemy, getEnemyCollision, type Enemy } from "./enemyState";
