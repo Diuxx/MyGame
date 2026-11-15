@@ -76,7 +76,7 @@ export async function startPlayground(
 
   const lifecycle = createHeroLifecycle(character.root, cameraControls, animationPlayer, heroState.stats.maxHealth);
   const { vitals } = lifecycle;
-  const hud = createHeroHud(signal);
+  const hud = createHeroHud(signal, heroState.baseStats);
   hud.setEquipment(heroState.equipment.mainHand);
   let controller: ReturnType<typeof createCharacterController> | undefined;
   const maps = createMapSystem(scene, {

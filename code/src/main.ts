@@ -57,7 +57,7 @@ async function start(): Promise<void> {
       const { shadows, ambience } = createGameplayEnvironment(scene, character.root);
       const lifecycle = createHeroLifecycle(character.root, camera, animationPlayer, heroState.stats.maxHealth);
       const { vitals } = lifecycle;
-      const hud = createHeroHud(signal);
+      const hud = createHeroHud(signal, heroState.baseStats);
       hud.setEquipment(heroState.equipment.mainHand);
       let controller: ReturnType<typeof createCharacterController> | undefined;
       let targetLock: ReturnType<typeof createTargetLockSystem> | undefined;

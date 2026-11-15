@@ -3,8 +3,18 @@ import type { EnemyEvent } from "../enemies/mapEnemySimulation";
 import { requireElement } from "./dom";
 import type { WeaponDefinition } from "../equipment/weaponDefinitions";
 import { DEFAULT_HERO_KEYS, heroKeyLabel } from "../character/heroInput";
+import type { HeroBaseStats } from "../character/heroStats";
 
-export function createHeroHud(signal: AbortSignal) {
+const HERO_STAT_LABELS: Record<keyof HeroBaseStats, string> = {
+  maxHealth: "PV max",
+  attack: "Attaque",
+  strength: "Force",
+  defense: "Défense",
+  agility: "Agilité",
+  intelligence: "Intelligence",
+};
+
+export function createHeroHud(signal: AbortSignal, baseStats: HeroBaseStats) {
   const container = requireElement<HTMLElement>("heroHud");
   const life = requireElement<HTMLOutputElement>("heroLife");
   const fill = requireElement<HTMLElement>("heroLifeFill");
@@ -13,6 +23,24 @@ export function createHeroHud(signal: AbortSignal) {
   const weaponName = requireElement<HTMLElement>("heroWeaponName");
   const message = requireElement<HTMLElement>("encounterMessage");
   const prompt = requireElement<HTMLElement>("worldInteractionPrompt");
+  const statsToggle = requireElement<HTMLButtonElement>("heroStatsToggle");
+  const statsPanel = requireElement<HTMLDListElement>("heroBaseStats");
+  statsPanel.replaceChildren(...(Object.keys(HERO_STAT_LABELS) as (keyof HeroBaseStats)[]).map((key) => {
+    const row = document.createElement("div");
+    const label = document.createElement("dt");
+    const value = document.createElement("dd");
+    label.textContent = HERO_STAT_LABELS[key];
+    value.textContent = String(baseStats[key]);
+    row.append(label, value);
+    return row;
+  }));
+  statsPanel.hidden = true;
+  statsToggle.setAttribute("aria-expanded", "false");
+  statsToggle.addEventListener("click", () => {
+    const expanded = statsPanel.hidden;
+    statsPanel.hidden = !expanded;
+    statsToggle.setAttribute("aria-expanded", String(expanded));
+  }, { signal });
   const spellSlots = new Map<string, { element: HTMLElement; timeout?: number }>();
   container.querySelectorAll<HTMLElement>(".hero-hud-spell-slot[data-spell]").forEach((element) => {
     spellSlots.set(element.dataset.spell!, { element });
