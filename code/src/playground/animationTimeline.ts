@@ -1,6 +1,6 @@
 export interface TimelineLane {
   label: string;
-  kind: "invulnerable" | "impact" | "cancel" | "blend";
+  kind: "invulnerable" | "impact" | "cancel" | "blend" | "combo" | "skip";
   from(): number;
   until(): number;
 }
