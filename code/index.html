@@ -143,6 +143,10 @@
           </div>
           <button id="pauseButton" type="button" class="secondary wide" disabled>Pause</button>
           <button id="exportAnimationManifest" type="button" class="secondary wide">Exporter ANIMATIONS.json</button>
+          <button id="importAnimationManifest" type="button" class="secondary wide">Importer ANIMATIONS.json</button>
+          <input id="importAnimationManifestFile" type="file" accept=".json,application/json" hidden />
+          <button id="resetAnimationManifest" type="button" class="secondary wide">Réinitialiser les animations</button>
+          <p id="animationConfigSource" class="animation-note" role="status">Source : ANIMATIONS.json</p>
         </section>
         <section id="actionsModule" class="module-window" aria-labelledby="actionsHeading" hidden>
           <header class="module-header">
