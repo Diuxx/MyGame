@@ -8,6 +8,8 @@ import { canCancelAction, type CancelTarget } from "./actionCancelling.ts";
 import { canBufferComboInput, canStartBufferedCombo, followUpStartProgress } from "./attackCombo.ts";
 import { allowsLocomotion } from "./animationLayers.ts";
 import { HERO_TUNING } from "./heroTuning.ts";
+import { cameraMovementYaw, targetYaw } from "./targetSelection.ts";
+import type { TargetingMotion } from "./targetLockSystem.ts";
 import { aimYaw, calculateMovementStep, consumeImpactWindow, dodgeDirection, dodgeInvulnerable, dodgeTravelProgress, mouseRelativeDirection, type GroundVector } from "./movement.ts";
 import type { CameraControls } from "../world/scene";
 
@@ -21,7 +23,7 @@ export function createCharacterController(
   canvas: HTMLCanvasElement,
   root: TransformNode,
   movementLimit: number,
-  camera: Pick<CameraControls, "follow">,
+  camera: Pick<CameraControls, "follow" | "alpha">,
   animations: AnimationPlayer,
   signal: AbortSignal,
   onAnimationChange: () => void = () => {},
@@ -45,6 +47,7 @@ export function createCharacterController(
   let comboCount = 0;
   let comboResetRemaining = 0;
   let queuedComboRemaining = 0;
+  let readTargeting: () => TargetingMotion | undefined = () => undefined;
 
   function resetCombo(): void {
     comboCount = 0;
@@ -115,7 +118,8 @@ export function createCharacterController(
     const startProgress = chained && combo
       ? followUpStartProgress(combo, attackSettings.impact!.from) : 0;
     const blendSeconds = chained ? combo?.followUp.blendSeconds : undefined;
-    const yaw = updateCursorYaw() ?? root.rotation.y;
+    const lock = readTargeting();
+    const yaw = lock ? targetYaw(root.position, lock.target) : updateCursorYaw() ?? root.rotation.y;
     turn(Math.sin(yaw), Math.cos(yaw), 1, Infinity);
     comboCount = chained ? comboCount + 1 : 1;
     comboResetRemaining = 0;
@@ -264,8 +268,14 @@ export function createCharacterController(
     }
 
     const attacking = action?.kind === "attack";
+    const lock = readTargeting();
     const facingLocked = attacking && HERO_TUNING.attack.lockFacing;
-    if (attacking && !facingLocked) {
+    // Lock-on controls facing independently from locomotion and from mouse aiming.
+    // Do not rotate a full-body dodge/preview midway through its animation.
+    if (lock && allowsLocomotion(action?.kind)) {
+      const yaw = targetYaw(root.position, lock.target);
+      turn(Math.sin(yaw), Math.cos(yaw), delta, lock.turnSpeed);
+    } else if (attacking && !facingLocked) {
       const aim = updateCursorYaw() ?? cursorYaw;
       if (aim !== undefined) turn(Math.sin(aim), Math.cos(aim), delta);
     }
@@ -276,18 +286,25 @@ export function createCharacterController(
     const movement = inCombat && !attacking
       ? HERO_ANIMATIONS.combatStance
       : running ? HERO_ANIMATIONS.run : selectedMovement;
-    if (wasSprinting && !wantsMovement && !action) {
+    if (wasSprinting && !wantsMovement && !action && !lock) {
       beginAction(HERO_ANIMATIONS.stop.id, { kind: "stop" });
       return;
     }
     let actual: GroundVector = { x: 0, z: 0 };
     if (wantsMovement) {
-      if (!attacking) cursorYaw = updateCursorYaw() ?? cursorYaw ?? root.rotation.y;
-      const movementYaw = facingLocked ? root.rotation.y : cursorYaw ?? root.rotation.y;
-      const direction = mouseRelativeDirection(horizontal, vertical, movementYaw);
+      if (!attacking && !lock) cursorYaw = updateCursorYaw() ?? cursorYaw ?? root.rotation.y;
+      const directionYaw = lock
+        ? lock.movementReference === "target"
+          ? targetYaw(root.position, lock.target)
+          : cameraMovementYaw(camera.alpha)
+        : facingLocked ? root.rotation.y : cursorYaw ?? root.rotation.y;
+      const direction = mouseRelativeDirection(horizontal, vertical, directionYaw);
       const speed = settings[movement.id].movement!.speed;
       actual = move(calculateMovementStep(direction, delta, speed));
-      if (!attacking) {
+      if (lock) {
+        const yaw = targetYaw(root.position, lock.target);
+        turn(Math.sin(yaw), Math.cos(yaw), delta, lock.turnSpeed);
+      } else if (!attacking) {
         const yaw = Math.atan2(direction.x, direction.z) + (movement.movement?.facingOffset ?? 0);
         turn(Math.sin(yaw), Math.cos(yaw), delta);
       }
@@ -345,6 +362,10 @@ export function createCharacterController(
       animations.setSettings(value);
     },
     setBindings: input.setBindings,
+    /** Optional gameplay adapter; Playground can switch lock-on without changing manual inputs. */
+    setTargetingProvider(provider: () => TargetingMotion | undefined) {
+      readTargeting = provider;
+    },
     clearAim() {
       cursorYaw = undefined;
       input.clearAim();
