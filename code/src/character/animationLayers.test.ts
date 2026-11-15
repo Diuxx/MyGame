@@ -132,3 +132,17 @@ test("the attack animates idle legs and hands the legs back to walk or run durin
   assert.equal(upperAttack.isStarted, false);
   assert.equal(lowerAttack.isStarted, false);
 });
+
+test("cancelled dodge keeps its outgoing animation until the return-to-run fade progresses", (t) => {
+  const { player, layer } = createPlayer(t);
+  player.play("dodge", true);
+  const dodge = layer("dodge");
+  player.finishAction(0.1);
+  assert.equal(dodge.isStarted, true);
+  player.updateLocomotion("run", 0.025);
+  assert.ok(layer("run-lower").weight > 0);
+  assert.ok(layer("run-lower").weight < 1);
+  assert.equal(dodge.isStarted, true);
+  player.updateLocomotion("run", 0.075);
+  assert.equal(layer("run-lower").weight, 1);
+});
