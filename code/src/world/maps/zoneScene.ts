@@ -66,7 +66,7 @@ export function createZoneScene(
     mesh.rotation.y = item.rotationY * Math.PI / 180;
   }
 
-  function exitArch(id: string, position: MapPosition): void {
+  function exitArch(id: string, position: MapPosition, triggerRadius: number): void {
     const [x, y, z] = position;
     const accent = "#67C4B1";
     box("exit-left:" + id, [x - 1.45, y + 1.25, z], [0.55, 2.5, 0.6], "#536C77");
@@ -76,6 +76,12 @@ export function createZoneScene(
       diameter: 2.2, height: 0.035, tessellation: 32,
     }, scene), accent);
     marker.position.set(x, y + 0.025, z);
+    const radiusMarker = track(MeshBuilder.CreateTorus("exit-range:" + id, {
+      diameter: triggerRadius * 2, thickness: 0.045, tessellation: 40,
+    }, scene), "#F8D47D");
+    radiusMarker.position.set(x, y + 0.065, z);
+    radiusMarker.setEnabled(false);
+    debug.push(radiusMarker);
   }
 
   function debugSpawn(position: MapPosition, id: string): void {
@@ -97,7 +103,7 @@ export function createZoneScene(
     ground.receiveShadows = true;
   }
   for (const item of map.primitives ?? []) primitive(item);
-  for (const exit of map.exits ?? []) exitArch(exit.id, exit.position);
+  for (const exit of map.exits ?? []) exitArch(exit.id, exit.position, exit.triggerRadius);
   for (const spawn of map.spawnPoints) {
     if (spawn.type === "player") debugSpawn(spawn.position, spawn.id);
   }
