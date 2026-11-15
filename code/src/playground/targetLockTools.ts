@@ -1,7 +1,7 @@
 import type { createTargetLockSystem } from "../character/targetLockSystem.ts";
 import {
   TARGETING_SETTINGS_KEY, createTargetingSettings, parseTargetingManifest,
-  serializeTargetingManifest, type TargetingSettings,
+  serializeTargetingManifest,
 } from "../character/targetingSettings.ts";
 import { downloadJson, requireElement } from "../ui/dom.ts";
 
