@@ -1,6 +1,7 @@
 import floatingTextManifest from '../../FLOATING_TEXT.json' with { type: 'json' };
+import { HERO_SPELL_SLOTS, type HeroSpellSlot } from '../character/heroInput.ts';
 
-export type ActionSplashId = 'attack' | 'dodge' | 'walk' | 'sprint';
+export type ActionSplashId = 'attack' | 'dodge' | 'walk' | 'sprint' | HeroSpellSlot;
 export type ActionTextProfile = 'movement' | 'attack';
 
 export interface FloatingTextStyle {
@@ -32,7 +33,7 @@ export interface FloatingTextConfig {
 
 export const FLOATING_TEXT_SETTINGS_KEY = 'mon-rpg.playground.floating-text.v2';
 export const FLOATING_TEXT_PREFERENCE_KEY = 'mon-rpg.settings.floating-text-enabled';
-const ACTION_IDS: readonly ActionSplashId[] = ['walk', 'sprint', 'dodge', 'attack'];
+const ACTION_IDS: readonly ActionSplashId[] = ['walk', 'sprint', 'dodge', 'attack', ...HERO_SPELL_SLOTS];
 const STYLE_LIMITS = {
   durationMs: [150, 4000],
   fontSize: [8, 72],
@@ -94,7 +95,8 @@ export function parseFloatingTextManifest(value: unknown): FloatingTextConfig {
   const limits = object(input.limits, 'limits');
   const parsedLabels = {} as Record<ActionSplashId, string>;
   for (const id of ACTION_IDS) {
-    const label = labels[id];
+    const label = labels[id] === undefined && id.startsWith('spell')
+      ? floatingTextManifest.actions.labels[id] : labels[id];
     if (typeof label !== 'string' || !label.trim() || label.length > 30) {
       throw new Error('FLOATING_TEXT.json · actions.labels.' + id + ' : texte invalide.');
     }
@@ -189,9 +191,9 @@ export function createFloatingTextConfig(value?: unknown): FloatingTextConfig {
   };
 }
 
-/** Movement covers walk, sprint and dodge; attack is intentionally more legible. */
+/** Spells share the combat text style. */
 export function actionTextStyle(config: FloatingTextConfig, id: ActionSplashId): FloatingTextStyle {
-  return id === 'attack' ? config.actions.styles.attack : config.actions.styles.movement;
+  return id === 'attack' || id.startsWith('spell') ? config.actions.styles.attack : config.actions.styles.movement;
 }
 
 function applyDisplayPreference(config: FloatingTextConfig): FloatingTextConfig {

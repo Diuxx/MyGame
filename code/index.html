@@ -45,6 +45,12 @@
               <p id="heroWeaponName" class="hero-hud-weapon-name">Sans arme</p>
             </div>
           </div>
+          <div class="hero-hud-spell" role="group" aria-label="Emplacements de sorts">
+            <div class="hero-hud-spell-slot" data-spell="spell1" role="img" aria-label="Spell 1"></div>
+            <div class="hero-hud-spell-slot" data-spell="spell2" role="img" aria-label="Spell 2"></div>
+            <div class="hero-hud-spell-slot" data-spell="spell3" role="img" aria-label="Spell 3"></div>
+            <div class="hero-hud-spell-slot" data-spell="spell4" role="img" aria-label="Spell 4"></div>
+          </div>
           <p id="worldInteractionPrompt" class="interaction-prompt" hidden></p>
           <p id="encounterMessage" role="status" aria-live="polite"></p>
         </div>
@@ -143,6 +149,11 @@
             <label>Aller à gauche<select id="keyLeft"></select></label>
             <label>Aller à droite<select id="keyRight"></select></label>
             <label>Courir<select id="keyRun"></select></label>
+            <label>Interagir<select id="keyInteract"></select></label>
+            <label>Spell 1<select id="keySpell1"></select></label>
+            <label>Spell 2<select id="keySpell2"></select></label>
+            <label>Spell 3<select id="keySpell3"></select></label>
+            <label>Spell 4<select id="keySpell4"></select></label>
           </div>
           <p class="micro">Sur la scène 3D, molette vers le haut pour zoomer et vers le bas pour dézoomer.</p>
           <button id="resetBindings" class="secondary wide" type="button">Rétablir les touches par défaut</button>

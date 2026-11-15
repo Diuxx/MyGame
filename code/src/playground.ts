@@ -69,7 +69,7 @@ export async function startPlayground(
 
   const lifecycle = createHeroLifecycle(character.root, cameraControls, animationPlayer, heroState.stats.maxHealth);
   const { vitals } = lifecycle;
-  const hud = createHeroHud();
+  const hud = createHeroHud(signal);
   hud.setEquipment(heroState.equipment.mainHand);
   let controller: ReturnType<typeof createCharacterController> | undefined;
   const maps = createMapSystem(scene, {
@@ -115,7 +115,10 @@ export async function startPlayground(
     },
     collisions.resolveMovement,
     () => vitals.isAlive && !worldEditor.enabled,
-    (actionId) => floatingText.showAction('hero', actionId, character.root));
+    (actionId) => {
+      hud.flashSpell(actionId);
+      floatingText.showAction('hero', actionId, character.root);
+    }, maps.interact);
   requireElement<HTMLButtonElement>("simulateHeroHit").addEventListener("click", controller.receiveHit, { signal });
   const simulateHeroDeath = requireElement<HTMLButtonElement>("simulateHeroDeath");
   simulateHeroDeath.addEventListener("click", () => {
@@ -123,7 +126,7 @@ export async function startPlayground(
     simulateHeroDeath.disabled = !vitals.isAlive;
     hud.refresh(vitals);
   }, { signal });
-  bindControlSettings(controller.setBindings, signal);
+  const getBindings = bindControlSettings(controller.setBindings, signal);
   const transitions = bindTransitionTools(animationPlayer, signal);
   const updateActiveAnimation = bindAnimationTools(animationPlayer, controller,
     new Set(character.animationGroups.map(({ name }) => name)), transitions, signal);
@@ -139,7 +142,7 @@ export async function startPlayground(
     lifecycle.update(delta, controller, maps.active?.definition.spawnPoints.find((point) => point.type === "player"));
     simulateHeroDeath.disabled = !vitals.isAlive;
     hud.refresh(vitals);
-    hud.nearby(worldEditor.enabled ? undefined : maps.active?.nearInteraction()?.label);
+    hud.nearby(worldEditor.enabled ? undefined : maps.world?.nearInteraction()?.label, getBindings().interact);
     const activeMap = maps.world;
     const worldEnemies = activeMap?.simulation.list() ?? [];
     const alive = worldEnemies.filter((enemy) => enemy.state !== "inactive" && !enemy.entity.defeated);

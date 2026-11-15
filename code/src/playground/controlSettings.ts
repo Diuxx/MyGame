@@ -1,16 +1,15 @@
-import { DEFAULT_HERO_KEYS, type HeroKeys } from "../character/heroInput";
+import { DEFAULT_HERO_KEYS, heroKeyLabel as label, type HeroKeys } from "../character/heroInput";
 import { requireElement } from "../ui/dom";
 
 const STORAGE_KEY = "mon-rpg.playground.keys";
 const KEYS = [..."abcdefghijklmnopqrstuvwxyz0123456789", "shift", "arrowup", "arrowdown", "arrowleft", "arrowright"];
-const LABELS: Record<string, string> = { shift: "Maj", arrowup: "↑", arrowdown: "↓", arrowleft: "←", arrowright: "→" };
 const FIELDS = {
   forward: "keyForward", backward: "keyBackward", left: "keyLeft", right: "keyRight", run: "keyRun",
+  spell1: "keySpell1", spell2: "keySpell2", spell3: "keySpell3", spell4: "keySpell4", interact: "keyInteract",
 } satisfies Record<keyof HeroKeys, string>;
 const ACTIONS = Object.keys(FIELDS) as (keyof HeroKeys)[];
-const label = (key: string) => LABELS[key] ?? key.toUpperCase();
 
-export function bindControlSettings(setBindings: (keys: HeroKeys) => void, signal: AbortSignal): void {
+export function bindControlSettings(setBindings: (keys: HeroKeys) => void, signal: AbortSignal): () => HeroKeys {
   const status = requireElement("bindingsStatus");
   const hint = requireElement("keyboardHint");
   const fields = ACTIONS.map((action) => {
@@ -21,9 +20,20 @@ export function bindControlSettings(setBindings: (keys: HeroKeys) => void, signa
   let keys = { ...DEFAULT_HERO_KEYS };
   try {
     const saved: Partial<HeroKeys> | null = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null");
-    if (saved && ACTIONS.every((action) => KEYS.includes(saved[action] ?? "")) &&
-        new Set(ACTIONS.map((action) => saved[action])).size === ACTIONS.length) {
-      for (const action of ACTIONS) keys[action] = saved[action]!;
+    if (saved) {
+      const used = new Set<string>();
+      const missing = ACTIONS.filter((action) => {
+        const key = saved[action];
+        if (!key || !KEYS.includes(key) || used.has(key)) return true;
+        used.add(key);
+        keys[action] = key;
+        return false;
+      });
+      for (const action of missing) {
+        const preferred = DEFAULT_HERO_KEYS[action];
+        keys[action] = used.has(preferred) ? KEYS.find((key) => !used.has(key))! : preferred;
+        used.add(keys[action]);
+      }
     }
   } catch {
     // Storage may be unavailable or contain invalid data. Start with the defaults.
@@ -58,4 +68,5 @@ export function bindControlSettings(setBindings: (keys: HeroKeys) => void, signa
     apply(true);
   }, { signal });
   apply(false);
+  return () => keys;
 }

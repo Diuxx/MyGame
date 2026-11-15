@@ -31,6 +31,19 @@ test('the editable configuration does not mutate versioned JSON defaults', () =>
   assert.equal(next.damage.normal.color, '#FFFFFF');
 });
 
+test('older exports gain spell splashes and keep their custom labels', () => {
+  const config = createFloatingTextConfig();
+  const { attack, dodge, walk, sprint } = config.actions.labels;
+  const imported = parseFloatingTextManifest({
+    ...config, actions: { ...config.actions, labels: { attack, dodge, walk, sprint, spell2: 'SORT 2' } },
+  });
+  assert.equal(imported.actions.labels.spell1, 'SPELL 1');
+  assert.equal(imported.actions.labels.spell2, 'SORT 2');
+  assert.equal(imported.actions.labels.spell3, 'SPELL 3');
+  assert.equal(imported.actions.labels.spell4, 'SPELL 4');
+  assert.equal(actionTextStyle(imported, 'spell4'), imported.actions.styles.attack);
+});
+
 test('temporary overrides are bounded and invalid values use JSON defaults', () => {
   const config = createFloatingTextConfig({
     enabled: false, actions: {

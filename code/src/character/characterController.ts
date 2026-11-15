@@ -30,6 +30,7 @@ export function createCharacterController(
   resolveMovement: (start: Position, step: GroundVector) => GroundVector = (_start, step) => step,
   isInputEnabled: () => boolean = () => true,
   onActionStarted: (id: string) => void = () => {},
+  onInteract: () => void = () => {},
 ) {
   const groundPlane = new Plane(0, 1, 0, 0);
   let wasMoving = false;
@@ -216,7 +217,11 @@ export function createCharacterController(
     wasMoving = true;
   }
 
-  const input = bindHeroInput(canvas, attack, startDodge, signal);
+  const input = bindHeroInput(canvas, attack, startDodge, signal, (slot) => {
+    if (isInputEnabled() && !animations.isPaused) onActionStarted(slot);
+  }, () => {
+    if (isInputEnabled()) onInteract();
+  });
   function resetForLifeChange(clip: string): void {
     action = undefined;
     wasSprinting = false;
