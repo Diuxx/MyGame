@@ -184,19 +184,16 @@ export function createCharacterController(
     }
     let actual: GroundVector = { x: 0, z: 0 };
     if (wantsMovement) {
-      cursorYaw = updateCursorYaw() ?? cursorYaw ?? root.rotation.y;
-      const direction = mouseRelativeDirection(horizontal, vertical, cursorYaw);
+      const movementYaw = attacking
+        ? root.rotation.y
+        : (cursorYaw = updateCursorYaw() ?? cursorYaw ?? root.rotation.y);
+      const direction = mouseRelativeDirection(horizontal, vertical, movementYaw);
       const speed = settings[movement.id].movement!.speed;
       actual = move(calculateMovementStep(direction, delta, speed));
-      // During a strike, aim at the pointer while movement remains independent.
       if (!attacking) {
         const yaw = Math.atan2(direction.x, direction.z) + (movement.movement?.facingOffset ?? 0);
         turn(Math.sin(yaw), Math.cos(yaw), delta);
       }
-    }
-    if (attacking) {
-      const aim = updateCursorYaw() ?? cursorYaw;
-      if (aim !== undefined) turn(Math.sin(aim), Math.cos(aim), delta);
     }
     const moving = !!(actual.x || actual.z);
     wasSprinting = moving && movement === HERO_ANIMATIONS.run && !action;

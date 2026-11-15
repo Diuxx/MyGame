@@ -9,6 +9,7 @@ import type { VisualOverride } from "../world/maps/editorSchema";
 import type { MapDefinition } from "../world/maps/types";
 import type { BuiltMap } from "../world/maps/mapBuilder";
 import type { EnemyDefinition } from "./enemyDefinitions";
+import type { MapEnemySpawn } from "./mapEnemyConfig";
 import type { EnemyEvent, FieldEnemy, SavedMapProgress } from "./mapEnemySimulation";
 import { createMapEnemySimulation } from "./mapEnemySimulation";
 import { createMapEnemyAnimation } from "./mapEnemyAnimation";
@@ -52,7 +53,8 @@ export async function createMapEnemyScene(
   );
   const root = new TransformNode("map-encounters-" + definition.id, scene);
   root.setEnabled(false);
-  const editableModels: ReturnType<typeof createEditableModel>[] = [];
+  const editableModels = new Set<ReturnType<typeof createEditableModel>>();
+  let disposed = false;
   const shadowCasters: AbstractMesh[] = [];
   const models = new Map<string, {
     node: TransformNode; model: ReturnType<typeof createEditableModel>;
@@ -123,13 +125,23 @@ export async function createMapEnemyScene(
   async function createVisual(enemy: FieldEnemy): Promise<void> {
     const node = new TransformNode("map-enemy-" + enemy.spec.id, scene);
     node.parent = root;
+    node.setEnabled(false);
     node.position.set(...enemy.entity.position);
     const clips = enemy.entity.definition.animationClips;
     const model = createEditableModel(scene, node, options.registry, options.shadows,
       enemy.entity.definition.modelPath, (holder) => primitive(enemy, holder), true,
-      clips && { Idle: clips.idle, Run: clips.run });
-    editableModels.push(model);
-    await model.load(enemy.spec.visual);
+      clips && { Idle: clips.idle, Run: clips.run },
+      { editorKind: "enemy", editorId: enemy.spec.id });
+    editableModels.add(model);
+    try {
+      await model.load(enemy.spec.visual);
+      if (disposed) throw new Error("Carte fermée pendant le placement.");
+    } catch (error) {
+      editableModels.delete(model);
+      model.dispose();
+      if (!node.isDisposed()) node.dispose(false, false);
+      throw error;
+    }
     const height = enemy.spec.boss ? 3.25 : 2.1;
     label(enemy.entity.definition.name, node, height + 0.35);
     const bg = MeshBuilder.CreatePlane("enemy-health-background", { width: 1.4, height: 0.12 }, scene);
@@ -188,7 +200,6 @@ export async function createMapEnemyScene(
   let editing = false;
   let paused = false;
   let activated = false;
-  let disposed = false;
 
   function refreshVisuals(simulationDelta?: number): void {
     for (const actor of simulation.list()) {
@@ -226,7 +237,7 @@ export async function createMapEnemyScene(
   }
 
   const tick = (): void => {
-    if (!activated || disposed || document.hidden) return;
+    if (!root.isEnabled() || disposed || document.hidden) return;
     const seconds = Math.min(0.1, scene.getEngine().getDeltaTime() / 1000);
     if (!paused) simulation.update(seconds, options.getHeroPosition(), options.isHeroAlive());
     refreshVisuals(seconds);
@@ -245,6 +256,7 @@ export async function createMapEnemyScene(
       refreshVisuals();
       dispatchEvents();
     },
+    setVisible(visible: boolean): void { root.setEnabled(visible); },
     showAggro(visible: boolean): void {
       debug = visible;
       refreshVisuals();
@@ -252,6 +264,13 @@ export async function createMapEnemyScene(
     setEditorEnabled(enabled: boolean): void {
       editing = enabled;
       paused = enabled;
+      refreshVisuals();
+    },
+    async addEnemy(spec: MapEnemySpawn): Promise<void> {
+      const actor = simulation.createActor(spec);
+      await createVisual(actor);
+      simulation.addActor(actor);
+      (definition.enemySpawns ??= []).push(spec);
       refreshVisuals();
     },
     moveEnemy(id: string, position: Position): void {

@@ -157,8 +157,13 @@ que la visualisation.
 
 ## Maps 3D modulaires (P1)
 
-Le système de maps est piloté par `public/assets/definitions/assets.json`
-et `public/assets/maps/*.json`. Le Gameplay charge automatiquement le
+Le catalogue `public/assets/definitions/assets.json` regroupe les tuiles,
+les décors et les définitions d’ennemis et de cibles. Une carte peut définir
+`"enemyCatalog": "/assets/definitions/enemies-hard.json"` pour ajouter des
+ennemis ou remplacer une définition du catalogue par son identifiant. Ce
+fichier contient un tableau de définitions complètes. Un ennemi peut
+définir `placementAI` pour les nouveaux placements depuis l’éditeur.
+Les niveaux sont définis dans `public/assets/maps/*.json`. Le Gameplay charge automatiquement le
 dojo ; le Playground propose un module **Maps 3D modulaires** pour
 charger, changer, décharger une map et afficher ses colliders.
 
@@ -184,8 +189,13 @@ Guide de configuration : [docs/ENCOUNTERS_AMBIENCE.md](../docs/ENCOUNTERS_AMBIEN
 
 ## Éditeur de monde du Playground
 
-Ouvrir une map puis le module **Éditeur de monde** : sélection et
-glissement des objets ou ennemis, collision, IA et aperçu GLB/texture.
+Ouvrir le module **Éditeur de monde** sur le terrain du Playground ou
+après avoir chargé une carte. Choisir une tuile,
+un décor ou un ennemi dans le catalogue active l’édition. Cliquer dans
+la scène pose l’élément ou remplace la tuile. Les éléments déjà posés
+peuvent être déplacés en maintenant le clic gauche, y compris les
+mannequins du module **Gestion des ennemis**. Ce module conserve la
+sauvegarde et l’export des mannequins d’entraînement existants.
 Exporter le JSON après édition ; les assets importés localement
 doivent être copiés dans `public/assets`. Interactions à proximité
 avec la touche **E** (ramassage, inspection). Guide :

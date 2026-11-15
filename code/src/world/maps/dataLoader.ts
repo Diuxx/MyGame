@@ -1,7 +1,6 @@
-import { validateMapAssets, validateMapDefinition } from "./validation";
+import { mapEnemyCatalogPath, validateMapAssets, validateMapDefinition } from "./validation.ts";
 import type { MapAssets, MapDefinition } from "./types";
-import { loadEnemyDefinitions } from "../../enemies/enemyDefinitions";
-import fieldEnemyDefinitions from "../../enemies/fieldEnemyDefinitions.json";
+import { loadEnemyDefinitions } from "../../enemies/enemyDefinitions.ts";
 
 const MAPS = {
   dojo: "/assets/maps/dojo.json",
@@ -29,18 +28,35 @@ export function isMapId(value: string): value is MapId {
   return Object.hasOwn(MAPS, value);
 }
 
+let defaultCatalog: Promise<ReturnType<typeof parseAssetCatalog>> | undefined;
+
+export function parseAssetCatalog(raw: unknown) {
+  const assets = validateMapAssets(raw);
+  const enemyCatalog = loadEnemyDefinitions((raw as { enemies?: unknown }).enemies);
+  return { assets, enemyCatalog };
+}
+
+export function loadAssetCatalog() {
+  defaultCatalog ??= fetchJson("/assets/definitions/assets.json").then(parseAssetCatalog).catch((error: unknown) => {
+    defaultCatalog = undefined;
+    throw error;
+  });
+  return defaultCatalog;
+}
+
 /** Validate all data and references before loading a single GLB. */
 export async function loadMapData(id: MapId): Promise<{
   assets: MapAssets;
   map: MapDefinition;
   enemyCatalog: ReturnType<typeof loadEnemyDefinitions>;
 }> {
-  const [rawAssets, rawMap] = await Promise.all([
-    fetchJson("/assets/definitions/assets.json"),
+  const [{ assets, enemyCatalog: defaults }, rawMap] = await Promise.all([
+    loadAssetCatalog(),
     fetchJson(MAPS[id]),
   ]);
-  const assets = validateMapAssets(rawAssets);
-  const enemyCatalog = loadEnemyDefinitions(fieldEnemyDefinitions);
+  const path = mapEnemyCatalogPath(rawMap);
+  const overrides = path ? loadEnemyDefinitions(await fetchJson(path)) : [];
+  const enemyCatalog = [...new Map([...defaults, ...overrides].map((enemy) => [enemy.id, enemy])).values()];
   const map = validateMapDefinition(rawMap, assets, new Set(enemyCatalog.map((enemy) => enemy.id)));
   if (map.id !== id) throw new Error("Identifiant de map inattendu : " + map.id);
   return { assets, map, enemyCatalog };

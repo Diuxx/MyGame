@@ -10,11 +10,13 @@ export type MapCollider =
   | { type: "cylinder"; position: MapPosition; radius: number; height: number };
 
 export interface TileAsset {
+  name?: string;
   model: string;
   walkable: boolean;
 }
 
 export interface ObjectAsset {
+  name?: string;
   model: string;
   blocksNavigation: boolean;
   colliders: MapCollider[];
@@ -49,12 +51,13 @@ export interface MapDefinition {
   tileSize: number;
   terrain: {
     origin: MapPosition;
-    tiles: string[][];
+    tiles: (string | null)[][];
     groundCollider: { enabled: boolean; thickness: number };
   };
   objects: MapObject[];
   spawnPoints: MapSpawn[];
   environment?: EnvironmentSettings;
+  enemyCatalog?: string;
   enemySpawns?: MapEnemySpawn[];
   waves?: MapWave[];
   events?: MapEncounterEvent[];

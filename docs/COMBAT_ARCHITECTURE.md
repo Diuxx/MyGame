@@ -6,7 +6,7 @@
 
 - `code/src/combat/combat.ts`: damage, health regeneration and compatibility entry point for the sword sweep.
 - `code/src/combat/hitDetection.ts`: Babylon-independent ground-plane sweep/hurtbox intersection, including rotated rectangular targets.
-- `code/src/enemies/enemyDefinitions.json`: version-controlled enemy archetypes, model URLs, base stats, and hurtboxes.
+- `code/public/assets/definitions/assets.json`: version-controlled asset catalogue with enemy archetypes, model URLs, base stats, and hurtboxes.
 - `code/src/enemies/enemyState.ts`: independent mutable instance state, with an instance ID separate from the archetype ID.
 - `code/src/enemies/enemyManager.ts`: runtime registry, regeneration and damage dispatch without Babylon.js.
 - `code/src/enemies/enemyScene.ts`: loading GLBs, visual health bars and debug meshes. Owns the lifecycle of its visual entries and synchronizes them with the manager.

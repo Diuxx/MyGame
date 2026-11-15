@@ -1,4 +1,5 @@
 import type { Hurtbox, RegenerationSettings } from "../combat/combat.ts";
+import { parseEnemyAI, type AISettings } from "./mapEnemyConfig.ts";
 
 export interface EnemyCollision {
   solid: boolean;
@@ -19,6 +20,7 @@ export interface EnemyDefinition extends EnemySettings {
   category: "static" | "animated";
   hurtbox: Hurtbox;
   animationClips?: { idle: string; run: string };
+  placementAI?: AISettings;
 }
 
 function record(value: unknown): Record<string, unknown> {
@@ -54,7 +56,9 @@ export function loadEnemyDefinitions(data: unknown): EnemyDefinition[] {
   return data.map((value: unknown) => {
     const definition = record(value);
     const { id, name, modelPath, category } = definition;
-    if (typeof id !== "string" || !id.trim() || ids.has(id)) throw new Error(`Identifiant d’ennemi invalide : ${id}`);
+    if (typeof id !== "string" || !/^[a-z0-9][a-z0-9_-]{0,79}$/i.test(id) || ids.has(id)) {
+      throw new Error(`Identifiant d’ennemi invalide : ${id}`);
+    }
     try {
       if (typeof name !== "string" || !name.trim() || typeof modelPath !== "string" || !/^\/(?!\/)[^?#\\]+\.glb$/i.test(modelPath) ||
           (category !== "static" && category !== "animated")) {
@@ -78,7 +82,9 @@ export function loadEnemyDefinitions(data: unknown): EnemyDefinition[] {
         throw new Error("Dimensions ou décalage de la zone de touche invalides.");
       }
       ids.add(id);
-      return value as EnemyDefinition;
+      const validated = value as EnemyDefinition;
+      return definition.placementAI === undefined ? validated :
+        { ...validated, placementAI: parseEnemyAI(definition.placementAI, "placementAI") };
     } catch (error) {
       throw new Error(`Définition ${id} : ${error instanceof Error ? error.message : String(error)}`, { cause: error });
     }

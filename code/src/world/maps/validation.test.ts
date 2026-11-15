@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { terrainBounds, tileCenter, validateMapAssets, validateMapDefinition } from "./validation.ts";
+import { loadMapData, parseAssetCatalog } from "./dataLoader.ts";
+import { findTerrainCell, terrainBounds, tileCenter, validateMapAssets, validateMapDefinition } from "./validation.ts";
+import { createNavigationData } from "./navigationData.ts";
 
 const load = (path: string): unknown => JSON.parse(readFileSync(
   new URL("../../../public/assets/" + path, import.meta.url), "utf8"));
@@ -21,6 +23,44 @@ test("tile centers use corner origin and column X / row Z", () => {
   assert.deepEqual(tileCenter(dojo, 2, 3), [7, 0, 5]);
   assert.deepEqual(terrainBounds(dojo), { minX: 0, maxX: 16, minZ: 0, maxZ: 16 });
   assert.deepEqual(dojo.objects[0].position, [3, 0, 0]);
+  assert.deepEqual(findTerrainCell(dojo, 7, 5), { row: 2, column: 3 });
+  assert.equal(findTerrainCell(dojo, -0.01, 5), undefined);
+  assert.equal(findTerrainCell(dojo, 16, 5), undefined);
+});
+
+test("French catalogue names and unpainted floor cells survive map validation", () => {
+  const rawAssets = load("definitions/assets.json") as Record<string, any>;
+  const rawMap = load("maps/dojo.json") as Record<string, any>;
+  const map = validateMapDefinition({ ...rawMap, terrain: { ...rawMap.terrain, tiles: [[null, "water"]] } }, assets);
+  assert.equal(assets.objects.boulder.name, "Rocher");
+  assert.equal(assets.tiles.water.name, "Eau");
+  assert.deepEqual(map.terrain.tiles, [[null, "water"]]);
+  assert.deepEqual(findTerrainCell(map, 1, 1), { row: 0, column: 0 });
+  assert.deepEqual(createNavigationData(map, assets).walkable, [[true, false]]);
+  rawAssets.tiles.water.name = "";
+  assert.throws(() => validateMapAssets(rawAssets), /water.name/);
+});
+
+test("a level can override enemy stats using a public catalogue while retaining defaults", async (t) => {
+  const rawAssets = load("definitions/assets.json");
+  const { enemyCatalog } = parseAssetCatalog(rawAssets);
+  const guard = enemyCatalog.find(({ id }) => id === "dojo-guard");
+  assert.ok(guard);
+  const path = "/assets/definitions/enemies-hard.json";
+  const overrides = [{ ...guard, stats: { ...guard.stats, maxHealth: 300 } }];
+  const rawDojo = load("maps/dojo.json") as object;
+  t.mock.method(globalThis, "fetch", async (input: string) => {
+    const value = input === path ? overrides : input === "/assets/maps/dojo.json"
+      ? { ...rawDojo, enemyCatalog: path } : rawAssets;
+    return Response.json(value);
+  });
+  const loaded = await loadMapData("dojo");
+  assert.equal(loaded.map.enemyCatalog, path);
+  assert.equal(loaded.enemyCatalog.find(({ id }) => id === guard.id)?.stats.maxHealth, 300);
+  assert.equal(loaded.enemyCatalog.find(({ id }) => id === "dummy-straw")?.category, "static");
+  assert.notEqual(guard.stats.maxHealth, 300);
+  assert.throws(() => validateMapDefinition({ ...rawDojo, enemyCatalog: "https://example.com/enemies.json" }, assets),
+    /enemyCatalog/);
 });
 
 test("unknown assets, non-rectangular grids and bad versions are rejected", () => {

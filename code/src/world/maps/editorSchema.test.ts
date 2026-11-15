@@ -1,6 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { NullEngine, Scene, TransformNode } from "@babylonjs/core";
 import { parseVisualOverride, parseWorldInteractions } from "./editorSchema.ts";
+import { createWorldInteractionScene } from "./worldInteractionScene.ts";
 import { createWorldInteractions } from "./worldInteractions.ts";
 
 test("visual overrides validate model, textures, tint and scaling", () => {
@@ -32,4 +34,26 @@ test("interaction definitions reject duplicates and invalid gameplay ranges", ()
   assert.throws(() => parseWorldInteractions([item, item]), /dupliqué/);
   assert.throws(() => parseWorldInteractions([{ ...item, range: 0 }]), /distance/);
   assert.throws(() => parseWorldInteractions([{ ...item, position: [1, NaN, 2] }]), /position/);
+});
+
+test("moving a pickup updates its model, exported position and interaction range", (t) => {
+  const engine = new NullEngine();
+  const scene = new Scene(engine);
+  const parent = new TransformNode("map", scene);
+  const entries = parseWorldInteractions([
+    { id: "loot", kind: "pickup", itemId: "gem", label: "Gemme", position: [2, 0, 2], range: 1 },
+  ]);
+  const interactions = createWorldInteractionScene(scene, parent, entries);
+  t.after(() => {
+    interactions.dispose();
+    engine.dispose();
+  });
+  const [mesh] = parent.getChildMeshes();
+  assert.deepEqual(mesh.metadata, { editorKind: "interaction", editorId: "loot" });
+  interactions.move("loot", [8, 1, -4]);
+  assert.deepEqual(mesh.position.asArray(), [8, 1.45, -4]);
+  assert.deepEqual(JSON.parse(JSON.stringify(entries))[0].position, [8, 1, -4]);
+  assert.equal(interactions.nearby([2, 0, 2]), undefined);
+  assert.equal(interactions.interact([8, 1, -4])?.itemId, "gem");
+  assert.equal(mesh.isEnabled(), false);
 });

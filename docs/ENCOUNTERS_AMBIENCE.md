@@ -22,13 +22,13 @@ et les événements. En mode Gameplay, `dojo` démarre automatiquement.
 
 ### Sans GLB
 
-Les quatre ennemis du catalogue `src/enemies/fieldEnemyDefinitions.json`
-utilisent actuellement des **formes provisoires** (cylindres, boîtes) et
+Les ennemis du catalogue `code/public/assets/definitions/assets.json`
+dont le GLB manque utilisent des **formes provisoires** (cylindres, boîtes) et
 des étiquettes. Si un modèle valide est ajouté à son chemin `modelPath`,
 il est instancié automatiquement à la place de la forme provisoire.
 Les règles de combat, les hurtboxes et la navigation ne dépendent jamais
-de ces meshes. Les mannequins statiques existants restent gérés par
-`enemyDefinitions.json` et le module de test habituel.
+de ces meshes. Les mannequins statiques du même catalogue sont disponibles
+dans l’éditeur et dans le module de test habituel.
 
 ## 1. Ambiance dans le même fichier map.json
 

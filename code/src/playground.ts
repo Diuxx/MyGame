@@ -72,11 +72,22 @@ export async function startPlayground(
     onEncounterEvent: hud.event,
     onWorldInteraction: hud.announce,
   });
+  const tileSize = 2;
+  const gridSize = PLAYGROUND_MOVEMENT_LIMIT * 2 / tileSize;
+  await maps.openBase({
+    version: 1, id: "playground", name: "Playground", tileSize,
+    terrain: {
+      origin: [-PLAYGROUND_MOVEMENT_LIMIT, 0, -PLAYGROUND_MOVEMENT_LIMIT],
+      tiles: Array.from({ length: gridSize }, () => Array<null>(gridSize).fill(null)),
+      groundCollider: { enabled: false, thickness: 0.1 },
+    },
+    objects: [], spawnPoints: [{ id: "hero", type: "player", position: [0, 0, 0], rotationY: 0 }],
+  });
   bindMapTools(maps, character.root, cameraControls, signal);
   const canvas = requireElement<HTMLCanvasElement>("renderCanvas");
-  const worldEditor = bindWorldEditor(scene, canvas, maps, signal);
+  const worldEditor = bindWorldEditor(scene, canvas, maps, enemies, signal);
   const collisions = bindCollisionTools(scene, character.root, enemies, signal,
-    (start, step, radius, height) => maps.active?.resolveMovement(start, step, radius, height) ?? step);
+    (start, step, radius, height) => maps.world?.resolveMovement(start, step, radius, height) ?? step);
   const attackTools = bindAttackTools(scene, character.root, signal);
   const facingInput = requireElement<HTMLInputElement>("facing");
   const facingOutput = requireElement<HTMLOutputElement>("facingOutput");
@@ -90,7 +101,7 @@ export async function startPlayground(
     }, () => {
       const swing = attackTools.getSwing();
       const dummyHit = enemies.strike(heroPosition(), character.root.rotation.y, swing);
-      const worldHit = maps.active?.strike(heroPosition(), character.root.rotation.y, swing) ?? false;
+      const worldHit = maps.world?.strike(heroPosition(), character.root.rotation.y, swing) ?? false;
       return dummyHit || worldHit;
     },
     collisions.resolveMovement,
@@ -119,7 +130,7 @@ export async function startPlayground(
     simulateHeroDeath.disabled = !vitals.isAlive;
     hud.refresh(vitals);
     hud.nearby(worldEditor.enabled ? undefined : maps.active?.nearInteraction()?.label);
-    const activeMap = maps.active;
+    const activeMap = maps.world;
     const worldEnemies = activeMap?.simulation.list() ?? [];
     const alive = worldEnemies.filter((enemy) => enemy.state !== "inactive" && !enemy.entity.defeated);
     const status = activeMap

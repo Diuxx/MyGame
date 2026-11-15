@@ -85,8 +85,9 @@ function distinct(items: readonly { id: string }[], path: string): void {
 }
 
 const SKILLS = ["slash", "cleave", "bolt", "heal"] as const;
+export const MAX_MAP_ENEMIES = 80;
 
-function parseAI(raw: unknown, path: string): AISettings {
+export function parseEnemyAI(raw: unknown, path: string): AISettings {
   const ai = data(raw, path);
   const profile = choice(ai.profile, ["guard", "patrol", "aggressive", "ranged"], path + ".profile");
   const attackRange = value(ai.attackRange, path + ".attackRange", 0.3, 12);
@@ -159,7 +160,7 @@ function parseSpawn(raw: unknown, index: number, catalog: ReadonlySet<string>): 
     id: id(item.id, path + ".id"), enemyId,
     position: position(item.position, path + ".position"),
     rotationY: value(item.rotationY, path + ".rotationY"),
-    activation, respawn, ai: parseAI(item.ai, path + ".ai"),
+    activation, respawn, ai: parseEnemyAI(item.ai, path + ".ai"),
     persistDeath, ...(boss ? { boss } : {}),
     ...(item.visual === undefined ? {} : { visual: parseVisualOverride(item.visual) }),
     ...(overrides ? { overrides } : {}),
@@ -180,7 +181,7 @@ export function parseMapEncounters(valueAt: unknown, catalog: ReadonlySet<string
   distinct(waves, "waves");
   const spawns = (root.enemySpawns === undefined ? [] : entries(root.enemySpawns, "enemySpawns"))
     .map((raw, index) => parseSpawn(raw, index, catalog));
-  if (spawns.length > 80) throw new Error("Maximum 80 ennemis par map.");
+  if (spawns.length > MAX_MAP_ENEMIES) throw new Error("Maximum " + MAX_MAP_ENEMIES + " ennemis par map.");
   distinct(spawns, "enemySpawns");
   for (const spawn of spawns) {
     if (spawn.activation.mode === "wave") {

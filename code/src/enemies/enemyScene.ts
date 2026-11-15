@@ -15,7 +15,7 @@ function footprint(box: Hurtbox): number {
 }
 
 export function createEnemyScene(scene: Scene, shadows: ShadowGenerator, groundY: number) {
-  const entries = new Map<string, { enemy: Enemy; update(): void; select(selected: boolean): void;
+  const entries = new Map<string, { enemy: Enemy; root: TransformNode; update(): void; select(selected: boolean): void;
     showHurtbox(visible: boolean): void; showCollider(visible: boolean): void; dispose(): void }>();
   const manager = createEnemyManager();
   const models = new MapModelRegistry(scene);
@@ -90,6 +90,7 @@ export function createEnemyScene(scene: Scene, shadows: ShadowGenerator, groundY
       health.material = fill;
       health.isPickable = false;
       for (const mesh of geometry) {
+        mesh.metadata = { ...mesh.metadata, editorKind: "practice", editorId: id };
         mesh.computeWorldMatrix(true);
         shadows.addShadowCaster(mesh, false);
         casters.push(mesh);
@@ -97,6 +98,7 @@ export function createEnemyScene(scene: Scene, shadows: ShadowGenerator, groundY
 
       const entry = {
         enemy,
+        root,
         update() {
           const ratio = enemy.health / enemy.stats.maxHealth;
           health.setEnabled(ratio > 0);
@@ -177,6 +179,15 @@ export function createEnemyScene(scene: Scene, shadows: ShadowGenerator, groundY
     removeAll,
     select(id: string) {
       for (const entry of entries.values()) entry.select(entry.enemy.id === id);
+    },
+    get(id: string) {
+      return entries.get(id)?.enemy;
+    },
+    move(id: string, position: Position): void {
+      const entry = entries.get(id);
+      if (!entry) throw new Error("Cible d’entraînement inconnue : " + id);
+      entry.enemy.position = [...position];
+      entry.root.position.set(...position);
     },
     showHurtboxes(visible: boolean) {
       debug = visible;

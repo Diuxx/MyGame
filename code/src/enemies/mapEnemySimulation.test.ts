@@ -27,6 +27,21 @@ function sim(config: Partial<MapEncounterConfig> = {}) {
     events: config.events ?? [],
   }, [definition]);
 }
+
+test("a placed enemy joins the active simulation with its own settings and solid body", () => {
+  const game = sim({ enemySpawns: [] });
+  const spec: MapEnemySpawn = { ...spawn, position: [1, 0, 1], respawn: { mode: "never" } };
+  const actor = game.createActor(spec);
+  assert.equal(game.list().length, 0);
+  game.addActor(actor);
+  assert.equal(game.list()[0].entity.position, spec.position);
+  assert.throws(() => game.addActor(actor), /dupliqué/);
+  assert.ok(game.resolveHeroMovement([1, 0, -1], { x: 0, z: 3 }, 0.4).z < 3);
+  game.update(0.5, [1, 0, -1]);
+  assert.equal(actor.state, "chase");
+  actor.entity.stats.maxHealth = 50;
+  assert.equal(definition.stats.maxHealth, 100);
+});
 test("guard detects within circle, chases, then returns when player leaves leash", () => {
   const game = sim();
   game.update(0.5, [0, 0, 0]);
@@ -41,8 +56,9 @@ test("guard detects within circle, chases, then returns when player leaves leash
 
 test("the dojo goblin spawns clear of obstacles and waits, pursues, returns and respawns", () => {
   const load = (path: string) => JSON.parse(readFileSync(new URL(path, import.meta.url), "utf8"));
-  const catalog = loadEnemyDefinitions(load("./fieldEnemyDefinitions.json"));
-  const assets = validateMapAssets(load("../../public/assets/definitions/assets.json"));
+  const source = load("../../public/assets/definitions/assets.json") as { enemies: unknown };
+  const catalog = loadEnemyDefinitions(source.enemies);
+  const assets = validateMapAssets(source);
   const dojo = validateMapDefinition(load("../../public/assets/maps/dojo.json"), assets,
     new Set(catalog.map(({ id }) => id)));
   const spec = dojo.enemySpawns?.find(({ id }) => id === "goblin-poc");

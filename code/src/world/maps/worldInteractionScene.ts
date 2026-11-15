@@ -1,7 +1,7 @@
 import {
   Color3, MeshBuilder, StandardMaterial, TransformNode, type Scene, type ShadowGenerator,
 } from "@babylonjs/core";
-import { createWorldInteractions } from "./worldInteractions";
+import { createWorldInteractions } from "./worldInteractions.ts";
 import type { WorldInteraction } from "./editorSchema";
 import type { MapPosition } from "./types";
 
@@ -25,6 +25,7 @@ export function createWorldInteractionScene(
     material.emissiveColor = material.diffuseColor.scale(0.25);
     mesh.material = material;
     mesh.isPickable = false;
+    mesh.metadata = { editorKind: "interaction", editorId: entry.id };
     materials.push(material);
     items.set(entry.id, mesh);
     shadows?.addShadowCaster(mesh, false);
@@ -32,6 +33,13 @@ export function createWorldInteractionScene(
   return {
     nearby: rules.nearby,
     inventory: rules.getInventory,
+    move(id: string, position: MapPosition): void {
+      const entry = definitions.find((item) => item.id === id);
+      const mesh = items.get(id);
+      if (!entry || !mesh) throw new Error("Interaction de map inconnue : " + id);
+      entry.position = [...position];
+      mesh.position.set(position[0], position[1] + 0.45, position[2]);
+    },
     interact(hero: MapPosition) {
       const result = rules.interact(hero);
       if (result?.kind === "pickup") items.get(result.id)?.setEnabled(false);

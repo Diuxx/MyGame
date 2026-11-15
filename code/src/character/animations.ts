@@ -1,7 +1,7 @@
 import { AnimationGroup, type Scene } from "@babylonjs/core";
-import { attackLayerWeight, isUpperBodyBone } from "./animationLayers";
-import { createTransitionSettings, type TransitionSettings } from "./transitionSettings";
-import { createAnimationSettings, effectivePlaybackSpeed, getAnimationDefinition, HERO_ANIMATIONS, type AnimationSettings } from "./animationSettings";
+import { attackLayerWeight, isUpperBodyBone } from "./animationLayers.ts";
+import { createTransitionSettings, type TransitionSettings } from "./transitionSettings.ts";
+import { createAnimationSettings, effectivePlaybackSpeed, getAnimationDefinition, HERO_ANIMATIONS, type AnimationSettings } from "./animationSettings.ts";
 
 export const IDLE_ANIMATION = HERO_ANIMATIONS.idle.id;
 export const ATTACK_ANIMATION = HERO_ANIMATIONS.attack.id;
@@ -24,12 +24,14 @@ function createBodyLayer(scene: Scene, source: AnimationGroup, upper: boolean): 
 }
 
 /**
- * Playback only. Locomotion drives the legs and a baseline upper-body pose;
- * light attacks temporarily replace just that upper-body pose.
+ * Playback only. Light attacks replace the upper-body pose and blend over
+ * the idle pose of the legs, while walk and run continue driving the legs.
  */
 export class AnimationPlayer {
+  private readonly animations: AnimationGroup[];
   private readonly bodyLayers = new Map<AnimationGroup, BodyLayers>();
   private readonly attackUpper: AnimationGroup;
+  private readonly attackLower: AnimationGroup;
   private locomotion = new Map<AnimationGroup, number>();
   private primary: AnimationGroup | null = null;
   private fullBody: AnimationGroup | null = null;
@@ -46,7 +48,8 @@ export class AnimationPlayer {
   private readonly combatIdleClip: string;
   private combatIdle = false;
 
-  constructor(private readonly animations: AnimationGroup[], scene: Scene) {
+  constructor(animations: AnimationGroup[], scene: Scene) {
+    this.animations = animations;
     const available = new Set(animations.map(({ name }) => name));
     const combatIdle = HERO_ANIMATIONS.combatIdle.id;
     this.combatIdleClip = available.has(combatIdle) ? combatIdle : IDLE_ANIMATION;
@@ -72,6 +75,7 @@ export class AnimationPlayer {
 
     const attack = this.requireClip(ATTACK_ANIMATION);
     this.attackUpper = createBodyLayer(scene, attack, true);
+    this.attackLower = createBodyLayer(scene, attack, false);
     if (!this.attackUpper.targetedAnimations.length) {
       throw new Error("Le clip " + ATTACK_ANIMATION + " n'anime aucun os du haut du corps.");
     }
@@ -80,6 +84,7 @@ export class AnimationPlayer {
     });
     scene.onDisposeObservable.addOnce(() => {
       this.attackUpper.dispose();
+      this.attackLower.dispose();
       for (const { lower, upper } of this.bodyLayers.values()) {
         lower.dispose();
         upper.dispose();
@@ -141,28 +146,36 @@ export class AnimationPlayer {
     this.transitioning = false;
   }
 
-  private startUpperAttack(source: AnimationGroup): void {
+  private stopActionPlayback(): void {
+    if (this.action === this.attackUpper) this.attackLower.stop(true);
+    this.action?.stop(true);
+  }
+
+  private startLayeredAttack(source: AnimationGroup): void {
     this.fullBody?.stop(true);
     this.fullBody = null;
-    this.attackUpper.stop(true);
+    this.stopActionPlayback();
     this.action = this.attackUpper;
     this.actionSource = source;
     this.actionControlled = true;
     this.actionCompleted = false;
     this.overlayElapsed = 0;
-    this.attackUpper.weight = 0;
-    this.attackUpper.start(false, this.playbackSpeed(source.name), source.from, source.to);
+    const speed = this.playbackSpeed(source.name);
+    for (const layer of [this.attackUpper, this.attackLower]) {
+      layer.weight = 0;
+      layer.start(false, speed, source.from, source.to);
+    }
   }
 
   /** Full-body actions (including dodge) preempt both animation layers. */
   play(name: string, controlled = false, layered = false): void {
     const selected = this.requireClip(name);
     if (name === ATTACK_ANIMATION && controlled && layered) {
-      this.startUpperAttack(selected);
+      this.startLayeredAttack(selected);
       return;
     }
     this.stopLocomotion();
-    this.action?.stop(true);
+    this.stopActionPlayback();
     this.action = null;
     this.actionSource = null;
     this.fullBody?.stop(true);
@@ -180,7 +193,7 @@ export class AnimationPlayer {
 
   /** Called by the controller once a one-shot finishes or is interrupted. */
   finishAction(): void {
-    this.action?.stop(true);
+    this.stopActionPlayback();
     if (this.fullBody === this.action) this.fullBody = null;
     this.action = null;
     this.actionSource = null;
@@ -190,13 +203,20 @@ export class AnimationPlayer {
     this.applyLayerWeights(0);
   }
 
-  private applyLayerWeights(upperAttackWeight: number): void {
+  private applyLayerWeights(attackWeight: number): void {
+    let lowerAttackWeight = 0;
     for (const [source, weight] of this.locomotion) {
       const layers = this.bodyLayers.get(source)!;
-      layers.lower.weight = weight;
-      layers.upper.weight = weight * (1 - upperAttackWeight);
+      const isIdle = source.name === IDLE_ANIMATION || source.name === this.combatIdleClip;
+      const replacement = isIdle ? weight * attackWeight : 0;
+      lowerAttackWeight += replacement;
+      layers.lower.weight = weight - replacement;
+      layers.upper.weight = weight * (1 - attackWeight);
     }
-    if (this.action === this.attackUpper) this.attackUpper.weight = upperAttackWeight;
+    if (this.action === this.attackUpper) {
+      this.attackUpper.weight = attackWeight;
+      this.attackLower.weight = lowerAttackWeight;
+    }
   }
 
   private updateAttackBlend(delta: number): void {
@@ -275,8 +295,10 @@ export class AnimationPlayer {
       layers.lower.speedRatio = speed;
       layers.upper.speedRatio = speed;
     }
-    if (this.action && this.actionSource) this.action.speedRatio = this.playbackSpeed(this.actionSource.name);
-    else if (this.fullBody) this.fullBody.speedRatio = this.playbackSpeed(this.fullBody.name);
+    if (this.action && this.actionSource) {
+      this.action.speedRatio = this.playbackSpeed(this.actionSource.name);
+      if (this.action === this.attackUpper) this.attackLower.speedRatio = this.action.speedRatio;
+    } else if (this.fullBody) this.fullBody.speedRatio = this.playbackSpeed(this.fullBody.name);
   }
 
   togglePause(): boolean {
@@ -288,6 +310,7 @@ export class AnimationPlayer {
       groups.add(layers.upper);
     }
     if (this.action) groups.add(this.action);
+    if (this.action === this.attackUpper) groups.add(this.attackLower);
     if (this.fullBody) groups.add(this.fullBody);
     if (!groups.size) return false;
     for (const group of groups) {

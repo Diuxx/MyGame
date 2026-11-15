@@ -1,4 +1,4 @@
-import { applyDamage, intersectsSwing, type Position, type SwordSwing } from "../combat/combat.ts";
+import { applyDamage, intersectsSwing, regenerate, type Position, type SwordSwing } from "../combat/combat.ts";
 import { intersectsMeleeHitbox } from "../combat/hitDetection.ts";
 import { resolveCircleMovement, type GroundStep } from "../combat/bodyCollision.ts";
 import type { EnemyDefinition } from "./enemyDefinitions.ts";
@@ -67,7 +67,7 @@ export function createMapEnemySimulation(
   const actors = new Map<string, FieldEnemy>();
   const waves = config.waves;
 
-  for (const spec of config.enemySpawns) {
+  function createActor(spec: MapEnemySpawn): FieldEnemy {
     const definition = catalog.get(spec.enemyId);
     if (!definition) throw new Error("Type d'ennemi absent : " + spec.enemyId);
     // Each placed enemy owns its hurtbox and stats; editing one must not
@@ -87,11 +87,15 @@ export function createMapEnemySimulation(
     const entity = createEnemy(spec.id, instanceDefinition, spec.position, settings);
     const disabled = spec.persistDeath && permanentlyDead.has(spec.id);
     if (disabled) { entity.health = 0; entity.defeated = true; }
-    actors.set(spec.id, {
+    return {
       spec, entity, state: disabled || spec.activation.mode === "wave" ? "inactive" : "idle",
       yaw: spec.rotationY * Math.PI / 180, cooldown: 0, windup: 0, skill: "slash",
       phaseIndex: -1, patrolIndex: 0, respawnIn: 0, nextSkill: 0,
-    });
+    };
+  }
+
+  for (const spec of config.enemySpawns) {
+    actors.set(spec.id, createActor(spec));
   }
 
   function notify(type: "enemyDefeated" | "waveCleared" | "bossPhase", target: string): void {
@@ -237,6 +241,10 @@ export function createMapEnemySimulation(
         }
         continue;
       }
+      if (actor.entity.definition.category === "static") {
+        regenerate(actor.entity, delta);
+        continue;
+      }
       phaseChanges(actor);
       actor.cooldown = Math.max(0, actor.cooldown - delta);
       if (actor.state === "windup") {
@@ -316,6 +324,11 @@ export function createMapEnemySimulation(
 
   return {
     list: () => [...actors.values()],
+    createActor,
+    addActor(actor: FieldEnemy): void {
+      if (actors.has(actor.spec.id)) throw new Error("Ennemi dupliqué : " + actor.spec.id);
+      actors.set(actor.spec.id, actor);
+    },
     update, strike, resolveHeroMovement,
     events: (): EnemyEvent[] => eventQueue.splice(0),
     progress: (): SavedMapProgress => ({

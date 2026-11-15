@@ -2,7 +2,7 @@ import {
   Color3, StandardMaterial, Texture, TransformNode,
   type AbstractMesh, type InstantiatedEntries, type Material, type Scene, type ShadowGenerator,
 } from "@babylonjs/core";
-import type { VisualOverride } from "./editorSchema";
+import type { MapEditorTarget, VisualOverride } from "./editorSchema";
 import type { MapModelRegistry } from "./modelRegistry";
 
 /** One placement owns its GLB instance and preview resources, never the cached GLB source. */
@@ -28,6 +28,7 @@ export function createEditableModel(
   fallback: (holder: TransformNode) => void,
   castsShadows = true,
   externalClips?: Readonly<Record<string, string>>,
+  editorTarget?: MapEditorTarget,
 ) {
   let current: ModelView | undefined;
   let generation = 0;
@@ -106,6 +107,9 @@ export function createEditableModel(
 
       for (const mesh of editableMeshes(next.holder)) {
         next.originalMaterials.set(mesh, mesh.material);
+        if (editorTarget && mesh.getTotalVertices() > 0) {
+          mesh.metadata = { ...mesh.metadata, ...editorTarget };
+        }
       }
       paint(next, visual, localTextureUrl);
 

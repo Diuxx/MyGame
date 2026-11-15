@@ -8,7 +8,7 @@ export interface NavigationData {
 }
 
 export function createNavigationData(map: MapDefinition, assets: MapAssets): NavigationData {
-  const walkable = map.terrain.tiles.map((row) => row.map((tile) => assets.tiles[tile].walkable));
+  const walkable = map.terrain.tiles.map((row) => row.map((tile) => tile === null || assets.tiles[tile].walkable));
   return {
     walkable,
     blockingObjects: map.objects

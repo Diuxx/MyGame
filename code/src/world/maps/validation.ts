@@ -8,7 +8,7 @@ import type {
 const IDENTIFIER = /^[a-z0-9][a-z0-9_-]{0,79}$/i;
 const MODEL_PATH = /^\/assets\/(?!.*(?:\.\.|\/\/|\\|[?#]))[a-z0-9_./-]+\.glb$/i;
 const MAX_TILES = 4096;
-const MAX_OBJECTS = 256;
+export const MAX_MAP_OBJECTS = 256;
 
 function record(value: unknown, label: string): Record<string, unknown> {
   if (value === null || typeof value !== "object" || Array.isArray(value)) {
@@ -78,6 +78,14 @@ function versions(value: unknown, label: string): Record<string, unknown> {
   return item;
 }
 
+function assetName(value: unknown, id: string): { name?: string } {
+  if (value === undefined) return {};
+  if (typeof value !== "string" || !value.trim() || value.trim().length > 80) {
+    throw new Error(id + ".name : nom non vide de 80 caractères maximum attendu.");
+  }
+  return { name: value.trim() };
+}
+
 export function validateMapAssets(value: unknown): MapAssets {
   const input = versions(value, "assets.json");
   const rawTiles = record(input.tiles, "tiles");
@@ -89,7 +97,7 @@ export function validateMapAssets(value: unknown): MapAssets {
     identifier(id, "tile");
     const item = record(raw, "tiles." + id);
     if (typeof item.walkable !== "boolean") throw new Error(id + " : walkable doit être un booléen.");
-    tiles[id] = { model: modelPath(item.model, id), walkable: item.walkable };
+    tiles[id] = { ...assetName(item.name, id), model: modelPath(item.model, id), walkable: item.walkable };
   }
   for (const [id, raw] of Object.entries(rawObjects)) {
     identifier(id, "objet");
@@ -100,6 +108,7 @@ export function validateMapAssets(value: unknown): MapAssets {
     const rawColliders = item.colliders === undefined ? [] : list(item.colliders, id + ".colliders");
     if (rawColliders.length > 16) throw new Error(id + " : trop de colliders (maximum 16).");
     objects[id] = {
+      ...assetName(item.name, id),
       model: modelPath(item.model, id),
       blocksNavigation: item.blocksNavigation,
       colliders: rawColliders.map((shape, index) => collider(shape, id + ".colliders[" + index + "]")),
@@ -108,10 +117,20 @@ export function validateMapAssets(value: unknown): MapAssets {
   return { version: 1, tiles, objects };
 }
 
+export function mapEnemyCatalogPath(value: unknown): string | undefined {
+  const path = record(value, "map.json").enemyCatalog;
+  if (path === undefined) return undefined;
+  if (typeof path !== "string" || !/^\/assets\/definitions\/[a-z0-9][a-z0-9_-]*\.json$/i.test(path)) {
+    throw new Error("enemyCatalog : fichier JSON attendu sous /assets/definitions/.");
+  }
+  return path;
+}
+
 export function validateMapDefinition(
   value: unknown, assets: MapAssets, knownEnemyIds?: ReadonlySet<string>,
 ): MapDefinition {
   const input = versions(value, "map.json");
+  const enemyCatalog = mapEnemyCatalogPath(input);
   const id = identifier(input.id, "map.id");
   if (typeof input.name !== "string" || !input.name.trim()) throw new Error("map.name invalide.");
   const tileSize = finite(input.tileSize, "tileSize", 0.01, 100);
@@ -128,6 +147,7 @@ export function validateMapDefinition(
     count += line.length;
     if (count > MAX_TILES) throw new Error("terrain : maximum " + MAX_TILES + " tiles.");
     return line.map((value, columnIndex) => {
+      if (value === null) return null;
       if (typeof value !== "string" || !Object.hasOwn(assets.tiles, value)) {
         throw new Error("Tile inconnue à [" + rowIndex + "][" + columnIndex + "] : " + String(value));
       }
@@ -141,7 +161,7 @@ export function validateMapDefinition(
 
   const objectIds = new Set<string>();
   const rawObjects = list(input.objects, "objects");
-  if (rawObjects.length > MAX_OBJECTS) throw new Error("Maximum " + MAX_OBJECTS + " objets.");
+  if (rawObjects.length > MAX_MAP_OBJECTS) throw new Error("Maximum " + MAX_MAP_OBJECTS + " objets.");
   const objects = rawObjects.map((raw, index) => {
     const item = record(raw, "objects[" + index + "]");
     const objectId = identifier(item.id, "objects[" + index + "].id");
@@ -192,7 +212,7 @@ export function validateMapDefinition(
   return {
     version: 1, id, name: input.name,
     tileSize, terrain: { origin, tiles, groundCollider: { enabled: ground.enabled, thickness } },
-    objects, spawnPoints, environment: parseEnvironmentSettings(input.environment),
+    objects, spawnPoints, environment: parseEnvironmentSettings(input.environment), enemyCatalog,
     ...encounters, interactions: parseWorldInteractions(input.interactions),
   };
 }
@@ -204,6 +224,13 @@ export function tileCenter(map: MapDefinition, row: number, column: number): Map
     origin[1],
     origin[2] + (row + 0.5) * map.tileSize,
   ];
+}
+
+export function findTerrainCell(map: MapDefinition, x: number, z: number): { row: number; column: number } | undefined {
+  const [originX, , originZ] = map.terrain.origin;
+  const row = Math.floor((z - originZ) / map.tileSize);
+  const column = Math.floor((x - originX) / map.tileSize);
+  return map.terrain.tiles[row]?.[column] === undefined ? undefined : { row, column };
 }
 
 export function terrainBounds(map: MapDefinition): MapBounds {

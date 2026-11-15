@@ -1,6 +1,6 @@
 import type { Position } from "../combat/combat";
-import { loadEnemyDefinitions, type EnemySettings } from "../enemies/enemyDefinitions";
-import definitionsJson from "../enemies/enemyDefinitions.json";
+import type { EnemySettings } from "../enemies/enemyDefinitions";
+import { loadAssetCatalog } from "../world/maps/dataLoader";
 import type { createEnemyScene } from "../enemies/enemyScene";
 import { configureEnemy, getEnemyCollision, resetEnemy, type Enemy } from "../enemies/enemyState";
 import { ENEMY_STORAGE_KEY, parseEnemyInstances, serializeEnemyInstances } from "../enemies/enemyPersistence";
@@ -12,7 +12,8 @@ export async function startEnemyTools(
   spawnNearHero: (definition: Enemy["definition"]) => Position,
   signal: AbortSignal,
 ): Promise<() => void> {
-  const definitions = loadEnemyDefinitions(definitionsJson).filter(({ category }) => category === "static");
+  const { enemyCatalog } = await loadAssetCatalog();
+  const definitions = enemyCatalog.filter(({ category }) => category === "static");
   const instances = new Map<string, Enemy>();
   const type = requireElement<HTMLSelectElement>("enemyType");
   const list = requireElement<HTMLSelectElement>("enemyInstance");

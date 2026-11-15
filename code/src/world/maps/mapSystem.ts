@@ -4,13 +4,31 @@ import type { GroundStep } from "../../combat/bodyCollision";
 import { createMapEnemyScene } from "../../enemies/mapEnemyScene";
 import { clearMapProgress, readMapProgress, saveMapProgress } from "../../enemies/mapProgress";
 import type { EnemyEvent, SavedMapProgress } from "../../enemies/mapEnemySimulation";
+import { MAX_MAP_ENEMIES, type AISettings } from "../../enemies/mapEnemyConfig";
 import { DEFAULT_ENVIRONMENT, type EnvironmentSettings } from "./environmentSettings";
-import { loadMapData, isMapId, type MapId } from "./dataLoader";
+import { loadAssetCatalog, loadMapData, isMapId, type MapId } from "./dataLoader";
 import { buildMap } from "./mapBuilder";
 import { createMapSession } from "./mapSession";
 import { MapModelRegistry } from "./modelRegistry";
-import type { VisualOverride } from "./editorSchema";
-import type { MapPosition } from "./types";
+import type { MapEditorKind, MapPlacementKind, VisualOverride } from "./editorSchema";
+import type { MapDefinition, MapPosition } from "./types";
+import { findTerrainCell, MAX_MAP_OBJECTS } from "./validation";
+
+const DEFAULT_PLACED_ENEMY_AI: AISettings = {
+  profile: "guard", aggroRadius: 6, attackRange: 1.5, leashRadius: 10,
+  attackCooldown: 1.5, patrol: [], skills: ["slash"],
+};
+
+function placementId(base: string, entries: readonly { id: string }[]): string {
+  const used = new Set(entries.map(({ id }) => id));
+  let index = 1;
+  let id: string;
+  do {
+    const suffix = "-" + index++;
+    id = base.slice(0, 80 - suffix.length) + suffix;
+  } while (used.has(id));
+  return id;
+}
 
 export interface MapSystemOptions {
   hero: TransformNode;
@@ -44,9 +62,7 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
     catch (error) { console.warn("Progression non enregistrée :", error); }
   }
 
-  const session = createMapSession(async (id) => {
-    if (!isMapId(id)) throw new Error("Map inconnue : " + id);
-    const { map, assets, enemyCatalog } = await loadMapData(id);
+  async function buildWorld({ map, assets, enemyCatalog }: Awaited<ReturnType<typeof loadMapData>>) {
     const level = await buildMap(scene, map, assets, registry, options.shadows);
     try {
       const enemies = await createMapEnemyScene(scene, map, enemyCatalog, level, {
@@ -64,19 +80,25 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
           options.onEncounterEvent?.(event);
         },
       });
+      let placing = false;
       return {
         definition: level.definition,
         assets,
+        enemyCatalog,
         missingModels: level.missingModels,
         navigation: level.navigation,
         simulation: enemies.simulation,
         enemyAnimationName: enemies.animationName,
-        activate(): void {
-          level.activate();
+        activate(useEnvironment = true): void {
+          level.setVisible(true);
           enemies.activate();
           level.setEditorEnabled(editing);
           enemies.setEditorEnabled(editing);
-          options.applyEnvironment(map.environment ?? DEFAULT_ENVIRONMENT);
+          if (useEnvironment) options.applyEnvironment(map.environment ?? DEFAULT_ENVIRONMENT);
+        },
+        setVisible(visible: boolean): void {
+          level.setVisible(visible);
+          enemies.setVisible(visible);
         },
         setColliderDebug(visible: boolean): void { level.setColliderDebug(visible); },
         showAggro(visible: boolean): void { enemies.showAggro(visible); },
@@ -85,9 +107,43 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
           enemies.setEditorEnabled(visible);
         },
         editor: {
-          move(kind: "object" | "enemy", id: string, position: MapPosition): void {
+          async place(kind: MapPlacementKind, asset: string, point: MapPosition): Promise<string | undefined> {
+            if (placing) throw new Error("Un placement est en cours.");
+            const cell = findTerrainCell(map, point[0], point[2]);
+            if (!cell || !point.every(Number.isFinite)) throw new Error("Cliquer à l’intérieur du terrain.");
+            placing = true;
+            try {
+              if (kind === "tile") {
+                if (!Object.hasOwn(assets.tiles, asset)) throw new Error("Tuile inconnue : " + asset);
+                await level.replaceTile(cell.row, cell.column, asset);
+                return;
+              }
+              if (kind === "object") {
+                if (!Object.hasOwn(assets.objects, asset)) throw new Error("Décor inconnu : " + asset);
+                if (map.objects.length >= MAX_MAP_OBJECTS) throw new Error("Nombre maximal de décors atteint.");
+                const id = placementId(asset, map.objects);
+                await level.addObject({ id, asset, position: point, rotationY: 0 });
+                return id;
+              }
+              const enemy = enemyCatalog.find(({ id }) => id === asset);
+              if (!enemy) throw new Error("Ennemi inconnu : " + asset);
+              const spawns = map.enemySpawns ?? [];
+              if (spawns.length >= MAX_MAP_ENEMIES) throw new Error("Nombre maximal d’ennemis atteint.");
+              const id = placementId(asset, spawns);
+              await enemies.addEnemy({
+                id, enemyId: asset, position: point, rotationY: 0,
+                activation: { mode: "always" }, respawn: { mode: "never" }, persistDeath: false,
+                ai: structuredClone(enemy.placementAI ?? DEFAULT_PLACED_ENEMY_AI),
+              });
+              return id;
+            } finally {
+              placing = false;
+            }
+          },
+          move(kind: MapEditorKind, id: string, position: MapPosition): void {
             if (kind === "object") level.moveObject(id, position);
-            else enemies.moveEnemy(id, position);
+            else if (kind === "enemy") enemies.moveEnemy(id, position);
+            else level.moveInteraction(id, position);
           },
           rotate(kind: "object" | "enemy", id: string, degrees: number): void {
             if (kind === "object") level.rotateObject(id, degrees);
@@ -135,11 +191,33 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
       level.dispose();
       throw error;
     }
+  }
+
+  let base: Awaited<ReturnType<typeof buildWorld>> | undefined;
+  const session = createMapSession(async (id) => {
+    if (!isMapId(id)) throw new Error("Map inconnue : " + id);
+    return buildWorld(await loadMapData(id));
   });
+  const world = () => session.active ?? base;
+
+  async function openBase(map: MapDefinition): Promise<void> {
+    if (disposed || base) throw new Error("Le terrain de base ne peut pas être ouvert.");
+    const next = await buildWorld({ ...(await loadAssetCatalog()), map });
+    if (disposed) {
+      next.dispose();
+      return;
+    }
+    base = next;
+    base.activate(false);
+    base.setVisible(!session.active);
+    base.setColliderDebug(showCollisionDebug);
+    base.showAggro(showAggroDebug);
+  }
 
   async function load(id: MapId) {
     if (disposed) throw new Error("Système de maps fermé.");
     const result = await session.load(id);
+    if (result) base?.setVisible(false);
     result?.setColliderDebug(showCollisionDebug);
     result?.showAggro(showAggroDebug);
     return result;
@@ -147,7 +225,7 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
 
   function setEditing(value: boolean): void {
     editing = value;
-    session.active?.setEditorEnabled(value);
+    world()?.setEditorEnabled(value);
   }
 
   window.addEventListener("keydown", (event) => {
@@ -155,12 +233,16 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
         event.ctrlKey || event.altKey || event.metaKey ||
         (event.target instanceof HTMLElement &&
           (event.target.isContentEditable || event.target.matches("input, textarea, select")))) return;
-    const result = session.active?.interact();
+    const result = world()?.interact();
     if (result) options.onWorldInteraction?.(result.message);
   }, { signal: keyboard.signal });
 
   function unload(): void {
     session.unload();
+    base?.setVisible(true);
+    base?.setEditorEnabled(editing);
+    base?.setColliderDebug(showCollisionDebug);
+    base?.showAggro(showAggroDebug);
     options.applyEnvironment(DEFAULT_ENVIRONMENT);
   }
 
@@ -168,23 +250,25 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
     if (disposed) return;
     disposed = true;
     keyboard.abort();
-    unload();
+    base?.dispose();
+    base = undefined;
     await session.dispose();
     await registry.dispose();
   }
 
   scene.onDisposeObservable.addOnce(() => { void dispose(); });
   return {
-    load, unload, setEditing,
+    load, unload, setEditing, openBase,
     get isEditing() { return editing; },
     get active() { return session.active; },
+    get world() { return world(); },
     showColliders(visible: boolean): void {
       showCollisionDebug = visible;
-      session.active?.setColliderDebug(visible);
+      world()?.setColliderDebug(visible);
     },
     showAggro(visible: boolean): void {
       showAggroDebug = visible;
-      session.active?.showAggro(visible);
+      world()?.showAggro(visible);
     },
     dispose,
   };

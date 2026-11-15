@@ -60,11 +60,14 @@ test("a failed replacement keeps the previous instance alive", async (t) => {
   });
   const path = await modelUrl();
   const holder = new TransformNode("holder", scene);
+  const editorTarget = { editorKind: "object", editorId: "dummy" } as const;
   const model = createEditableModel(scene, holder, registry, undefined, path,
-    () => { throw new Error("Fallback failed"); });
+    () => { throw new Error("Fallback failed"); }, true, undefined, editorTarget);
   assert.equal(await model.load(), true);
   const oldMesh = holder.getChildMeshes().find((mesh) => mesh.getTotalVertices() > 0);
   assert.ok(oldMesh);
+  assert.equal(oldMesh.metadata?.editorId, "dummy");
+  assert.equal(oldMesh.isPickable, false);
   const previousWarning = console.warn;
   console.warn = () => {};
   try {
@@ -75,5 +78,10 @@ test("a failed replacement keeps the previous instance alive", async (t) => {
   }
   assert.equal(oldMesh.isDisposed(), false);
   assert.equal(holder.getChildMeshes().includes(oldMesh), true);
+  assert.equal(await model.load({ scale: 2 }), true);
+  const newMesh = holder.getChildMeshes().find((mesh) => mesh.getTotalVertices() > 0);
+  assert.ok(newMesh && newMesh !== oldMesh);
+  assert.equal(newMesh.metadata?.editorId, "dummy");
+  assert.equal(newMesh.isPickable, false);
   model.dispose();
 });

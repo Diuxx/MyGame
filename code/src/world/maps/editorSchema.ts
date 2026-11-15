@@ -5,6 +5,10 @@ export interface VisualOverride {
   tint?: string;
   scale?: number;
 }
+export type MapEditorKind = "object" | "enemy" | "interaction";
+export type MapPlacementKind = "tile" | "object" | "enemy";
+export type MapEditorTarget = { editorKind: MapEditorKind; editorId: string };
+
 export type InteractionKind = "pickup" | "inspect" | "interact";
 export interface WorldInteraction {
   id: string;

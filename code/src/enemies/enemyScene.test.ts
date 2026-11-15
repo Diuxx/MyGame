@@ -21,9 +21,11 @@ test("playground targets share a GLB source but own their scene instances", asyn
 
   const source = await readFile(new URL("../../public/assets/training/dummy-straw.glb", import.meta.url));
   const url = "data:model/gltf-binary;base64," + source.toString("base64");
-  const definitions = loadEnemyDefinitions(JSON.parse(
-    await readFile(new URL("./enemyDefinitions.json", import.meta.url), "utf8")));
-  const definition = { ...definitions[0], modelPath: url };
+  const sourceCatalog = JSON.parse(
+    await readFile(new URL("../../public/assets/definitions/assets.json", import.meta.url), "utf8"));
+  const straw = loadEnemyDefinitions(sourceCatalog.enemies).find(({ id }) => id === "dummy-straw");
+  assert.ok(straw);
+  const definition = { ...straw, modelPath: url };
   const first = await enemies.spawn(definition, definition, [0, 0, 0]);
   const second = await enemies.spawn(definition, definition, [4, 0, 0]);
   assert.equal(enemies.list().length, 2);
@@ -32,6 +34,14 @@ test("playground targets share a GLB source but own their scene instances", asyn
   const firstRoot = scene.getTransformNodeByName(first.id);
   const secondRoot = scene.getTransformNodeByName(second.id);
   assert.ok(firstRoot && secondRoot);
+  const firstMesh = firstRoot.getChildMeshes().find((mesh) => mesh.getTotalVertices() > 0);
+  assert.equal(firstMesh?.metadata?.editorKind, "practice");
+  assert.equal(firstMesh?.metadata?.editorId, first.id);
+  enemies.move(first.id, [2, 0, -3]);
+  assert.equal(enemies.get(first.id), first);
+  assert.deepEqual(first.position, [2, 0, -3]);
+  assert.deepEqual(firstRoot.position.asArray(), [2, 0, -3]);
+  assert.ok(enemies.resolveMovement([2, 0, -5], { x: 0, z: 3 }, 0.4).z < 3);
   const remainingMesh = secondRoot.getChildMeshes().find((mesh) => mesh.getTotalVertices() > 0);
   assert.ok(remainingMesh);
   enemies.remove(first.id);

@@ -11,7 +11,7 @@ import type { VisualOverride } from "./editorSchema";
 import { MissingMapVisuals } from "./missingVisuals";
 import { MapModelRegistry } from "./modelRegistry";
 import { tileCenter } from "./validation";
-import type { MapAssets, MapCollider, MapDefinition, MapPosition } from "./types";
+import type { MapAssets, MapCollider, MapDefinition, MapObject, MapPosition } from "./types";
 
 function placeNode(scene: Scene, parent: TransformNode, id: string,
                    position: MapPosition, rotationY = 0): TransformNode {
@@ -45,8 +45,7 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
   root.setEnabled(false);
   const missing = new MissingMapVisuals(scene);
   const missingModels = new Set<string>();
-  const instanceDisposers: (() => void)[] = [];
-  const shadowCasters: AbstractMesh[] = [];
+  const tiles = new Map<string, () => void>();
   const debugMeshes: AbstractMesh[] = [];
   let interactions: ReturnType<typeof createWorldInteractionScene> | undefined;
   const objectViews = new Map<string, {
@@ -57,6 +56,7 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
   }>();
   let editorEnabled = false;
   let debugVisible = false;
+  let disposed = false;
   const pickMaterial = new StandardMaterial("map-editor-pick-mat", scene);
   pickMaterial.alpha = 0.008;
   pickMaterial.disableLighting = true;
@@ -68,29 +68,57 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
   debugMaterial.wireframe = true;
   debugMaterial.backFaceCulling = false;
 
-  async function renderModel(path: string, node: TransformNode, fallback: () => void): Promise<void> {
-    const instance = await registry.instantiate(path, node);
-    if (instance) {
-      instanceDisposers.push(() => instance.dispose());
-      for (const mesh of node.getChildMeshes()) mesh.isPickable = false;
-    } else {
-      missingModels.add(path);
-      fallback();
+  async function renderTile(row: number, column: number, tileId: string): Promise<void> {
+    const key = "tile-" + row + "-" + column;
+    const node = placeNode(scene, root, key, tileCenter(definition, row, column));
+    node.setEnabled(false);
+    const { model } = assets.tiles[tileId];
+    let instance: Awaited<ReturnType<MapModelRegistry["instantiate"]>> = null;
+    const release = () => {
+      instance?.dispose();
+      if (!node.isDisposed()) node.dispose(false, false);
+    };
+    try {
+      instance = await registry.instantiate(model, node);
+      if (disposed) throw new Error("Carte fermée pendant le placement.");
+      if (!instance) {
+        missingModels.add(model);
+        missing.addTile(node, model, definition.tileSize, tileId);
+      }
+      for (const mesh of node.getChildMeshes()) {
+        mesh.isPickable = false;
+        mesh.receiveShadows = true;
+      }
+      tiles.get(key)?.();
+      tiles.set(key, release);
+      node.setEnabled(true);
+    } catch (error) {
+      release();
+      throw error;
     }
   }
 
-  function attachShadows(node: TransformNode, casts: boolean): void {
-    for (const mesh of node.getChildMeshes()) {
-      mesh.receiveShadows = true;
-      if (!casts || mesh.name.startsWith("missing-label:") || !shadows) continue;
-      shadows.addShadowCaster(mesh, false);
-      shadowCasters.push(mesh);
+  async function renderObject(object: MapObject): Promise<void> {
+    const asset = assets.objects[object.asset];
+    const parent = placeNode(scene, root, "map-object-" + object.id, object.position, object.rotationY);
+    parent.setEnabled(false);
+    const model = createEditableModel(scene, parent, registry, shadows, asset.model,
+      (holder) => missing.addObject(holder, object.visual?.model ?? asset.model,
+        object.colliders ?? asset.colliders), true, undefined,
+      { editorKind: "object", editorId: object.id });
+    const view = { parent, model, debug: [], picks: [] };
+    objectViews.set(object.id, view);
+    try {
+      const imported = await model.load(object.visual);
+      if (disposed) throw new Error("Carte fermée pendant le placement.");
+      if (!imported) missingModels.add(object.visual?.model ?? asset.model);
+      parent.setEnabled(true);
+    } catch (error) {
+      objectViews.delete(object.id);
+      model.dispose();
+      if (!parent.isDisposed()) parent.dispose(false, false);
+      throw error;
     }
-  }
-
-  function releaseCasters(): void {
-    for (const mesh of shadowCasters) shadows?.removeShadowCaster(mesh, false);
-    shadowCasters.length = 0;
   }
 
   function refreshCollisionMeshes(id: string): void {
@@ -144,31 +172,19 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
   try {
     for (const [row, columns] of definition.terrain.tiles.entries()) {
       for (const [column, tileId] of columns.entries()) {
-        const parent = placeNode(scene, root, "tile-" + row + "-" + column,
-          tileCenter(definition, row, column));
-        const tile = assets.tiles[tileId];
-        await renderModel(tile.model, parent, () => missing.addTile(parent, tile.model, definition.tileSize, tileId));
-        attachShadows(parent, false);
+        if (tileId !== null) await renderTile(row, column, tileId);
       }
     }
     for (const object of definition.objects) {
-      const asset = assets.objects[object.asset];
-      const parent = placeNode(scene, root, "map-object-" + object.id, object.position, object.rotationY);
-      const model = createEditableModel(scene, parent, registry, shadows, asset.model,
-        (holder) => missing.addObject(holder, object.visual?.model ?? asset.model,
-          object.colliders ?? asset.colliders));
-      objectViews.set(object.id, { parent, model, debug: [], picks: [] });
-      const imported = await model.load(object.visual);
-      if (!imported) missingModels.add(object.visual?.model ?? asset.model);
+      await renderObject(object);
       refreshCollisionMeshes(object.id);
     }
     addGroundCollider();
     interactions = createWorldInteractionScene(scene, root, definition.interactions ?? [], shadows);
   } catch (error) {
     interactions?.dispose();
-    releaseCasters();
     for (const view of objectViews.values()) view.model.dispose();
-    for (const dispose of instanceDisposers) dispose();
+    for (const release of tiles.values()) release();
     root.dispose(false, false);
     pickMaterial.dispose();
     missing.dispose();
@@ -187,12 +203,11 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
     navigation.blockingObjects = createNavigationData(definition, assets).blockingObjects;
   }
 
-  let disposed = false;
   return {
     definition,
     navigation,
     missingModels: [...missingModels],
-    activate(): void { root.setEnabled(true); },
+    setVisible(visible: boolean): void { root.setEnabled(visible); },
     setColliderDebug(visible: boolean): void {
       debugVisible = visible;
       for (const mesh of debugMeshes) mesh.setEnabled(visible);
@@ -205,6 +220,18 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
           pick.isPickable = enabled;
         }
       }
+    },
+    async addObject(object: MapObject): Promise<void> {
+      await renderObject(object);
+      definition.objects.push(object);
+      refreshCollisionMeshes(object.id);
+      refreshCollisionData();
+    },
+    async replaceTile(row: number, column: number, tileId: string): Promise<void> {
+      if (definition.terrain.tiles[row][column] === tileId) return;
+      await renderTile(row, column, tileId);
+      definition.terrain.tiles[row][column] = tileId;
+      navigation.walkable[row][column] = assets.tiles[tileId].walkable;
     },
     moveObject(id: string, position: MapPosition): void {
       const object = definition.objects.find((item) => item.id === id);
@@ -245,6 +272,7 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
       });
     },
     nearbyInteraction(hero: MapPosition) { return interactions?.nearby(hero); },
+    moveInteraction(id: string, position: MapPosition): void { interactions?.move(id, position); },
     interact(hero: MapPosition) { return interactions?.interact(hero); },
     getInventory() { return interactions?.inventory() ?? {}; },
     resolveMovement(start: MapPosition, step: GroundStep, heroRadius: number, heroHeight = 1.8): GroundStep {
@@ -254,9 +282,8 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
       if (disposed) return;
       disposed = true;
       interactions?.dispose();
-      releaseCasters();
       for (const view of objectViews.values()) view.model.dispose();
-      for (const dispose of instanceDisposers) dispose();
+      for (const release of tiles.values()) release();
       root.dispose(false, false);
       pickMaterial.dispose();
       missing.dispose();

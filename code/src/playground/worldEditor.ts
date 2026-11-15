@@ -2,12 +2,15 @@ import {
   Color3, MeshBuilder, Plane, StandardMaterial, type Scene,
 } from "@babylonjs/core";
 import type { MapCollider, MapPosition } from "../world/maps/types";
-import type { VisualOverride } from "../world/maps/editorSchema";
+import type { createEnemyScene } from "../enemies/enemyScene";
+import type { MapEditorKind, MapPlacementKind, VisualOverride } from "../world/maps/editorSchema";
+import { findTerrainCell, tileCenter } from "../world/maps/validation";
 import type { createMapSystem } from "../world/maps/mapSystem";
 import { requireElement } from "../ui/dom";
 
-type EntityKind = "object" | "enemy";
-interface Selection { kind: EntityKind; id: string; mapId: string }
+type SelectionKind = MapEditorKind | "practice";
+interface Selection { kind: SelectionKind; id: string; mapId: string }
+interface Placement { kind: MapPlacementKind; id: string; label: string }
 
 function numerical(id: string): number {
   const element = requireElement<HTMLInputElement>(id);
@@ -33,6 +36,7 @@ function downloadJson(filename: string, json: string): void {
  */
 export function bindWorldEditor(
   scene: Scene, canvas: HTMLCanvasElement, maps: ReturnType<typeof createMapSystem>,
+  practice: ReturnType<typeof createEnemyScene>,
   signal: AbortSignal,
 ) {
   const enabled = requireElement<HTMLInputElement>("worldEditorEnabled");
@@ -42,6 +46,11 @@ export function bindWorldEditor(
   const status = requireElement<HTMLElement>("worldEditorStatus");
   const objectSettings = requireElement<HTMLElement>("worldEditorObjectFields");
   const enemySettings = requireElement<HTMLElement>("worldEditorEnemyFields");
+  const rotationField = requireElement<HTMLElement>("worldEditorRotationField");
+  const visualSettings = requireElement<HTMLElement>("worldEditorVisualFields");
+  const snapToGrid = requireElement<HTMLInputElement>("worldEditorSnap");
+  const catalog = requireElement<HTMLElement>("worldEditorCatalog");
+  const cancelPlacement = requireElement<HTMLButtonElement>("worldEditorCancelPlacement");
   const modelFile = requireElement<HTMLInputElement>("worldEditorModelFile");
   const textureFile = requireElement<HTMLInputElement>("worldEditorTextureFile");
   const applyVisual = requireElement<HTMLButtonElement>("worldEditorApplyVisual");
@@ -56,16 +65,60 @@ export function bindWorldEditor(
   marker.isPickable = false;
   marker.setEnabled(false);
   let selected: Selection | undefined;
-  let dragging = false;
-  let offsetX = 0, offsetZ = 0;
-  let currentMap = maps.active;
+  let drag: { pointerId: number; offsetX: number; offsetZ: number } | undefined;
+  let currentMap = maps.world;
+  let pendingPlacement: Placement | undefined;
+  let placing = false;
+
+  function syncPlacement(): void {
+    canvas.classList.toggle("map-editor-placing", !!pendingPlacement);
+    cancelPlacement.hidden = !pendingPlacement;
+    catalog.querySelectorAll<HTMLButtonElement>("button[data-kind]").forEach((button) => {
+      button.setAttribute("aria-pressed", String(
+        button.dataset.kind === pendingPlacement?.kind && button.dataset.id === pendingPlacement?.id));
+      button.disabled = placing;
+    });
+  }
+
+  function buildCatalog(): void {
+    const source = maps.world;
+    if (!source) return;
+    const groups = [
+      { kind: "object", field: "worldEditorCatalogObjects", entries: Object.entries(source.assets.objects).map(([id, asset]) => ({ id, name: asset.name ?? id })) },
+      { kind: "tile", field: "worldEditorCatalogTiles", entries: Object.entries(source.assets.tiles).map(([id, asset]) => ({ id, name: asset.name ?? id })) },
+      { kind: "enemy", field: "worldEditorCatalogEnemies", entries: source.enemyCatalog },
+    ] as const;
+    for (const { kind, field, entries } of groups) {
+      const buttons = entries.map(({ id, name }) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "secondary";
+        button.textContent = name;
+        button.dataset.kind = kind;
+        button.dataset.id = id;
+        return button;
+      });
+      requireElement(field).replaceChildren(...buttons);
+    }
+    if (pendingPlacement && !groups.some(({ kind, entries }) => kind === pendingPlacement?.kind &&
+        entries.some(({ id }) => id === pendingPlacement?.id))) pendingPlacement = undefined;
+    syncPlacement();
+  }
 
   function getSelected() {
-    const active = maps.active;
-    if (!active || !selected || selected.mapId !== active.definition.id) return undefined;
+    const active = maps.world;
+    if (!active || active !== currentMap || !selected || selected.mapId !== active.definition.id) return undefined;
     if (selected.kind === "object") {
       const object = active.definition.objects.find((entry) => entry.id === selected?.id);
       return object ? { kind: "object" as const, object, active } : undefined;
+    }
+    if (selected.kind === "interaction") {
+      const interaction = active.definition.interactions?.find((entry) => entry.id === selected?.id);
+      return interaction ? { kind: "interaction" as const, interaction, active } : undefined;
+    }
+    if (selected.kind === "practice") {
+      const enemy = practice.get(selected.id);
+      return enemy ? { kind: "practice" as const, enemy, active } : undefined;
     }
     const actor = active.simulation.list().find((entry) => entry.spec.id === selected?.id);
     return actor ? { kind: "enemy" as const, actor, active } : undefined;
@@ -73,17 +126,20 @@ export function bindWorldEditor(
 
   function clearSelection(): void {
     selected = undefined;
-    dragging = false;
+    stopDrag();
     panel.hidden = true;
     marker.setEnabled(false);
-    selectionLabel.textContent = "Cliquer sur un ennemi ou un objet pour le sélectionner.";
+    selectionLabel.textContent = "Cliquer sur un décor, un objet interactif ou un ennemi pour le sélectionner.";
     modelFile.value = "";
     textureFile.value = "";
   }
 
   function position(): MapPosition | undefined {
     const target = getSelected();
-    return target?.kind === "object" ? target.object.position : target?.actor.entity.position;
+    if (target?.kind === "object") return target.object.position;
+    if (target?.kind === "enemy") return target.actor.entity.position;
+    if (target?.kind === "practice") return target.enemy.position;
+    return target?.interaction.position;
   }
 
   function setMarker(): void {
@@ -92,23 +148,32 @@ export function bindWorldEditor(
     if (point) marker.position.set(point[0], point[1] + 0.065, point[2]);
   }
 
-  function select(kind: EntityKind, id: string): void {
-    const map = maps.active;
+  function select(kind: SelectionKind, id: string): void {
+    const map = maps.world;
     if (!map) return;
     selected = { kind, id, mapId: map.definition.id };
     const target = getSelected();
     if (!target) return clearSelection();
-    const spec = target.kind === "object" ? target.object : target.actor.spec;
+    const spec = target.kind === "object" ? target.object :
+      target.kind === "enemy" ? target.actor.spec :
+      target.kind === "practice" ? target.enemy : target.interaction;
     panel.hidden = false;
-    selectionLabel.textContent = (kind === "object" ? "Décor : " : "Ennemi : ") + id;
+    selectionLabel.textContent = target.kind === "interaction" ? target.interaction.label :
+      target.kind === "practice" ? target.enemy.definition.name :
+      target.kind === "object" ? target.active.assets.objects[target.object.asset].name ?? id :
+      target.actor.entity.definition.name;
     setNumber("worldEditorX", spec.position[0]);
     setNumber("worldEditorY", spec.position[1]);
     setNumber("worldEditorZ", spec.position[2]);
-    setNumber("worldEditorRotation", spec.rotationY);
-    setNumber("worldEditorScale", spec.visual?.scale ?? 1);
-    requireElement<HTMLInputElement>("worldEditorTint").value = spec.visual?.tint ?? "#ffffff";
     objectSettings.hidden = kind !== "object";
     enemySettings.hidden = kind !== "enemy";
+    rotationField.hidden = visualSettings.hidden = target.kind === "interaction" || target.kind === "practice";
+    setMarker();
+    if (target.kind === "interaction" || target.kind === "practice") return;
+    const placement = target.kind === "object" ? target.object : target.actor.spec;
+    setNumber("worldEditorRotation", placement.rotationY);
+    setNumber("worldEditorScale", placement.visual?.scale ?? 1);
+    requireElement<HTMLInputElement>("worldEditorTint").value = placement.visual?.tint ?? "#ffffff";
     if (target.kind === "object") {
       const shape = (target.object.colliders ?? target.active.assets.objects[target.object.asset].colliders)[0];
       setNumber("worldEditorColliderWidth", shape?.type === "box" ? shape.size[0] : (shape?.radius ?? 0.5) * 2);
@@ -128,7 +193,6 @@ export function bindWorldEditor(
       setNumber("worldEditorHurtboxRadius", actor.entity.definition.hurtbox.shape === "cylinder"
         ? actor.entity.definition.hurtbox.radius : 0.6);
     }
-    setMarker();
   }
 
   function report(error: unknown): void {
@@ -141,14 +205,21 @@ export function bindWorldEditor(
     const point: MapPosition = [
       numerical("worldEditorX"), numerical("worldEditorY"), numerical("worldEditorZ"),
     ];
-    target.active.editor.move(selected.kind, selected.id, point);
-    target.active.editor.rotate(selected.kind, selected.id, numerical("worldEditorRotation"));
+    moveSelected(target, selected, point);
+    if (target.kind === "object" || target.kind === "enemy") {
+      target.active.editor.rotate(target.kind, selected.id, numerical("worldEditorRotation"));
+    }
     setMarker();
+  }
+
+  function moveSelected(target: NonNullable<ReturnType<typeof getSelected>>, selection: Selection, point: MapPosition): void {
+    if (target.kind === "practice") practice.move(selection.id, point);
+    else target.active.editor.move(target.kind, selection.id, point);
   }
 
   function applyParameters(): void {
     const target = getSelected();
-    if (!target || !selected) return;
+    if (!target || target.kind === "interaction" || target.kind === "practice" || !selected) return;
     if (target.kind === "enemy") {
       target.active.editor.setEnemyParameters(selected.id, {
         movementSpeed: numerical("worldEditorSpeed"),
@@ -187,28 +258,100 @@ export function bindWorldEditor(
     };
   }
 
+  function stopDrag(): void {
+    if (!drag) return;
+    const { pointerId } = drag;
+    drag = undefined;
+    canvas.classList.remove("map-editor-dragging");
+    if (canvas.hasPointerCapture(pointerId)) canvas.releasePointerCapture(pointerId);
+  }
+
+  function placementPoint(event: PointerEvent): MapPosition | undefined {
+    const map = maps.world?.definition;
+    if (!map) return undefined;
+    const y = map.terrain.origin[1];
+    const point = pickPosition(event, y);
+    if (!point) return undefined;
+    const cell = findTerrainCell(map, point.x, point.z);
+    if (!cell) return undefined;
+    if (pendingPlacement?.kind === "tile") return tileCenter(map, cell.row, cell.column);
+    const snapped: MapPosition = [snap(point.x), y, snap(point.z)];
+    return findTerrainCell(map, snapped[0], snapped[2]) ? snapped : [point.x, y, point.z];
+  }
+
+  function snap(value: number): number {
+    return snapToGrid.checked ? Math.round(value * 2) / 2 : value;
+  }
+
+  function cancelPendingPlacement(): void {
+    pendingPlacement = undefined;
+    syncPlacement();
+    setMarker();
+  }
+
   enabled.addEventListener("change", () => {
     quickToggle.checked = enabled.checked;
     maps.setEditing(enabled.checked);
+    canvas.classList.toggle("map-editor-active", enabled.checked);
     clearSelection();
+    if (!enabled.checked) cancelPendingPlacement();
     status.textContent = enabled.checked
-      ? "Mode édition actif : le combat est désactivé. Glisser sur le terrain pour déplacer."
+      ? "Maintenir le clic gauche sur un élément et le faire glisser. Le combat est suspendu."
       : "Mode combat réactivé.";
   }, { signal });
 
+  catalog.addEventListener("click", (event) => {
+    const button = (event.target as HTMLElement).closest<HTMLButtonElement>("button[data-kind]");
+    const kind = button?.dataset.kind;
+    const id = button?.dataset.id;
+    if (!button || !id || (kind !== "tile" && kind !== "object" && kind !== "enemy") || placing) return;
+    if (!enabled.checked) {
+      enabled.checked = true;
+      enabled.dispatchEvent(new Event("change"));
+    }
+    clearSelection();
+    const label = button.textContent ?? id;
+    pendingPlacement = { id, kind, label };
+    syncPlacement();
+    status.textContent = "Cliquer sur le terrain pour placer " + label + ".";
+  }, { signal });
+  cancelPlacement.addEventListener("click", () => {
+    cancelPendingPlacement();
+    status.textContent = "Placement annulé.";
+  }, { signal });
   quickToggle.addEventListener("change", () => {
     enabled.checked = quickToggle.checked;
     enabled.dispatchEvent(new Event("change"));
   }, { signal });
 
   canvas.addEventListener("pointerdown", (event) => {
-    if (!enabled.checked || event.button !== 0 || !maps.active) return;
+    const active = maps.world;
+    if (!enabled.checked || event.button !== 0 || drag || !active || placing) return;
+    const placement = pendingPlacement;
+    if (placement) {
+      const point = placementPoint(event);
+      if (!point) return report("Cliquer à l’intérieur du terrain.");
+      placing = true;
+      syncPlacement();
+      void active.editor.place(placement.kind, placement.id, point).then((id) => {
+        if (signal.aborted || maps.world !== active || pendingPlacement !== placement) return;
+        cancelPendingPlacement();
+        if (id && placement.kind !== "tile") select(placement.kind, id);
+        status.textContent = placement.label + " · Placement terminé.";
+      }).catch((error) => {
+        if (!signal.aborted && maps.world === active && pendingPlacement === placement) report(error);
+      }).finally(() => {
+        placing = false;
+        if (!signal.aborted) syncPlacement();
+      });
+      return;
+    }
     const bounds = canvas.getBoundingClientRect();
     const hit = scene.pick(event.clientX - bounds.left, event.clientY - bounds.top,
-      (mesh) => mesh.isPickable && !!mesh.metadata?.editorKind);
+      (mesh) => mesh.isEnabled() && mesh.isVisible && mesh.visibility > 0 && !!mesh.metadata?.editorKind);
     const kind = hit?.pickedMesh?.metadata?.editorKind;
     const id = hit?.pickedMesh?.metadata?.editorId;
-    if ((kind !== "object" && kind !== "enemy") || typeof id !== "string") {
+    if ((kind !== "object" && kind !== "enemy" && kind !== "interaction" && kind !== "practice") || typeof id !== "string") {
       clearSelection();
       return;
     }
@@ -216,31 +359,40 @@ export function bindWorldEditor(
     const point = position();
     const location = point && pickPosition(event, point[1]);
     if (!point || !location) return;
-    offsetX = point[0] - location.x;
-    offsetZ = point[2] - location.z;
-    dragging = true;
     canvas.setPointerCapture(event.pointerId);
+    drag = { pointerId: event.pointerId, offsetX: point[0] - location.x, offsetZ: point[2] - location.z };
+    canvas.classList.add("map-editor-dragging");
   }, { signal });
 
   canvas.addEventListener("pointermove", (event) => {
-    if (!dragging || !enabled.checked || !selected) return;
+    if (pendingPlacement) {
+      const point = placementPoint(event);
+      marker.setEnabled(!!point);
+      if (point) marker.position.set(point[0], point[1] + 0.065, point[2]);
+      return;
+    }
+    if (drag?.pointerId !== event.pointerId || !enabled.checked || !selected) return;
     const point = position();
     const target = getSelected();
     if (!point || !target) return clearSelection();
     const location = pickPosition(event, point[1]);
     if (!location) return;
-    const snap = requireElement<HTMLInputElement>("worldEditorSnap").checked ? 0.5 : 0;
-    const coordinate = (value: number) => snap ? Math.round(value / snap) * snap : value;
-    const next: MapPosition = [coordinate(location.x + offsetX), point[1], coordinate(location.z + offsetZ)];
-    target.active.editor.move(selected.kind, selected.id, next);
+    const next: MapPosition = [snap(location.x + drag.offsetX), point[1], snap(location.z + drag.offsetZ)];
+    if (next[0] === point[0] && next[2] === point[2]) return;
+    moveSelected(target, selected, next);
     setNumber("worldEditorX", next[0]);
     setNumber("worldEditorZ", next[2]);
     setMarker();
   }, { signal });
+  canvas.addEventListener("pointerleave", () => {
+    if (pendingPlacement) marker.setEnabled(false);
+  }, { signal });
 
-  const stopDrag = () => { dragging = false; };
-  canvas.addEventListener("pointerup", stopDrag, { signal });
-  canvas.addEventListener("pointercancel", stopDrag, { signal });
+  for (const eventName of ["pointerup", "pointercancel", "lostpointercapture"] as const) {
+    canvas.addEventListener(eventName, (event) => {
+      if (drag?.pointerId === event.pointerId) stopDrag();
+    }, { signal });
+  }
 
   for (const id of ["worldEditorX", "worldEditorY", "worldEditorZ", "worldEditorRotation"]) {
     requireElement<HTMLInputElement>(id).addEventListener("change", () => {
@@ -258,10 +410,10 @@ export function bindWorldEditor(
 
   applyVisual.addEventListener("click", async () => {
     const target = getSelected();
-    if (!target || !selected) return;
+    if (!target || target.kind === "interaction" || target.kind === "practice" || !selected) return;
     // Capture the destination before awaiting a file import; selection is mutable.
     const selection = { ...selected };
-    const isCurrent = () => !signal.aborted && maps.active === target.active &&
+    const isCurrent = () => !signal.aborted && maps.world === target.active &&
       selected?.kind === selection.kind && selected.id === selection.id &&
       selected.mapId === selection.mapId;
     applyVisual.disabled = true;
@@ -283,7 +435,7 @@ export function bindWorldEditor(
         visual.texture = "/assets/textures/editor/" + safeName;
         preview = URL.createObjectURL(texture);
       }
-      await target.active.editor.setVisual(selection.kind, selection.id, visual, preview);
+      await target.active.editor.setVisual(target.kind, selection.id, visual, preview);
       preview = undefined; // Its lifetime now belongs to the model's texture.
       if (isCurrent()) {
         status.textContent = "Aperçu appliqué. Pour le rendre permanent, copier les assets dans public/assets puis exporter le JSON.";
@@ -297,24 +449,34 @@ export function bindWorldEditor(
   }, { signal });
 
   exportButton.addEventListener("click", () => {
-    const map = maps.active;
+    const map = maps.world;
     if (!map) return report("Charger une map avant d'exporter.");
     downloadJson(map.definition.id + "-edited.json", map.exportJson());
     status.textContent = "JSON exporté. Les fichiers GLB et textures locaux restent à copier dans public/assets.";
   }, { signal });
 
   const observer = scene.onBeforeRenderObservable.add(() => {
-    if (maps.active === currentMap) return;
-    currentMap = maps.active;
+    if (maps.world === currentMap) {
+      if (selected?.kind === "practice" && !practice.get(selected.id)) clearSelection();
+      return;
+    }
+    if (currentMap) cancelPendingPlacement();
+    currentMap = maps.world;
     clearSelection();
+    buildCatalog();
+    if (pendingPlacement && currentMap) status.textContent = "Cliquer sur le terrain pour placer " + pendingPlacement.label + ".";
   });
   signal.addEventListener("abort", () => {
+    stopDrag();
+    canvas.classList.remove("map-editor-active");
+    canvas.classList.remove("map-editor-placing");
     scene.onBeforeRenderObservable.remove(observer);
     maps.setEditing(false);
     marker.dispose();
     markerMaterial.dispose();
   }, { once: true });
   clearSelection();
+  buildCatalog();
 
   return { get enabled() { return enabled.checked; } };
 }

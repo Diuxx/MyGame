@@ -11,13 +11,15 @@ cd code && npm ci && npm test && npm run build
 npm run dev-playground
 ```
 
-Dans **Maps 3D modulaires**, charger `dojo` ou `forest`.
-Ouvrir **Éditeur de monde**, activer le mode édition puis cliquer sur
-un ennemi ou un mur. Maintenir le clic et glisser pour déplacer sur
-le plan XZ ; Y et rotation sont modifiables numériquement. Le pas
-de grille est configurable (0,5 unité ou libre). Un anneau marque
-l'objet sélectionné. Le combat du héros et l'IA des ennemis de la
-map sont suspendus pendant le mode édition.
+Ouvrir **Éditeur de monde** sur le terrain de base du Playground
+ou après avoir chargé `dojo` ou `forest` via **Maps 3D modulaires**.
+Choisir un décor, une tuile, un ennemi ou
+une cible dans le catalogue pour activer le mode édition. Cliquer dans
+le terrain pour poser l’élément à l’endroit marqué par l’anneau. Une tuile
+remplace la case pointée et actualise sa propriété de navigation.
+Maintenir le clic sur un élément posé pour le déplacer sur le plan XZ.
+Y et la rotation se règlent dans les champs de sélection. L’aimantation
+à 0,5 unité peut être désactivée. Le combat et l’IA de la carte sont suspendus.
 
 **Objets** : édition des dimensions du premier collider (box/cylinder).
 Les volumes suivants d'un collider composé sont préservés.
@@ -102,8 +104,10 @@ Les données du JSON ne contiennent aucune instruction exécutable.
 
 - Seul le premier collider de décor est paramétrable via les champs ;
   pas encore d'édition visuelle de chacun des volumes.
-- Le sélecteur n'agit que sur les ennemis déclarés dans `map.json`,
-  pas sur les mannequins autonomes de l'ancien module Playground.
+- Le catalogue propose des mannequins à placer. Ceux posés via l’éditeur
+  sont exportés avec la carte dans `enemySpawns`. Les mannequins
+  d’entraînement existants peuvent aussi être déplacés et sont enregistrés
+  depuis **Gestion des ennemis**.
 - Pas d'annuler/refaire ni de sauvegarde automatique ; exporter le JSON.
 - Pas de validation anti-chevauchement à l'export. Le déplacement
   d'un ennemi suspend son IA, puis la réactive à la sortie du mode.
