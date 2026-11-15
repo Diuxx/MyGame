@@ -8,8 +8,7 @@ import { canCancelAction, type CancelTarget } from "./actionCancelling.ts";
 import { canBufferComboInput, canStartBufferedCombo, followUpStartProgress } from "./attackCombo.ts";
 import { allowsLocomotion } from "./animationLayers.ts";
 import { HERO_TUNING } from "./heroTuning.ts";
-import { cameraMovementYaw, targetYaw } from "./targetSelection.ts";
-import type { TargetingMotion } from "./targetLockSystem.ts";
+import { cameraMovementYaw, targetYaw, type TargetingMotion } from "./targetSelection.ts";
 import { aimYaw, calculateMovementStep, consumeImpactWindow, dodgeDirection, dodgeInvulnerable, dodgeTravelProgress, mouseRelativeDirection, type GroundVector } from "./movement.ts";
 import type { CameraControls } from "../world/scene";
 
