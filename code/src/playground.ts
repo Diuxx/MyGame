@@ -73,7 +73,7 @@ export async function startPlayground(
     targetLock?.lockOnHit("practice:" + damage.targetId);
   });
   const heroPosition = (): Position => [character.root.position.x, ground.position.y, character.root.position.z];
-  const refreshEnemyHealth = await startEnemyTools(enemies, ground.position.y,
+  const refreshEnemyHealth = await startEnemyTools(enemies,
     (definition) => enemies.findSpawnPosition(definition, heroPosition(), character.root.rotation.y, PLAYGROUND_MOVEMENT_LIMIT), signal);
   const gridToggle = requireElement<HTMLInputElement>("showGrid");
   gridToggle.checked = false;

@@ -8,7 +8,6 @@ import { requireElement } from "../ui/dom";
 
 export async function startEnemyTools(
   enemies: ReturnType<typeof createEnemyScene>,
-  groundY: number,
   spawnNearHero: (definition: Enemy["definition"]) => Position,
   signal: AbortSignal,
 ): Promise<() => void> {
