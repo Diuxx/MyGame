@@ -5,9 +5,9 @@ import {
 import { MapModelRegistry } from "../world/maps/modelRegistry.ts";
 import type { Hurtbox, Position, SwordSwing } from "../combat/combat";
 import type { EnemyDefinition, EnemySettings } from "./enemyDefinitions";
-import { createEnemy, getEnemyCollision, type Enemy } from "./enemyState";
+import { createEnemy, getEnemyCollision, type Enemy } from "./enemyState.ts";
 import type { GroundStep } from "../combat/bodyCollision";
-import { createEnemyManager } from "./enemyManager";
+import { createEnemyManager } from "./enemyManager.ts";
 
 function footprint(box: Hurtbox): number {
   const radius = box.shape === "cylinder" ? box.radius : Math.hypot(box.width, box.depth) / 2;
