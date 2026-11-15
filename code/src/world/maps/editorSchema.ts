@@ -26,8 +26,8 @@ export function parseVisualOverride(raw: unknown): VisualOverride | undefined {
   const input = raw as Record<string, unknown>;
   const result: VisualOverride = {};
   if (input.model !== undefined) {
-    if (typeof input.model !== "string" || !FILE_PATH.test(input.model) || !/\.glb$/i.test(input.model)) {
-      throw new Error("visual.model : chemin GLB sous /assets/ attendu.");
+    if (typeof input.model !== "string" || !FILE_PATH.test(input.model) || !/\.(?:glb|gltf)$/i.test(input.model)) {
+      throw new Error("visual.model : chemin glTF/GLB sous /assets/ attendu.");
     }
     result.model = input.model;
   }
