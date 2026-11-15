@@ -16,7 +16,7 @@ test("an enemy entering the radius never acquires itself", () => {
 });
 
 test("W cycles among living targets in distance order, wrapping to the nearest", () => {
-  const enemies = [candidate("third", 6, 0), candidate("first", 1, 0), candidate("second", 2, 0)];
+  const enemies = [candidate("third", settings.acquireRadius - 0.5, 0), candidate("first", 1, 0), candidate("second", 2, 0)];
   const origin = { x: 0, z: 0 };
   assert.equal(cycleTarget(origin, enemies, undefined, settings)?.id, "first");
   assert.equal(cycleTarget(origin, enemies, "first", settings)?.id, "second");
@@ -26,9 +26,9 @@ test("W cycles among living targets in distance order, wrapping to the nearest",
 });
 
 test("the current target is retained until the release radius, without reacquiring another", () => {
-  const enemies = [candidate("locked", 9, 0), candidate("closer", 2, 0)];
+  const enemies = [candidate("locked", settings.releaseRadius - 0.5, 0), candidate("closer", 2, 0)];
   assert.equal(selectTarget({ x: 0, z: 0 }, enemies, "locked", settings)?.id, "locked");
-  enemies[0].x = 10.1;
+  enemies[0].x = settings.releaseRadius + 0.1;
   assert.equal(selectTarget({ x: 0, z: 0 }, enemies, "locked", settings), undefined);
   enemies[0].x = 1;
   assert.equal(selectTarget({ x: 0, z: 0 }, enemies, undefined, settings), undefined);
@@ -54,7 +54,7 @@ test("camera-relative movement and target-relative strafing use independent head
 test("settings import/export preserve all fields and reject invalid radius pairs", () => {
   const restored = parseTargetingManifest(JSON.parse(serializeTargetingManifest(settings)));
   assert.deepEqual(restored, settings);
-  assert.throws(() => parseTargetingManifest({ ...settings, releaseRadius: 4 }), /releaseRadius/);
+  assert.throws(() => parseTargetingManifest({ ...settings, releaseRadius: settings.acquireRadius - 1 }), /releaseRadius/);
   assert.throws(() => parseTargetingManifest({ ...settings, movementReference: "pointer" }), /movementReference/);
   assert.equal(createTargetingSettings({ ...settings, releaseRadius: -1 }).releaseRadius, settings.acquireRadius);
 });
