@@ -97,7 +97,7 @@ export function createEditableModel(
     next.holder.setEnabled(false);
 
     try {
-      next.instance = await registry.instantiate(visual?.model ?? defaultPath, next.holder, externalClips);
+      next.instance = await registry.instantiate(visual?.model ?? defaultPath, next.holder, externalClips, true);
       if (disposed || request !== generation) {
         release(next);
         return undefined;
