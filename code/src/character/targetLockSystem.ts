@@ -1,7 +1,7 @@
 import {
   Color3, MeshBuilder, StandardMaterial, type Scene, type TransformNode,
 } from "@babylonjs/core";
-import { selectTarget, type TargetCandidate, type TargetingMotion } from "./targetSelection.ts";
+import { cycleTarget, selectTarget, type TargetCandidate, type TargetingMotion } from "./targetSelection.ts";
 import {
   createTargetingSettings, type TargetingSettings,
 } from "./targetingSettings.ts";
@@ -46,6 +46,8 @@ export function createTargetLockSystem(
   function update(): void {
     if (disposed) return;
     const active = settings.enabled && isAvailable();
+    // Never acquire automatically when an enemy simply enters the radius.
+    // A missing, defeated or distant target releases the lock with no replacement.
     target = active ? selectTarget(
       { x: hero.position.x, z: hero.position.z },
       listCandidates(), target?.id, settings,
@@ -80,6 +82,27 @@ export function createTargetLockSystem(
   return {
     get settings(): TargetingSettings { return { ...settings }; },
     get target(): TargetCandidate | undefined { return target; },
+    /** W: acquire the closest target, or select the next one within range. */
+    cycleTarget(): void {
+      if (disposed || !settings.enabled || !isAvailable()) return;
+      target = cycleTarget(
+        { x: hero.position.x, z: hero.position.z }, listCandidates(), target?.id, settings,
+      );
+      update();
+    },
+    /** X: release the current target until the next successful hit or W. */
+    clearTarget(): void {
+      target = undefined;
+      update();
+    },
+    /** Only a confirmed damaging hit can auto-lock a new enemy. */
+    lockOnHit(id: string): void {
+      if (disposed || !settings.enabled || !isAvailable() || target) return;
+      target = selectTarget(
+        { x: hero.position.x, z: hero.position.z }, listCandidates(), id, settings,
+      );
+      update();
+    },
     get motion(): TargetingMotion | undefined {
       return target && settings.enabled && isAvailable() ? {
         target: { x: target.x, z: target.z },
