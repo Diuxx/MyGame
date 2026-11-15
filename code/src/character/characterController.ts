@@ -12,6 +12,8 @@ import { cameraMovementYaw, targetYaw, type TargetingMotion } from "./targetSele
 import { aimYaw, calculateMovementStep, consumeImpactWindow, dodgeDirection, dodgeInvulnerable, dodgeTravelProgress, relativeMovementDirection, type GroundVector } from "./movement.ts";
 import type { CameraControls } from "../world/scene";
 
+export interface MovementBounds { minX: number; maxX: number; minZ: number; maxZ: number }
+
 type ActiveAction =
   | { kind: "attack"; progress: number; hits: ReturnType<typeof createAttackHits> }
   | { kind: "dodge"; progress: number; direction: GroundVector; distance: number }
@@ -21,7 +23,7 @@ export function createCharacterController(
   scene: Scene,
   canvas: HTMLCanvasElement,
   root: TransformNode,
-  movementLimit: number,
+  movementLimit: number | (() => MovementBounds),
   camera: Pick<CameraControls, "follow" | "alpha">,
   animations: AnimationPlayer,
   signal: AbortSignal,
@@ -140,13 +142,16 @@ export function createCharacterController(
 
   function move(step: GroundVector): GroundVector {
     const { position } = root;
+    const bounds = typeof movementLimit === "number"
+      ? { minX: -movementLimit, maxX: movementLimit, minZ: -movementLimit, maxZ: movementLimit }
+      : movementLimit();
     const desired = {
-      x: clamp(position.x + step.x, -movementLimit, movementLimit) - position.x,
-      z: clamp(position.z + step.z, -movementLimit, movementLimit) - position.z,
+      x: clamp(position.x + step.x, bounds.minX, bounds.maxX) - position.x,
+      z: clamp(position.z + step.z, bounds.minZ, bounds.maxZ) - position.z,
     };
     const resolved = resolveMovement([position.x, position.y, position.z], desired);
-    const nextX = clamp(position.x + resolved.x, -movementLimit, movementLimit);
-    const nextZ = clamp(position.z + resolved.z, -movementLimit, movementLimit);
+    const nextX = clamp(position.x + resolved.x, bounds.minX, bounds.maxX);
+    const nextZ = clamp(position.z + resolved.z, bounds.minZ, bounds.maxZ);
     const actual = { x: nextX - position.x, z: nextZ - position.z };
     if (actual.x || actual.z) {
       position.x = nextX;

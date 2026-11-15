@@ -32,13 +32,13 @@ export function createMapTransitions(options: MapTransitionOptions) {
     return new Promise((resolve) => window.setTimeout(resolve, FADE_MS));
   }
 
-  async function enter(id: MapId, spawnId?: string): Promise<void> {
-    if (busy || disposed || maps.isEditing) return;
+  async function enter(id: MapId, spawnId?: string): Promise<boolean> {
+    if (busy || disposed || maps.isEditing) return false;
     busy = true;
     options.onBusyChange?.(true);
     try {
       await fade(true);
-      if (disposed || signal.aborted) return;
+      if (disposed || signal.aborted) return false;
       const loaded = await maps.load(id, spawnId);
       if (!loaded) throw new Error("Chargement remplacé par une requête plus récente.");
       const spawn = spawnId
@@ -51,11 +51,13 @@ export function createMapTransitions(options: MapTransitionOptions) {
       guard.consume();
       options.onMapChanged?.(id);
       options.onStatus("Zone : " + loaded.definition.name);
+      return true;
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
       options.onStatus("Transition impossible : " + reason);
       console.error("Map transition failed", error);
       guard.consume();
+      return false;
     } finally {
       if (!disposed) await fade(false);
       busy = false;

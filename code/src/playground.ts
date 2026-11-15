@@ -10,6 +10,8 @@ import { bindCollisionTools } from "./playground/collisionTools";
 import { bindMapTools } from "./playground/mapTools";
 import { bindWorldEditor } from "./playground/worldEditor";
 import { createMapSystem } from "./world/maps/mapSystem";
+import { createMapTransitions } from "./world/maps/zoneTransitions";
+import { terrainBounds } from "./world/maps/validation";
 import { createHeroLifecycle } from "./character/heroLifecycle";
 import { createHeroHud } from "./ui/heroHud";
 import { createFloatingTextSystem } from "./ui/floatingTextSystem";
@@ -102,7 +104,16 @@ export async function startPlayground(
     },
     objects: [], spawnPoints: [{ id: "hero", type: "player", position: [0, 0, 0], rotationY: 0 }],
   });
-  bindMapTools(maps, character.root, cameraControls, signal);
+  const transitions = createMapTransitions({
+    maps, hero: character.root, camera: cameraControls, signal,
+    onStatus: hud.announce,
+    onMapChanged: (id) => {
+      requireElement<HTMLSelectElement>("mapSelect").value = id;
+      requireElement("mapActiveId").textContent = id;
+      requireElement("mapStatus").textContent = "Zone active : " + id;
+    },
+  });
+  bindMapTools(maps, character.root, cameraControls, signal, transitions);
   bindFloatingTextTools(floatingText, character.root, signal);
   const worldEditor = bindWorldEditor(scene, canvas, maps, enemies, signal);
   const collisions = bindCollisionTools(scene, character.root, enemies, signal,
@@ -116,7 +127,10 @@ export async function startPlayground(
   const facingInput = requireElement<HTMLInputElement>("facing");
   const facingOutput = requireElement<HTMLOutputElement>("facingOutput");
   controller = createCharacterController(scene, canvas, character.root,
-    PLAYGROUND_MOVEMENT_LIMIT, cameraControls, animationPlayer, signal, () => updateActiveAnimation(), (yaw) => {
+    () => maps.active ? terrainBounds(maps.active.definition) : {
+      minX: -PLAYGROUND_MOVEMENT_LIMIT, maxX: PLAYGROUND_MOVEMENT_LIMIT,
+      minZ: -PLAYGROUND_MOVEMENT_LIMIT, maxZ: PLAYGROUND_MOVEMENT_LIMIT,
+    }, cameraControls, animationPlayer, signal, () => updateActiveAnimation(), (yaw) => {
       const degrees = String(Math.round(yaw * 180 / Math.PI));
       if (facingInput.value !== degrees) {
         facingInput.value = degrees;
@@ -129,11 +143,11 @@ export async function startPlayground(
       return dummyHit || worldHit;
     },
     collisions.resolveMovement,
-    () => vitals.isAlive && !worldEditor.enabled,
+    () => vitals.isAlive && !worldEditor.enabled && !transitions.isBusy,
     (actionId) => {
       hud.flashSpell(actionId);
       floatingText.showAction('hero', actionId, character.root);
-    }, maps.interact);
+    }, transitions.interact);
   controller.setTargetingProvider(() => targetLock?.motion);
   controller.setTargetingActions({
     cycle: () => targetLock?.cycleTarget(),
@@ -155,6 +169,7 @@ export async function startPlayground(
   }
   const mapEnemyCount = requireElement("mapEnemyCount");
   scene.onBeforeRenderObservable.add(() => {
+    transitions.update();
     const delta = scene.getEngine().getDeltaTime() / 1000;
     enemies.update(document.hidden ? 0 : delta);
     updateTargetLockUi();
@@ -163,7 +178,10 @@ export async function startPlayground(
     lifecycle.update(delta, controller, maps.active?.definition.spawnPoints.find((point) => point.type === "player"));
     simulateHeroDeath.disabled = !vitals.isAlive;
     hud.refresh(vitals);
-    hud.nearby(worldEditor.enabled ? undefined : maps.world?.nearInteraction()?.label, getBindings().interact);
+    const exit = maps.active?.nearExit();
+    hud.nearby(worldEditor.enabled ? undefined :
+      exit?.activation === "interact" ? exit.label : maps.world?.nearInteraction()?.label,
+      getBindings().interact);
     const activeMap = maps.world;
     const worldEnemies = activeMap?.simulation.list() ?? [];
     const alive = worldEnemies.filter((enemy) => enemy.state !== "inactive" && !enemy.entity.defeated);
