@@ -117,3 +117,16 @@ input[type=range] { accent-color:#a4c49e; display:block; width:100%; margin:0 0 
 #worldEditorFields[hidden] { display:none; }
 #worldEditorObjectFields[hidden], #worldEditorEnemyFields[hidden],
 #worldEditorRotationField[hidden], #worldEditorVisualFields[hidden] { display:none; }
+
+
+/* Playground animation tuning: normalized action windows and playback cursor. */
+.action-timeline { display: grid; gap: .55rem; margin: .9rem 0; }
+.action-timeline-row, .action-timeline-progress { display: grid; gap: .2rem; font-size: .78rem; }
+.action-timeline-label { color: var(--text-secondary, #b7bdc8); }
+.action-timeline-track { position: relative; height: .65rem; border-radius: .25rem; background: #303744; overflow: visible; }
+.action-timeline-segment { position: absolute; top: 0; bottom: 0; border-radius: .2rem; }
+.action-timeline-segment.invulnerable { background: #2baf91; }
+.action-timeline-segment.impact { background: #efad53; }
+.action-timeline-segment.cancel { background: #679cf0; }
+.action-timeline-segment.blend { background: #b58bde; }
+.action-timeline-cursor { position: absolute; top: -.2rem; bottom: -.2rem; width: 2px; background: white; pointer-events: none; }
