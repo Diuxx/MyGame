@@ -11,6 +11,8 @@ import { bindAnimationGroup } from "../bindAnimationGroup.ts";
 export class MapModelRegistry {
   private readonly sources = new Map<string, Promise<AssetContainer | null>>();
   private readonly retired = new Set<AssetContainer>();
+  private readonly pendingImports = new Set<Promise<AssetContainer>>();
+  private disposed = false;
   private readonly scene: Scene;
 
   constructor(scene: Scene) {
@@ -18,12 +20,15 @@ export class MapModelRegistry {
   }
 
   private getSource(path: string): Promise<AssetContainer | null> {
+    if (this.disposed) throw new Error("Registre de modèles déjà libéré.");
     let pending = this.sources.get(path);
     if (!pending) {
       pending = LoadAssetContainerAsync(path, this.scene, {
         pluginOptions: { gltf: { animationStartMode: 0 } },
       }).then((container) => {
-        return container;
+        if (!this.disposed) return container;
+        container.dispose();
+        return null;
       }).catch((error: unknown) => {
         console.warn("Map : fichier GLB absent ou illisible :", path, error);
         return null;
@@ -34,33 +39,39 @@ export class MapModelRegistry {
   }
 
   async registerLocalFile(file: File): Promise<string> {
-    if (!/^[a-z0-9][a-z0-9_.-]*\.glb$/i.test(file.name) || file.size === 0 ||
+    if (this.disposed) throw new Error("Registre de modèles déjà libéré.");
+    if (!/^[a-z0-9][a-z0-9_.-]*\\.glb$/i.test(file.name) || file.size === 0 ||
         file.size > 25 * 1024 * 1024) {
       throw new Error("GLB invalide (nom simple, fichier non vide, 25 Mo maximum).");
     }
     const base = file.name.toLowerCase().replace(/[^a-z0-9_.-]/g, "-");
     const path = "/assets/models/editor/" + base;
     const url = URL.createObjectURL(file);
+    const loading = LoadAssetContainerAsync(url, this.scene, {
+      pluginExtension: ".glb",
+      pluginOptions: { gltf: { animationStartMode: 0 } },
+    });
+    this.pendingImports.add(loading);
+    let container: AssetContainer | undefined;
     try {
-      const container = await LoadAssetContainerAsync(url, this.scene, {
-        pluginExtension: ".glb",
-        pluginOptions: { gltf: { animationStartMode: 0 } },
-      });
+      container = await loading;
       if (!container.rootNodes.length || !container.meshes.some((mesh) => mesh.getTotalVertices() > 0)) {
-        container.dispose();
         throw new Error("Le fichier GLB ne contient pas de modèle utilisable.");
       }
-      // Replace a previous failed lookup or an older locally imported source.
+
+      // A replaced source stays alive until the registry closes, while its instances
+      // may still share its materials and textures.
       const previous = this.sources.get(path);
+      const old = previous ? await previous : null;
+      if (this.disposed) throw new Error("Registre libéré pendant l'import GLB.");
       this.sources.set(path, Promise.resolve(container));
-      if (previous) {
-        // Existing instances own their meshes; the earlier source is disposed
-        // only when the registry itself is closed, avoiding dangling instances.
-        const old = await previous;
-        if (old) this.retired.add(old);
-      }
+      if (old) this.retired.add(old);
       return path;
+    } catch (error) {
+      container?.dispose();
+      throw error;
     } finally {
+      this.pendingImports.delete(loading);
       URL.revokeObjectURL(url);
     }
   }
@@ -68,6 +79,7 @@ export class MapModelRegistry {
   async instantiate(path: string, parent: TransformNode,
                     externalClips: Readonly<Record<string, string>> = {}): Promise<InstantiatedEntries | null> {
     const source = await this.getSource(path);
+    if (this.disposed) throw new Error("Registre libéré pendant l'instanciation.");
     if (!source) return null;
     if (!source.rootNodes.length || !source.meshes.some((mesh) => mesh.getTotalVertices() > 0)) {
       console.warn("Map : modèle GLB vide, représentation de collision utilisée :", path);
@@ -77,6 +89,7 @@ export class MapModelRegistry {
     try {
       const clips = await Promise.all(Object.entries(externalClips).map(async ([name, url]) =>
         ({ name, url, source: await this.getSource(url) })));
+      if (this.disposed) throw new Error("Registre libéré pendant le chargement des animations.");
       placed = source.instantiateModelsToScene(clips.length ? (name) => name : undefined,
         false, { doNotInstantiate: false });
       if (!placed.rootNodes.length) {
@@ -104,6 +117,9 @@ export class MapModelRegistry {
   }
 
   async dispose(): Promise<void> {
+    if (this.disposed) return;
+    this.disposed = true;
+    await Promise.allSettled(this.pendingImports);
     const sources = await Promise.all(this.sources.values());
     for (const source of sources) source?.dispose();
     for (const old of this.retired) old.dispose();
