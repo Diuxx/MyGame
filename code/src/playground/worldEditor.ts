@@ -259,6 +259,11 @@ export function bindWorldEditor(
   applyVisual.addEventListener("click", async () => {
     const target = getSelected();
     if (!target || !selected) return;
+    // Capture the destination before awaiting a file import; selection is mutable.
+    const selection = { ...selected };
+    const isCurrent = () => !signal.aborted && maps.active === target.active &&
+      selected?.kind === selection.kind && selected.id === selection.id &&
+      selected.mapId === selection.mapId;
     applyVisual.disabled = true;
     let preview: string | undefined;
     try {
@@ -268,6 +273,7 @@ export function bindWorldEditor(
       visual.tint = requireElement<HTMLInputElement>("worldEditorTint").value;
       const model = modelFile.files?.[0];
       if (model) visual.model = await target.active.editor.importGlb(model);
+      if (!isCurrent()) return; // Do not apply an import to a different selection or map.
       const texture = textureFile.files?.[0];
       if (texture) {
         if (!/\.(png|jpe?g|webp)$/i.test(texture.name) || !texture.size || texture.size > 8 * 1024 * 1024) {
@@ -277,11 +283,17 @@ export function bindWorldEditor(
         visual.texture = "/assets/textures/editor/" + safeName;
         preview = URL.createObjectURL(texture);
       }
-      await target.active.editor.setVisual(selected.kind, selected.id, visual, preview);
+      await target.active.editor.setVisual(selection.kind, selection.id, visual, preview);
       preview = undefined; // Its lifetime now belongs to the model's texture.
-      status.textContent = "Aperçu appliqué. Pour le rendre permanent, copier les assets dans public/assets puis exporter le JSON.";
-    } catch (error) { if (preview) URL.revokeObjectURL(preview); report(error); }
-    finally { applyVisual.disabled = false; }
+      if (isCurrent()) {
+        status.textContent = "Aperçu appliqué. Pour le rendre permanent, copier les assets dans public/assets puis exporter le JSON.";
+      }
+    } catch (error) {
+      if (preview) URL.revokeObjectURL(preview);
+      if (isCurrent()) report(error);
+    } finally {
+      applyVisual.disabled = false;
+    }
   }, { signal });
 
   exportButton.addEventListener("click", () => {
