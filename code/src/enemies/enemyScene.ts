@@ -1,13 +1,13 @@
 import {
-  Color3, LoadAssetContainerAsync, Mesh, MeshBuilder, StandardMaterial, TransformNode,
-  type Scene, type ShadowGenerator,
+  Color3, Mesh, MeshBuilder, StandardMaterial, TransformNode,
+  type AbstractMesh, type Scene, type ShadowGenerator,
 } from "@babylonjs/core";
-import "@babylonjs/loaders/glTF";
+import { MapModelRegistry } from "../world/maps/modelRegistry.ts";
 import type { Hurtbox, Position, SwordSwing } from "../combat/combat";
 import type { EnemyDefinition, EnemySettings } from "./enemyDefinitions";
-import { createEnemy, getEnemyCollision, type Enemy } from "./enemyState";
+import { createEnemy, getEnemyCollision, type Enemy } from "./enemyState.ts";
 import type { GroundStep } from "../combat/bodyCollision";
-import { createEnemyManager } from "./enemyManager";
+import { createEnemyManager } from "./enemyManager.ts";
 
 function footprint(box: Hurtbox): number {
   const radius = box.shape === "cylinder" ? box.radius : Math.hypot(box.width, box.depth) / 2;
@@ -18,6 +18,8 @@ export function createEnemyScene(scene: Scene, shadows: ShadowGenerator, groundY
   const entries = new Map<string, { enemy: Enemy; update(): void; select(selected: boolean): void;
     showHurtbox(visible: boolean): void; showCollider(visible: boolean): void; dispose(): void }>();
   const manager = createEnemyManager();
+  const models = new MapModelRegistry(scene);
+  let disposed = false;
   let nextId = 1;
   let debug = false;
   let debugColliders = false;
@@ -40,24 +42,20 @@ export function createEnemyScene(scene: Scene, shadows: ShadowGenerator, groundY
   colliderMaterial.wireframe = true;
 
   async function spawn(definition: EnemyDefinition, settings: EnemySettings, position: Position | (() => Position)): Promise<Enemy> {
+    if (disposed) throw new Error("Scène des cibles déjà libérée.");
     const id = `${definition.id}-${nextId++}`;
-    const assets = await LoadAssetContainerAsync(definition.modelPath, scene, {
-      pluginOptions: { gltf: { animationStartMode: 0 } },
-    }).catch((error: unknown) => {
-      throw new Error(`Chargement de ${definition.modelPath} impossible : ${error instanceof Error ? error.message : String(error)}`, { cause: error });
-    });
-    let root: TransformNode | undefined;
+    const root = new TransformNode(id, scene);
+    const model = new TransformNode(`${id}-model`, scene);
+    model.parent = root;
+    let instance: Awaited<ReturnType<MapModelRegistry["instantiate"]>> = null;
+    const casters: AbstractMesh[] = [];
     try {
+      instance = await models.instantiate(definition.modelPath, model);
+      if (disposed) throw new Error("Scène des cibles libérée pendant le chargement.");
+      if (!instance) throw new Error(`Chargement de ${definition.modelPath} impossible.`);
       const enemy = createEnemy(id, definition, typeof position === "function" ? position() : position, settings);
-      const geometry = assets.meshes.filter((mesh) => mesh.getTotalVertices() > 0);
-      if (geometry.length === 0 || assets.rootNodes.length === 0) {
-        throw new Error(`Aucun maillage visible dans ${definition.modelPath}.`);
-      }
-      root = new TransformNode(id, scene);
-      assets.addAllToScene();
-      const model = new TransformNode(`${id}-model`, scene);
-      model.parent = root;
-      for (const node of assets.rootNodes) node.parent = model;
+      const geometry = model.getChildMeshes().filter((mesh) => mesh.getTotalVertices() > 0);
+      if (!geometry.length) throw new Error(`Aucun maillage visible dans ${definition.modelPath}.`);
       const bounds = model.getHierarchyBoundingVectors();
       model.position.y = -bounds.min.y;
       root.position.set(...enemy.position);
@@ -94,6 +92,7 @@ export function createEnemyScene(scene: Scene, shadows: ShadowGenerator, groundY
       for (const mesh of geometry) {
         mesh.computeWorldMatrix(true);
         shadows.addShadowCaster(mesh, false);
+        casters.push(mesh);
       }
 
       const entry = {
@@ -115,13 +114,9 @@ export function createEnemyScene(scene: Scene, shadows: ShadowGenerator, groundY
           collider.setEnabled(visible && solid.solid && !enemy.defeated);
         },
         dispose() {
-          for (const mesh of geometry) shadows.removeShadowCaster(mesh, false);
-          assets.dispose();
-          bar.dispose();
-          hurtbox.dispose();
-          collider.dispose();
-          model.dispose(true);
-          root?.dispose(true);
+          for (const mesh of casters) shadows.removeShadowCaster(mesh, false);
+          instance?.dispose();
+          root.dispose(false, false);
         },
       };
       entries.set(id, entry);
@@ -129,8 +124,9 @@ export function createEnemyScene(scene: Scene, shadows: ShadowGenerator, groundY
       entry.update();
       return enemy;
     } catch (error) {
-      assets.dispose();
-      root?.dispose();
+      for (const mesh of casters) shadows.removeShadowCaster(mesh, false);
+      instance?.dispose();
+      root.dispose(false, false);
       throw error;
     }
   }
@@ -151,19 +147,34 @@ export function createEnemyScene(scene: Scene, shadows: ShadowGenerator, groundY
     throw new Error("Aucune place libre près du héros.");
   }
 
+  async function dispose(): Promise<void> {
+    if (disposed) return;
+    disposed = true;
+    removeAll();
+    for (const material of [background, selected, fill, debugMaterial, colliderMaterial]) {
+      material.dispose();
+    }
+    await models.dispose();
+  }
+
+  function removeAll(): void {
+    for (const entry of entries.values()) entry.dispose();
+    entries.clear();
+    manager.clear();
+  }
+
+  scene.onDisposeObservable.addOnce(() => { void dispose(); });
+
   return {
     spawn,
     findSpawnPosition,
+    dispose,
     remove(id: string) {
       entries.get(id)?.dispose();
       entries.delete(id);
       manager.remove(id);
     },
-    removeAll() {
-      for (const entry of entries.values()) entry.dispose();
-      entries.clear();
-      manager.clear();
-    },
+    removeAll,
     select(id: string) {
       for (const entry of entries.values()) entry.select(entry.enemy.id === id);
     },
