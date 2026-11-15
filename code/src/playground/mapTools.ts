@@ -26,16 +26,19 @@ export function bindMapTools(
   let pending = false;
 
   const labels: Record<string, string> = {
+    playground: "Playground — Entraînement",
     dojo: "Cour du dojo", forest: "Clairière",
     "prototype-forest": "Prototype — Forêt",
     "prototype-arena": "Prototype — Arène",
   };
   for (const id of AVAILABLE_MAPS) selection.add(new Option(labels[id] ?? id, id));
+  selection.value = maps.active?.definition.id ?? "playground";
 
   function syncButtons(): void {
     load.disabled = pending || transitions.isBusy;
     selection.disabled = pending || transitions.isBusy;
-    unload.disabled = pending || transitions.isBusy || !maps.active;
+    unload.disabled = pending || transitions.isBusy || !maps.active ||
+      maps.active.definition.id === "playground";
     placeHero.disabled = pending || transitions.isBusy ||
       !maps.active?.definition.spawnPoints.some((point) => point.type === "player");
     resetProgress.disabled = pending || transitions.isBusy || !maps.active;
@@ -78,11 +81,19 @@ export function bindMapTools(
     }
   }, { signal });
 
-  unload.addEventListener("click", () => {
-    if (pending || transitions.isBusy) return;
-    maps.unload();
-    status.textContent = "Map déchargée ; le terrain du Playground reste affiché.";
+  unload.addEventListener("click", async () => {
+    if (pending || transitions.isBusy || maps.active?.definition.id === "playground") return;
+    pending = true;
     syncButtons();
+    try {
+      const loaded = await transitions.loadManual("playground");
+      status.textContent = loaded
+        ? "Map Playground restaurée."
+        : "Retour impossible. Vérifier le message dans le HUD.";
+    } finally {
+      pending = false;
+      syncButtons();
+    }
   }, { signal });
 
   placeHero.addEventListener("click", teleportToSpawn, { signal });

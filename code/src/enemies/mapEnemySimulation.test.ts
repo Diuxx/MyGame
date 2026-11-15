@@ -255,3 +255,23 @@ test("map strike reports mitigated and overkill-capped damage", () => {
     (event) => losses.push(event.finalDamage)), false);
   assert.deepEqual(losses, [30, 70]);
 });
+
+test("Playground map initializes one regenerating training target and three goblins", () => {
+  const loadJson = (path: string) => JSON.parse(readFileSync(new URL(path, import.meta.url), "utf8"));
+  const source = loadJson("../../public/assets/definitions/assets.json") as { enemies: unknown };
+  const catalog = loadEnemyDefinitions(source.enemies);
+  const assets = validateMapAssets(source);
+  const map = validateMapDefinition(loadJson("../../public/assets/maps/playground.json"), assets,
+    new Set(catalog.map(({ id }) => id)));
+  const game = createMapEnemySimulation({
+    enemySpawns: map.enemySpawns ?? [], waves: [], events: [],
+  }, catalog);
+  assert.equal(game.list().length, 4);
+  const target = game.list().find(({ spec }) => spec.enemyId === "target-wood");
+  assert.ok(target);
+  assert.equal(target.entity.definition.category, "static");
+  assert.equal(target.entity.immortal, true);
+  const goblins = game.list().filter(({ spec }) => spec.enemyId === "goblin");
+  assert.equal(goblins.length, 3);
+  assert.ok(goblins.every(({ state }) => state === "idle"));
+});

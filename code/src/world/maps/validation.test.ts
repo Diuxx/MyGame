@@ -119,3 +119,25 @@ test("primitive prototype zones retain their non-GLB ground, geometry and exits"
     assert.ok(map.exits?.every((exit) => exit.targetSpawn.length > 0));
   }
 });
+
+test("Playground starts from a large textured training map with exactly four placed targets", () => {
+  const source = load("maps/playground.json") as Record<string, unknown>;
+  const catalog = parseAssetCatalog(load("definitions/assets.json")).enemyCatalog;
+  const map = validateMapDefinition(source, assets, new Set(catalog.map((enemy) => enemy.id)));
+  assert.equal(map.id, "playground");
+  assert.equal(map.terrain.tiles.length, 30);
+  assert.equal(map.terrain.tiles[0].length, 30);
+  assert.equal(map.terrain.primitiveGround?.pattern, "training");
+  assert.ok(map.terrain.tiles.every((row) => row.every((tile) => tile === null)));
+  assert.equal(map.enemySpawns?.length, 4);
+  const target = map.enemySpawns?.find((enemy) => enemy.enemyId === "target-wood");
+  assert.deepEqual(target?.position, [0, 0, 0]);
+  const goblins = map.enemySpawns?.filter((enemy) => enemy.enemyId === "goblin");
+  assert.equal(goblins?.length, 3);
+  assert.equal(goblins?.filter((enemy) => enemy.position[2] === 11).length, 2);
+  const spawn = map.spawnPoints.find((point) => point.type === "player");
+  assert.ok(spawn && Math.hypot(spawn.position[0], spawn.position[2]) >= 10);
+  const invalid = structuredClone(source) as Record<string, any>;
+  invalid.terrain.primitiveGround.pattern = "unknown";
+  assert.throws(() => validateMapDefinition(invalid, assets), /motif inconnu/);
+});

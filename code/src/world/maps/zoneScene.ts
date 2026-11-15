@@ -1,5 +1,5 @@
 import {
-  Color3, MeshBuilder, StandardMaterial,
+  Color3, DynamicTexture, MeshBuilder, StandardMaterial,
   type AbstractMesh, type Scene, type ShadowGenerator, type TransformNode,
 } from "@babylonjs/core";
 import type { MapDefinition, MapPosition } from "./types.ts";
@@ -11,6 +11,7 @@ export function createZoneScene(
 ) {
   const materials = new Map<string, StandardMaterial>();
   const meshes: AbstractMesh[] = [];
+  const textures: DynamicTexture[] = [];
   const casters: AbstractMesh[] = [];
   const debug: AbstractMesh[] = [];
 
@@ -22,6 +23,48 @@ export function createZoneScene(
     existing.specularColor = Color3.Black();
     materials.set(color, existing);
     return existing;
+  }
+
+  /** One generated texture for the whole training ground, not hundreds of floor meshes. */
+  function trainingTexture(baseColor: string): DynamicTexture {
+    const texture = new DynamicTexture("training-ground-texture", 1024, scene, false);
+    const context = texture.getContext();
+    context.fillStyle = baseColor;
+    context.fillRect(0, 0, 1024, 1024);
+
+    // Seeded flecks help judge scale and motion without external textures.
+    let seed = 1741;
+    const random = () => {
+      seed = (1664525 * seed + 1013904223) >>> 0;
+      return seed / 4294967296;
+    };
+    const shades = ["#617b65", "#819978", "#a0a68a", "#708d72"];
+    for (let i = 0; i < 2300; i++) {
+      context.fillStyle = shades[Math.floor(random() * shades.length)];
+      const x = Math.floor(random() * 1024);
+      const y = Math.floor(random() * 1024);
+      const size = 1 + Math.floor(random() * 5);
+      context.fillRect(x, y, size, size * 0.6 + 1);
+    }
+
+    // Soft geometric training circle in the middle of the 60x60 map.
+    context.beginPath();
+    context.arc(512, 512, 168, 0, Math.PI * 2);
+    context.fillStyle = "#a69f83";
+    context.fill();
+    context.beginPath();
+    context.arc(512, 512, 154, 0, Math.PI * 2);
+    context.strokeStyle = "#c3ba95";
+    context.lineWidth = 6;
+    context.stroke();
+    context.beginPath();
+    context.arc(512, 512, 58, 0, Math.PI * 2);
+    context.strokeStyle = "#787d65";
+    context.lineWidth = 3;
+    context.stroke();
+    texture.update();
+    textures.push(texture);
+    return texture;
   }
 
   function track(mesh: AbstractMesh, color: string, castsShadow = false): AbstractMesh {
@@ -101,6 +144,11 @@ export function createZoneScene(
       map.terrain.primitiveGround.color);
     ground.position.set(x + width / 2, y - 0.01, z + depth / 2);
     ground.receiveShadows = true;
+    if (map.terrain.primitiveGround.pattern === "training") {
+      const groundMaterial = ground.material as StandardMaterial;
+      groundMaterial.diffuseColor = Color3.White();
+      groundMaterial.diffuseTexture = trainingTexture(map.terrain.primitiveGround.color);
+    }
   }
   for (const item of map.primitives ?? []) primitive(item);
   for (const exit of map.exits ?? []) exitArch(exit.id, exit.position, exit.triggerRadius);
@@ -116,6 +164,7 @@ export function createZoneScene(
       for (const mesh of casters) shadows?.removeShadowCaster(mesh, false);
       for (const mesh of meshes) mesh.dispose();
       for (const value of materials.values()) value.dispose();
+      for (const texture of textures) texture.dispose();
     },
   };
 }

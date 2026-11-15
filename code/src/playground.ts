@@ -62,6 +62,9 @@ export async function startPlayground(
   requireElement<HTMLElement>("movementHint").hidden = false;
   bindModuleWindows(signal);
   const { ground, grid, shadows, ambience } = createPlaygroundEnvironment(scene, character.root);
+  // Map-specific ground now owns the visible terrain; retain the legacy plane only
+  // as an origin for debug tools and the optional grid.
+  ground.isVisible = false;
   const canvas = requireElement<HTMLCanvasElement>("renderCanvas");
   const floatingText = createFloatingTextSystem(scene, canvas, loadPlaygroundFloatingTextConfig());
   let targetLock: ReturnType<typeof createTargetLockSystem> | undefined;
@@ -93,17 +96,13 @@ export async function startPlayground(
     onEncounterEvent: hud.event,
     onWorldInteraction: hud.announce,
   });
-  const tileSize = 2;
-  const gridSize = PLAYGROUND_MOVEMENT_LIMIT * 2 / tileSize;
-  await maps.openBase({
-    version: 1, id: "playground", name: "Playground", tileSize,
-    terrain: {
-      origin: [-PLAYGROUND_MOVEMENT_LIMIT, 0, -PLAYGROUND_MOVEMENT_LIMIT],
-      tiles: Array.from({ length: gridSize }, () => Array<null>(gridSize).fill(null)),
-      groundCollider: { enabled: false, thickness: 0.1 },
-    },
-    objects: [], spawnPoints: [{ id: "hero", type: "player", position: [0, 0, 0], rotationY: 0 }],
-  });
+  const initialMap = await maps.load("playground");
+  if (!initialMap) throw new Error("Chargement de la map Playground interrompu.");
+  const initialSpawn = initialMap.definition.spawnPoints.find((spawn) => spawn.type === "player");
+  if (!initialSpawn) throw new Error("La map Playground ne définit aucun spawn du héros.");
+  character.root.position.set(...initialSpawn.position);
+  character.root.rotation.y = degreesToRadians(initialSpawn.rotationY);
+  cameraControls.follow(initialSpawn.position[0], initialSpawn.position[2]);
   const zoneTransitions = createMapTransitions({
     maps, hero: character.root, camera: cameraControls, signal,
     onStatus: hud.announce,

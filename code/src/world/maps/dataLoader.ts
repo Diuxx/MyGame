@@ -3,6 +3,7 @@ import type { MapAssets, MapDefinition } from "./types";
 import { loadEnemyDefinitions } from "../../enemies/enemyDefinitions.ts";
 
 const MAPS = {
+  playground: "/assets/maps/playground.json",
   dojo: "/assets/maps/dojo.json",
   forest: "/assets/maps/forest.json",
   "prototype-forest": "/assets/maps/prototype-forest.json",

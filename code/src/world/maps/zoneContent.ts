@@ -2,6 +2,7 @@ import type { MapPosition } from "./types.ts";
 
 export interface PrimitiveGround {
   color: string;
+  pattern?: "training";
 }
 
 export interface MapPrimitive {
@@ -69,7 +70,13 @@ function vector(value: unknown, label: string, positive = false): MapPosition {
 export function parsePrimitiveGround(raw: unknown): PrimitiveGround | undefined {
   if (raw === undefined) return undefined;
   const input = asObject(raw, "terrain.primitiveGround");
-  return { color: color(input.color, "terrain.primitiveGround.color") };
+  if (input.pattern !== undefined && input.pattern !== "training") {
+    throw new Error("terrain.primitiveGround.pattern : motif inconnu.");
+  }
+  return {
+    color: color(input.color, "terrain.primitiveGround.color"),
+    ...(input.pattern === "training" ? { pattern: "training" as const } : {}),
+  };
 }
 
 export function parseMapPrimitives(raw: unknown): MapPrimitive[] {
