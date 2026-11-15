@@ -47,7 +47,7 @@ export function createEnemyScene(scene: Scene, shadows: ShadowGenerator, groundY
     const root = new TransformNode(id, scene);
     const model = new TransformNode(`${id}-model`, scene);
     model.parent = root;
-    let instance: Awaited<ReturnType<MapModelRegistry["instantiate"]>>;
+    let instance: Awaited<ReturnType<MapModelRegistry["instantiate"]>> = null;
     try {
       instance = await models.instantiate(definition.modelPath, model);
       if (disposed) throw new Error("Scène des cibles libérée pendant le chargement.");
