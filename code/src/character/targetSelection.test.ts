@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { cameraMovementYaw, movementYaw, selectTarget, targetYaw, type TargetCandidate } from "./targetSelection.ts";
 import { createTargetingSettings, parseTargetingManifest, serializeTargetingManifest } from "./targetingSettings.ts";
-import { mouseRelativeDirection } from "./movement.ts";
+import { relativeMovementDirection } from "./movement.ts";
 
 const settings = { ...createTargetingSettings(), enabled: true };
 const candidate = (id: string, x: number, z: number, alive = true): TargetCandidate =>
@@ -50,10 +50,10 @@ test("Q/D strafe tangentially while Z/S move toward and away from the locked ene
   const origin = { x: 0, z: 0 };
   const target = { x: 0, z: 5 };
   const yaw = movementYaw({ ...settings, movementReference: "target" }, 1, origin, target);
-  assert.deepEqual(mouseRelativeDirection(0, 1, yaw), { x: 0, z: 1 });
-  assert.deepEqual(mouseRelativeDirection(0, -1, yaw), { x: 0, z: -1 });
-  assert.deepEqual(mouseRelativeDirection(-1, 0, yaw), { x: -1, z: 0 });
-  assert.deepEqual(mouseRelativeDirection(1, 0, yaw), { x: 1, z: 0 });
+  assert.deepEqual(relativeMovementDirection(0, 1, yaw), { x: 0, z: 1 });
+  assert.deepEqual(relativeMovementDirection(0, -1, yaw), { x: 0, z: -1 });
+  assert.deepEqual(relativeMovementDirection(-1, 0, yaw), { x: -1, z: 0 });
+  assert.deepEqual(relativeMovementDirection(1, 0, yaw), { x: 1, z: 0 });
 });
 
 test("acquisition includes enemies precisely at the radius boundary", () => {
