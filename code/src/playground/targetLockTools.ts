@@ -130,7 +130,7 @@ export function bindTargetLockTools(system: TargetLockSystem, signal: AbortSigna
   let lastTarget = "";
   return () => {
     const nextTarget = !settings.enabled ? "Mode libre — verrouillage désactivé"
-      : system.target ? "Verrouillé : " + system.target.id : "Recherche d'une cible dans le rayon…";
+      : system.target ? "Verrouillé : " + system.target.id : "Ciblage disponible : attaquer ou appuyer sur W";
     if (lastTarget !== nextTarget) {
       targetLabel.textContent = nextTarget;
       lastTarget = nextTarget;
