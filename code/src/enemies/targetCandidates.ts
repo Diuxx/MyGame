@@ -11,6 +11,8 @@ export function collectMapTargetCandidates(encounters: readonly FieldEnemy[]): T
       id: "map:" + actor.spec.id,
       x: enemy.position[0], z: enemy.position[2], groundY: enemy.position[1],
       radius: getEnemyCollision(enemy).radius, alive: true,
+      clickHeight: enemy.definition.hurtbox.height,
+      clickOffsetY: enemy.definition.hurtbox.offset[1],
     }];
   });
 }
