@@ -228,7 +228,7 @@ test("a third chained slash can reuse the first layer after the first fade", (t)
  * Pointer movement deliberately has no aiming API or picking surface.
  */
 function createManualInputFixture(t: TestContext) {
-  const originals = ["window", "document", "HTMLElement"].map((name) => ({
+  const originals = ["window", "document", "HTMLElement", "HTMLInputElement"].map((name) => ({
     name, descriptor: Object.getOwnPropertyDescriptor(globalThis, name),
   }));
   const keyboard = new EventTarget();
@@ -237,6 +237,7 @@ function createManualInputFixture(t: TestContext) {
     window: { value: keyboard, configurable: true },
     document: { value: document, configurable: true },
     HTMLElement: { value: class MockElement {}, configurable: true },
+    HTMLInputElement: { value: class MockInputElement {}, configurable: true },
   });
   t.after(() => {
     for (const { name, descriptor } of originals) {
@@ -341,4 +342,27 @@ test("Target Lock keeps enemy facing and falls back to camera ZQSD when switched
   const facingAfterStop = root.rotation.y;
   scene.onBeforeRenderObservable.notifyObservers(scene);
   assert.equal(root.rotation.y, facingAfterStop, "without movement or lock, facing remains stable");
+});
+
+test("W cycles targets and X cancels the lock through the same hero input controller", (t) => {
+  const { player, scene } = createPlayer(t);
+  const { canvas, key } = createManualInputFixture(t);
+  const hero = new TransformNode("hero", scene);
+  const controller = createCharacterController(
+    scene, canvas, hero, 20, { alpha: 0, follow() {} },
+    player, new AbortController().signal,
+  );
+  let cycles = 0;
+  let cancels = 0;
+  controller.setTargetingActions({
+    cycle: () => { cycles++; },
+    cancel: () => { cancels++; },
+  });
+
+  key("w", "keydown");
+  key("x", "keydown");
+  assert.equal(cycles, 1);
+  assert.equal(cancels, 1);
+  assert.equal(hero.position.x, 0, "target shortcuts must not alter normal movement");
+  assert.equal(hero.position.z, 0);
 });
