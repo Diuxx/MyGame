@@ -1,10 +1,11 @@
 import {
   ANIMATION_DEFINITIONS, ANIMATION_RANGES, createAnimationSettings, effectivePlaybackSpeed,
-  getAnimationDefinition, serializeAnimationManifest,
+  getAnimationDefinition, parseAnimationManifest, serializeAnimationManifest,
 } from "../character/animationSettings";
 import type { AnimationPlayer } from "../character/animations";
 import type { createCharacterController } from "../character/characterController";
-import type { TransitionSettings } from "../character/transitionSettings";
+import type { TransitionControls } from "./transitionTools";
+import { createAnimationTimeline, type TimelineLane } from "./animationTimeline";
 import { downloadJson, requireElement } from "../ui/dom";
 
 const STORAGE_KEY = "mon-rpg.playground.animations.v2";
@@ -14,21 +15,86 @@ export function bindAnimationTools(
   player: AnimationPlayer,
   controller: ReturnType<typeof createCharacterController>,
   available: ReadonlySet<string>,
-  getTransitions: () => TransitionSettings,
+  transitions: TransitionControls,
   signal: AbortSignal,
 ): () => void {
   let settings = createAnimationSettings();
+  let hasLocalOverrides = false;
+  const source = requireElement<HTMLParagraphElement>("animationConfigSource");
+  const redraw: Array<() => void> = [];
+  let updateTimelineProgress = () => {};
+
+  function refreshSource(message?: string): void {
+    source.textContent = message ?? (hasLocalOverrides
+      ? "Source : réglages Playground temporaires · exporter pour les versionner."
+      : "Source : code/ANIMATIONS.json · valeurs versionnées.");
+  }
+
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
+    const legacy = saved === null ? localStorage.getItem("mon-rpg.playground.animations.v1") : null;
     settings = saved === null
-      ? createAnimationSettings(JSON.parse(localStorage.getItem("mon-rpg.playground.animations.v1") ?? "null"), true)
+      ? createAnimationSettings(JSON.parse(legacy ?? "null"), true)
       : createAnimationSettings(JSON.parse(saved));
+    hasLocalOverrides = saved !== null || legacy !== null;
   } catch (error) {
     console.warn("Réglages d’animation illisibles. Valeurs par défaut utilisées.", error);
   }
   controller.setAnimationSettings(settings);
+  refreshSource();
+
+  function applySettings(): void {
+    controller.setAnimationSettings(settings);
+    redraw.forEach((render) => render());
+    refreshSource();
+  }
+
   requireElement<HTMLButtonElement>("exportAnimationManifest").addEventListener("click", () => {
-    downloadJson("ANIMATIONS.json", serializeAnimationManifest(settings, getTransitions()));
+    downloadJson("ANIMATIONS.json", serializeAnimationManifest(settings, transitions.get()));
+    refreshSource("JSON exporté : remplacer code/ANIMATIONS.json pour versionner ces réglages.");
+  }, { signal });
+
+  const importInput = requireElement<HTMLInputElement>("importAnimationManifestFile");
+  requireElement<HTMLButtonElement>("importAnimationManifest").addEventListener("click", () => importInput.click(), { signal });
+  importInput.addEventListener("change", async () => {
+    const file = importInput.files?.[0];
+    if (!file) return;
+    try {
+      const parsed = parseAnimationManifest(JSON.parse(await file.text()));
+      settings = parsed.settings;
+      transitions.set(parsed.transitions);
+      let saveWarning: string | undefined;
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+      } catch (error) {
+        saveWarning = error instanceof Error ? error.message : String(error);
+      }
+      hasLocalOverrides = true;
+      applySettings();
+      if (saveWarning) {
+        refreshSource(`Configuration appliquée pour cette session uniquement : ${saveWarning}`);
+      }
+      refreshSource("Configuration importée et appliquée dans le Playground. Exporter pour la versionner.");
+    } catch (error) {
+      refreshSource(`Import refusé : ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      importInput.value = "";
+    }
+  }, { signal });
+
+  requireElement<HTMLButtonElement>("resetAnimationManifest").addEventListener("click", () => {
+    settings = createAnimationSettings();
+    transitions.reset();
+    let resetWarning: string | undefined;
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem("mon-rpg.playground.animations.v1");
+    } catch (error) {
+      resetWarning = error instanceof Error ? error.message : String(error);
+    }
+    hasLocalOverrides = false;
+    applySettings();
+    if (resetWarning) refreshSource(`Configuration réinitialisée pour cette session : ${resetWarning}`);
   }, { signal });
 
   for (const category of ["movement", "action"] as const) {
@@ -36,6 +102,7 @@ export function bindAnimationTools(
     const buttons = requireElement(movement ? "animationButtons" : "actionButtons");
     const fields = requireElement(movement ? "movementAnimationSettings" : "actionAnimationSettings");
     const definitions = ANIMATION_DEFINITIONS.filter((clip) => clip.category === category && available.has(clip.id));
+    let selectedClip = definitions[0];
     const options = definitions.map((clip) => {
       const button = document.createElement("button");
       button.type = "button";
@@ -54,6 +121,7 @@ export function bindAnimationTools(
     });
 
     function select(clip: typeof ANIMATION_DEFINITIONS[number]): void {
+      selectedClip = clip;
       for (const option of options) {
         const selected = option.clip === clip;
         option.button.classList.toggle("active", selected);
@@ -65,6 +133,8 @@ export function bindAnimationTools(
 
       function save(): void {
         controller.setAnimationSettings(settings);
+        hasLocalOverrides = true;
+        refreshSource();
         refresh.forEach((update) => update());
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
@@ -177,6 +247,69 @@ export function bindAnimationTools(
           save();
         });
       }
+      if (config.cancel) {
+        const labels = {
+          runFrom: "Course / marche autorisée",
+          attackFrom: "Nouvelle attaque autorisée",
+          dodgeFrom: "Esquive autorisée",
+        };
+        for (const key of ["runFrom", "attackFrom", "dodgeFrom"] as const) {
+          if (config.cancel[key] === undefined) continue;
+          slider(key, labels[key], ANIMATION_RANGES.progress,
+            () => config.cancel![key]!,
+            (value) => { config.cancel![key] = value; },
+            (value) => `${Math.round(value * 100)} % (${Math.round(value * (player.duration(clip.id) ?? 0) * 1000)} ms)`);
+        }
+      }
+      if (config.blendOutSeconds !== undefined) {
+        slider("blendOut", "Fondu en sortie", ANIMATION_RANGES.blend,
+          () => config.blendOutSeconds!, (value) => { config.blendOutSeconds = value; },
+          (value) => `${Math.round(value * 1000)} ms`);
+      }
+      if (clip.category === "action") {
+        const duration = () => player.duration(clip.id) ?? 0;
+        const lanes: TimelineLane[] = [];
+        if (config.dodge) {
+          lanes.push({ label: "Invulnérabilité", kind: "invulnerable",
+            from: () => config.dodge!.window.from, until: () => config.dodge!.window.until });
+        }
+        if (config.impact) {
+          lanes.push({ label: "Premier impact", kind: "impact",
+            from: () => config.impact!.from, until: () => config.impact!.until });
+          lanes.push({ label: "Deuxième impact", kind: "impact",
+            from: () => config.impact!.doubleHit ? config.impact!.second.from : 0,
+            until: () => config.impact!.doubleHit ? config.impact!.second.until : 0 });
+        }
+        if (config.cancel) {
+          for (const [key, label] of [
+            ["runFrom", "Course / marche"], ["attackFrom", "Attaque"], ["dodgeFrom", "Esquive"],
+          ] as const) {
+            if (config.cancel[key] === undefined) continue;
+            lanes.push({ label, kind: "cancel", from: () => config.cancel![key]!, until: () => 1 });
+          }
+        }
+        if (config.blendOutSeconds !== undefined) {
+          lanes.push({ label: "Fondu de sortie maximal", kind: "blend",
+            from: () => Math.max(0, 1 - config.blendOutSeconds! / (duration() || 1)), until: () => 1 });
+        }
+        const timeline = createAnimationTimeline(fields, duration, lanes);
+        refresh.push(timeline.refresh);
+        updateTimelineProgress = () => timeline.setProgress(
+          player.activeName === clip.id && !player.isActionInterrupted ? player.actionProgress : 0);
+        const replay = document.createElement("button");
+        replay.type = "button";
+        replay.className = "secondary wide";
+        replay.textContent = "Rejouer l’animation (prévisualisation)";
+        replay.addEventListener("click", () => {
+          controller.restartAnimationPreview(clip.id);
+          updateStatus();
+        }, { signal });
+        fields.append(replay);
+        const durationText = document.createElement("p");
+        durationText.className = "animation-note";
+        fields.append(durationText);
+        refresh.push(() => { durationText.textContent = `Durée effective : ${Math.round(duration() * 1000)} ms`; });
+      }
       if (clip.movement?.facingOffset !== undefined) {
         const note = document.createElement("p");
         note.className = "animation-note";
@@ -194,7 +327,17 @@ export function bindAnimationTools(
 
     const initial = definitions.find((clip) => clip.id === (movement ? player.activeName : definitions[0]?.id));
     if (initial) select(initial);
+    redraw.push(() => { if (selectedClip) select(selectedClip); });
   }
+
+  let frame = 0;
+  const updateCursor = () => {
+    if (signal.aborted) return;
+    updateTimelineProgress();
+    frame = requestAnimationFrame(updateCursor);
+  };
+  frame = requestAnimationFrame(updateCursor);
+  signal.addEventListener("abort", () => cancelAnimationFrame(frame), { once: true });
 
   const pause = requireElement<HTMLButtonElement>("pauseButton");
   const status = requireElement("animationStatus");
