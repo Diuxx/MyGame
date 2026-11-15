@@ -2,6 +2,7 @@ import {
   Color3, MeshBuilder, StandardMaterial, type Scene, type TransformNode,
 } from "@babylonjs/core";
 import { cycleTarget, selectTarget, type TargetCandidate, type TargetingMotion } from "./targetSelection.ts";
+import { pickTargetByRay, type TargetRay } from "./targetPicking.ts";
 import {
   createTargetingSettings, type TargetingSettings,
 } from "./targetingSettings.ts";
@@ -65,6 +66,17 @@ export function createTargetLockSystem(
     }
   }
 
+  function lockOnClick(id: string): boolean {
+    if (disposed || !settings.enabled || !isAvailable()) return false;
+    const candidate = listCandidates().find((entry) => entry.id === id && entry.alive);
+    if (!candidate || Math.hypot(candidate.x - hero.position.x, candidate.z - hero.position.z) > settings.acquireRadius) {
+      return false;
+    }
+    target = candidate;
+    update();
+    return target?.id === id;
+  }
+
   const observer = scene.onBeforeRenderObservable.add(update);
   function dispose(): void {
     if (disposed) return;
@@ -96,15 +108,11 @@ export function createTargetLockSystem(
       update();
     },
     /** Clicking an enemy replaces the current lock only inside the acquisition radius. */
-    lockOnClick(id: string): boolean {
+    lockOnClick,
+    lockFromRay(ray: TargetRay): boolean {
       if (disposed || !settings.enabled || !isAvailable()) return false;
-      const candidate = listCandidates().find((entry) => entry.id === id && entry.alive);
-      if (!candidate || Math.hypot(candidate.x - hero.position.x, candidate.z - hero.position.z) > settings.acquireRadius) {
-        return false;
-      }
-      target = candidate;
-      update();
-      return target?.id === id;
+      const picked = pickTargetByRay(ray, hero.position, listCandidates(), settings.acquireRadius);
+      return picked ? lockOnClick(picked.id) : false;
     },
     /** Only a confirmed damaging hit can auto-lock a new enemy. */
     lockOnHit(id: string): void {
