@@ -3,7 +3,7 @@ import type { AnimationPlayer } from "../character/animations";
 import type { createCharacterController } from "../character/characterController";
 import { requireElement } from "../ui/dom";
 
-const STORAGE_KEY = "mon-rpg.playground.animations.v1";
+const STORAGE_KEY = "mon-rpg.playground.animations.v2";
 const format = (value: number, digits: number) => value.toFixed(digits).replace(".", ",");
 
 export function bindAnimationTools(
@@ -14,7 +14,10 @@ export function bindAnimationTools(
 ): () => void {
   let settings = createAnimationSettings();
   try {
-    settings = createAnimationSettings(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null"));
+    const saved = localStorage.getItem(STORAGE_KEY);
+    settings = saved === null
+      ? createAnimationSettings(JSON.parse(localStorage.getItem("mon-rpg.playground.animations.v1") ?? "null"), true)
+      : createAnimationSettings(JSON.parse(saved));
   } catch (error) {
     console.warn("Réglages d’animation illisibles. Valeurs par défaut utilisées.", error);
   }
@@ -34,6 +37,7 @@ export function bindAnimationTools(
         select(clip);
         if (movement) controller.selectMovement(clip.id);
         if (clip.impact) controller.attack();
+        else if (clip.dodge) controller.dodge();
         else controller.preview(clip.id);
         updateStatus();
       }, { signal });

@@ -6,7 +6,6 @@ import {
   Scene,
   TransformNode,
   Vector3,
-  type Bone,
 } from "@babylonjs/core";
 import { GLTFLoaderAnimationStartMode } from "@babylonjs/loaders/glTF";
 import animationManifest from "../../ANIMATIONS.json" with { type: "json" };
@@ -19,7 +18,6 @@ const importOptions = { pluginOptions: { gltf: { animationStartMode: GLTFLoaderA
 export interface LoadedCharacter {
   root: TransformNode;
   hips: TransformNode;
-  rightHand: Bone;
   skinnedMesh: AbstractMesh;
   animationGroups: AnimationGroup[];
   heightBeforeScale: number;
@@ -54,10 +52,9 @@ export async function loadCharacter(scene: Scene): Promise<LoadedCharacter> {
   const result = await ImportMeshAsync(CHARACTER_URL, scene, importOptions);
 
   const hips = result.transformNodes.find(({ name }) => name === "mixamorig:Hips");
-  const skinnedMesh = result.meshes.find((mesh) => mesh.skeleton?.bones.some(({ name }) => name === "mixamorig:RightHand"));
-  const rightHand = skinnedMesh?.skeleton?.bones.find(({ name }) => name === "mixamorig:RightHand");
-  if (!hips || !skinnedMesh?.skeleton || !rightHand) {
-    throw new Error(`Squelette incomplet dans ${CHARACTER_URL} : bassin ou main droite introuvable.`);
+  const skinnedMesh = result.meshes.find((mesh) => mesh.skeleton?.bones.some((bone) => bone.getTransformNode() === hips));
+  if (!hips || !skinnedMesh?.skeleton) {
+    throw new Error(`Squelette incomplet dans ${CHARACTER_URL} : bassin introuvable.`);
   }
   const skeleton = skinnedMesh.skeleton;
 
@@ -111,7 +108,6 @@ export async function loadCharacter(scene: Scene): Promise<LoadedCharacter> {
   return {
     root,
     hips,
-    rightHand,
     skinnedMesh,
     animationGroups,
     heightBeforeScale: initialHeight,

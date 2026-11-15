@@ -7,15 +7,23 @@ export function createHeroVitals(maxHealth = 100, respawnDelay = 2) {
   let health = maxHealth;
   let remaining = 0;
   let invulnerability = 0;
+  function defeat(): boolean {
+    if (health <= 0) return false;
+    health = 0;
+    remaining = respawnDelay;
+    return true;
+  }
   return {
     get health() { return health; },
     get maxHealth() { return maxHealth; },
     get isAlive() { return health > 0; },
     get respawnRemaining() { return remaining; },
+    defeat,
     hit(damage: number, dodging = false): boolean {
       if (!Number.isFinite(damage) || damage <= 0 || health <= 0 || dodging || invulnerability > 0) return false;
-      health = Math.max(0, health - Math.max(1, Math.floor(damage)));
-      if (health === 0) remaining = respawnDelay;
+      const loss = Math.max(1, Math.floor(damage));
+      if (loss >= health) return defeat();
+      health -= loss;
       return true;
     },
     update(seconds: number): boolean {

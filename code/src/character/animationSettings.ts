@@ -6,7 +6,7 @@ type AttackImpact = Window & { doubleHit: boolean; second: Window };
 type Definition = {
   id: string;
   displayName: string;
-  category: "movement" | "action";
+  category: "movement" | "action" | "lifecycle";
   loop: boolean;
   playbackSpeed: number;
   movement?: Movement;
@@ -28,24 +28,22 @@ export const HERO_ANIMATIONS = {
   crouch: locomotion("crouch-walk", "Marche accroupie", { speed: 1.5, facingOffset: 0 }),
   idle: locomotion("idle", "Repos"),
   combatIdle: locomotion("combat-idle", "Repos en combat"),
-  left: locomotion("strafe-left", "Pas à gauche", { speed: 1.5, facingOffset: Math.PI / 2 }),
-  right: locomotion("strafe-right", "Pas à droite", { speed: 1.5, facingOffset: -Math.PI / 2 }),
-  backward: locomotion("walk-backward", "Marche arrière", { speed: 1.5, facingOffset: Math.PI }),
   dodge: action("dodge", "Esquive", {
     playbackSpeed: 2.5,
     dodge: { distance: 2, window: { from: 0.15, until: 0.9 } },
   }),
   attack: action("attack", "Attaque à l’épée", {
     playbackSpeed: 2,
-    impact: { from: 0.23, until: 0.5, doubleHit: true, second: { from: 0.5, until: 0.8 } },
+    impact: { from: 0.39, until: 0.46, doubleHit: false, second: { from: 0.63, until: 0.70 } },
   }),
   jump: action("jump", "Saut", { playbackSpeed: 1.5 }),
   stop: action("stop", "Arrêt brusque après sprint"),
+  dying: { ...action("dying", "Mort"), category: "lifecycle" as const },
 };
 
 export const ANIMATION_DEFINITIONS = Object.values(HERO_ANIMATIONS);
 const definitions = new Map(ANIMATION_DEFINITIONS.map((definition) => [definition.id, definition]));
-const legacyIds = new Map(animationManifest.animations.map(({ name, source }) => [name, source]));
+const legacyIds = new Map(animationManifest.animations.flatMap(({ name, source }) => source ? [[name, source] as const] : []));
 legacyIds.set(HERO_ANIMATIONS.combatIdle.id, "Idle_5");
 export const getAnimationDefinition = (id: string) => definitions.get(id);
 
@@ -79,7 +77,7 @@ function windowSettings(value: unknown, defaults: Window): Window {
   return { from: start, until: Math.max(start, end) };
 }
 
-export function createAnimationSettings(saved?: unknown): AnimationSettings {
+export function createAnimationSettings(saved?: unknown, resetAttackTiming = false): AnimationSettings {
   const entries = record(saved);
   return Object.fromEntries(ANIMATION_DEFINITIONS.map((definition) => {
     const legacyId = legacyIds.get(definition.id);
@@ -99,7 +97,7 @@ export function createAnimationSettings(saved?: unknown): AnimationSettings {
       };
     }
     if (definition.impact) {
-      const impact = record(value.impact);
+      const impact = resetAttackTiming ? {} : record(value.impact);
       settings.impact = {
         ...windowSettings(impact, definition.impact),
         doubleHit: typeof impact.doubleHit === "boolean" ? impact.doubleHit : definition.impact.doubleHit,

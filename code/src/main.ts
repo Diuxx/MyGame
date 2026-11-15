@@ -2,12 +2,11 @@ import { Engine, Scene } from "@babylonjs/core";
 import { AnimationPlayer, IDLE_ANIMATION } from "./character/animations";
 import { loadCharacter } from "./character/character";
 import { createCharacterController } from "./character/characterController";
-import { loadEquipment } from "./character/equipment";
+import { createHeroLifecycle } from "./character/heroLifecycle";
 import { requireElement } from "./ui/dom";
 import { createGameplayEnvironment, PLAYGROUND_MOVEMENT_LIMIT } from "./world/environments";
 import { createCamera } from "./world/scene";
 import { createMapSystem } from "./world/maps/mapSystem";
-import { createHeroVitals } from "./combat/heroVitals";
 import { SWORD_SWING } from "./combat/combat";
 import { createHeroHud } from "./ui/heroHud";
 
@@ -36,8 +35,7 @@ async function start(): Promise<void> {
     scene.onDisposeObservable.addOnce(() => listeners.abort());
 
     const character = await loadCharacter(scene);
-    const equipment = await loadEquipment(scene, character);
-    const animationPlayer = new AnimationPlayer(character.animationGroups);
+    const animationPlayer = new AnimationPlayer(character.animationGroups, scene);
     animationPlayer.play(IDLE_ANIMATION);
 
     // The Playground sidebar changes the canvas width, so reveal it before sizing the camera.
@@ -45,20 +43,18 @@ async function start(): Promise<void> {
     const camera = createCamera(scene, canvas, signal);
     if (mode === "playground") {
       const { startPlayground } = await import("./playground");
-      await startPlayground(scene, camera, character, animationPlayer, equipment, signal);
+      await startPlayground(scene, camera, character, animationPlayer, signal);
     } else {
       const { shadows, ambience } = createGameplayEnvironment(scene, character.root);
-      for (const mesh of equipment.meshes) shadows.addShadowCaster(mesh, false);
-      const vitals = createHeroVitals();
+      const lifecycle = createHeroLifecycle(character.root, camera, animationPlayer);
+      const { vitals } = lifecycle;
       const hud = createHeroHud();
       let controller: ReturnType<typeof createCharacterController> | undefined;
       const maps = createMapSystem(scene, {
         hero: character.root, shadows,
         applyEnvironment: ambience.apply,
         isHeroAlive: () => vitals.isAlive,
-        onHeroHit: (damage) => {
-          if (vitals.hit(damage, controller?.isInvulnerable ?? false)) controller?.receiveHit();
-        },
+        onHeroHit: (damage) => lifecycle.hit(damage, controller),
         onEncounterEvent: hud.event,
         onWorldInteraction: hud.announce,
       });
@@ -70,7 +66,7 @@ async function start(): Promise<void> {
         camera.follow(character.root.position.x, character.root.position.z);
       }
       controller = createCharacterController(scene, canvas, character.root,
-        PLAYGROUND_MOVEMENT_LIMIT, camera, animationPlayer, equipment, signal,
+        PLAYGROUND_MOVEMENT_LIMIT, camera, animationPlayer, signal,
         undefined, undefined,
         () => maps.active?.strike([
           character.root.position.x, character.root.position.y, character.root.position.z,
@@ -78,13 +74,8 @@ async function start(): Promise<void> {
         (start, step) => maps.active?.resolveMovement(start, step, 0.4) ?? step,
         () => vitals.isAlive);
       scene.onBeforeRenderObservable.add(() => {
-        if (!document.hidden && vitals.update(Math.min(scene.getEngine().getDeltaTime() / 1000, 0.1))) {
-          const point = maps.active?.definition.spawnPoints.find((entry) => entry.type === "player");
-          if (point) {
-            character.root.position.set(...point.position);
-            camera.follow(point.position[0], point.position[2]);
-          }
-        }
+        lifecycle.update(scene.getEngine().getDeltaTime() / 1000, controller,
+          maps.active?.definition.spawnPoints.find((entry) => entry.type === "player"));
         hud.refresh(vitals);
         hud.nearby(maps.active?.nearInteraction()?.label);
       });

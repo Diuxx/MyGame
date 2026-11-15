@@ -1,8 +1,6 @@
 import { HERO_TUNING } from "./heroTuning.ts";
 import { HERO_ANIMATIONS } from "./animationSettings.ts";
 
-export type MovementMode = "exploration" | "combat";
-
 export interface GroundVector {
   x: number;
   z: number;
@@ -38,14 +36,14 @@ export function calculateMovementStep(
   return { x: direction.x * distance, z: direction.z * distance };
 }
 
-export function localMovement(direction: GroundVector, yaw: number): { forward: number; right: number } {
-  const cos = Math.cos(yaw);
-  const sin = Math.sin(yaw);
-  return { forward: direction.x * sin + direction.z * cos, right: direction.x * cos - direction.z * sin };
+export function dodgeDirection(yaw: number): GroundVector {
+  return { x: -Math.sin(yaw), z: -Math.cos(yaw) };
 }
 
-export function dodgeDirection(direction: GroundVector, yaw: number): GroundVector {
-  return direction.x || direction.z ? direction : { x: Math.sin(yaw), z: Math.cos(yaw) };
+/** Match the windup, push-off and landing in dodging-back.fbx. */
+export function dodgeTravelProgress(progress: number): number {
+  const travel = Math.min(1, Math.max(0, (progress - 0.05) / 0.8));
+  return travel * travel * (3 - 2 * travel);
 }
 
 export function dodgeInvulnerable(progress: number, { from, until } = HERO_ANIMATIONS.dodge.dodge!.window): boolean {

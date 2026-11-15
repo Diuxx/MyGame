@@ -1,43 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { aimYaw, calculateMovementStep, consumeImpactWindow, crossesImpactWindow, dodgeDirection, dodgeInvulnerable, mouseRelativeDirection } from "./movement.ts";
-import { LOCOMOTION_CLIPS as clips, locomotionWeights } from "./locomotion.ts";
+import { aimYaw, calculateMovementStep, consumeImpactWindow, crossesImpactWindow, dodgeDirection, dodgeInvulnerable, dodgeTravelProgress, mouseRelativeDirection } from "./movement.ts";
 import { createAnimationSettings, createAttackHits, effectivePlaybackSpeed, HERO_ANIMATIONS } from "./animationSettings.ts";
-import { createWeaponState } from "./weaponState.ts";
-
-test("weapon visibility switches at the attachment point and stays exclusive", () => {
-  const weapon = createWeaponState();
-  assert.equal(weapon.state, "SHEATHED");
-  assert.equal(weapon.drawn, false);
-  weapon.transition(true, 0.6);
-  weapon.advance(0.59);
-  assert.equal(weapon.state, "DRAWING");
-  assert.equal(weapon.drawn, false);
-  weapon.transition(false);
-  weapon.advance(0.6);
-  assert.equal(weapon.drawn, true);
-  weapon.advance(1);
-  assert.equal(weapon.state, "DRAWN");
-  weapon.transition(false, 0.5);
-  assert.equal(weapon.state, "SHEATHING");
-  assert.equal(weapon.drawn, true);
-  weapon.advance(0.5);
-  assert.equal(weapon.drawn, false);
-  weapon.advance(1);
-  assert.equal(weapon.state, "SHEATHED");
-});
-
-test("weapon can be drawn and sheathed instantly without a transition clip", () => {
-  const weapon = createWeaponState();
-  weapon.transition(true);
-  weapon.transition(true);
-  assert.equal(weapon.state, "DRAWN");
-  assert.equal(weapon.drawn, true);
-  weapon.transition(false);
-  assert.equal(weapon.state, "SHEATHED");
-  assert.equal(weapon.drawn, false);
-});
-
 test("aim keeps its heading near the hero and turns across the shortest arc", () => {
   assert.equal(aimYaw(1, 0.01, 0.01, 1 / 60, 18, 0.12), 1);
   const turn = aimYaw(3.1, -0.04, -1, 1 / 60, 18, 0.12);
@@ -73,26 +37,15 @@ test("no input gives no movement and slow frames cap the distance", () => {
   );
 });
 
-test("directional weights follow movement and switch between idle, exploration and combat", () => {
-  const available = new Set(Object.values(clips));
-  assert.deepEqual(locomotionWeights({ x: -1, z: 1 }, 0, false, "combat", clips.idle, available),
-    new Map([[clips.walk, 0.5], [clips.left, 0.5]]));
-  assert.deepEqual(locomotionWeights({ x: 1, z: -1 }, 0, true, "combat", clips.idle, available),
-    new Map([[clips.backward, 0.5], [clips.right, 0.5]]));
-  assert.deepEqual(locomotionWeights({ x: 0, z: -1 }, 0, true, "combat", clips.idle, available),
-    new Map([[clips.backward, 1]]));
-  assert.deepEqual(locomotionWeights({ x: 0, z: -1 }, 0, true, "exploration", clips.idle, available),
-    new Map([[clips.run, 1]]));
-  assert.deepEqual(locomotionWeights({ x: 0, z: 0 }, 0, false, "combat", clips.idle, available),
-    new Map([[clips.idle, 1]]));
-  assert.deepEqual(locomotionWeights({ x: -1, z: 1 }, 0, false, "combat", clips.idle, new Set()),
-    new Map([[clips.walk, 1]]));
-});
-
-test("dodge uses the normalized input direction or falls back to facing", () => {
-  const diagonal = mouseRelativeDirection(1, 1, 0);
-  assert.deepEqual(dodgeDirection(diagonal, 0), diagonal);
-  assert.deepEqual(dodgeDirection({ x: 0, z: 0 }, 0), { x: 0, z: 1 });
+test("dodge travels behind the hero and stops advancing during recovery", () => {
+  const facing = Math.PI / 4;
+  const direction = dodgeDirection(facing);
+  assert.ok(Math.abs(Math.sin(facing) * direction.x + Math.cos(facing) * direction.z + 1) < 1e-12);
+  assert.equal(dodgeTravelProgress(0.03), 0);
+  assert.ok(dodgeTravelProgress(0.6) > dodgeTravelProgress(0.3));
+  assert.ok(dodgeTravelProgress(0.6) < 1);
+  assert.equal(dodgeTravelProgress(0.9), 1);
+  assert.equal(dodgeTravelProgress(1), 1);
 });
 
 test("default dodge invulnerability starts at 15% and ends at 90%", () => {
@@ -145,12 +98,14 @@ test("action timing uses progress and catches an impact window crossed in a sing
   assert.equal(dodgeInvulnerable(1, { from: 0.4, until: 1 }), false);
 });
 
-test("attack defaults to two windows and an explicit single-hit preference is preserved", () => {
+test("the slash defaults to one impact and migrates old timing without losing speed", () => {
   const { id } = HERO_ANIMATIONS.attack;
   assert.deepEqual(createAttackHits(createAnimationSettings()[id].impact!), [
-    { triggered: false, window: { from: 0.23, until: 0.5 } },
-    { triggered: false, window: { from: 0.5, until: 0.8 } },
+    { triggered: false, window: { from: 0.39, until: 0.46 } },
   ]);
+  const migrated = createAnimationSettings({ [id]: { playbackSpeed: 1.5, impact: { doubleHit: true } } }, true);
+  assert.equal(migrated[id].playbackSpeed, 1.5);
+  assert.equal(migrated[id].impact?.doubleHit, false);
   const settings = createAnimationSettings({ [id]: { impact: { from: 0.2, until: 0.3, doubleHit: false } } });
   const impact = settings[id].impact!;
   assert.equal(impact.doubleHit, false);

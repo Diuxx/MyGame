@@ -25,7 +25,7 @@ npm run build
 
 ## Ce qu'on peut tester
 
-- Les onze clips du héros sont chargés depuis `public/assets/animations/hero/`. Leurs noms en minuscules figurent dans `ANIMATIONS.json`. Le héros se tourne vers son déplacement et passe progressivement entre le repos, la marche et la course.
+- Les neuf clips du héros sont chargés depuis `public/assets/animations/hero/`. Leurs noms figurent dans `ANIMATIONS.json`. Relâcher les touches de déplacement en pleine course déclenche l’animation d’arrêt.
 - **Z/S** rapprochent ou éloignent le héros du curseur. **Q/D** le déplacent perpendiculairement à gauche ou à droite. **Maj** permet de courir. Le module **Commandes** permet de modifier ces touches dans le Playground. À l’arrêt, le héros garde sa dernière orientation.
 - **Clic droit** lance une esquive dans la direction demandée, ou dans la direction du regard si aucune touche de déplacement n’est enfoncée. La direction reste fixe durant la roulade. La fenêtre d’invulnérabilité couvre 15 % à 90 % du clip par défaut (réglable) et le délai de réactivation est de 500 ms à partir du départ. Le contrôleur expose `isInvulnerable` pour la future réception de dégâts du héros.
 - L'attaque est jouée une fois. À la fin, le héros reprend le déplacement si une direction est maintenue, ou revient au repos.
@@ -73,7 +73,7 @@ Ces valeurs sont des réglages de **playground**, pas des mesures exactes issues
 
 Le fichier `hero.glb` provient du modèle Meshy fourni par l'utilisateur. Le projet ne revendique pas de droits nouveaux sur les contenus Meshy.
 
-Pour régénérer le modèle et les onze clips, passer le GLB source animé au script depuis la racine du dépôt. Il remplace le modèle de jeu et écrit les clips à partir des noms déclarés dans `ANIMATIONS.json`.
+Pour régénérer le modèle et les clips, passer le GLB source animé au script depuis la racine du dépôt. Il remplace le modèle de jeu et écrit les clips à partir des noms déclarés dans `ANIMATIONS.json`.
 
 ```text
 node code/tools/extractHeroAnimations.mjs chemin/vers/hero-anime.glb
@@ -140,12 +140,12 @@ Dans le module **Collisions et hitbox**, active ou désactive les collisions, af
 
 Les durées de fondu de déplacement, de retour au repos et de ralentissement sont ajustables dans **Animations de déplacement** et sauvegardées localement. Lorsque le héros se heurte à une cible, l'animation de locomotion dépend du déplacement réellement effectué ; il revient au repos s'il est complètement bloqué. Le détail technique et les essais manuels figurent dans [la documentation des collisions](../docs/COLLISIONS_PLAYGROUND.md).
 
-## Hitboxes d'attaque et orientation du katana
+## Hitboxes d'attaque et cycle de vie
 
-Le panneau **Équipement** possède maintenant un réglage indépendant
-**Orientation de la lame dégainée** (rotations X/Y/Z), en complément des
-coordonnées de son attache à la main droite. Les valeurs sont sauvegardées
-dans le navigateur.
+L’attaque du haut du corps se joue au repos et en déplacement. Le clic droit
+déclenche une esquive vers l’arrière avec une fenêtre d’invincibilité. Dans
+**Gestion des ennemis**, **Simuler la mort** déclenche la chute du héros et le
+compte à rebours de réapparition.
 
 Le menu de droite expose des cases rapides pour masquer la hitbox rouge du
 héros et la zone d'attaque orange. Le module **Zone d'attaque / Portée**

@@ -6,7 +6,7 @@ export type HeroKeys = typeof DEFAULT_HERO_KEYS;
 export function bindHeroInput(
   canvas: HTMLCanvasElement,
   attack: () => void,
-  dodge: (horizontal: number, vertical: number) => void,
+  dodge: () => void,
   signal: AbortSignal,
 ) {
   const pressed = new Set<string>();
@@ -35,10 +35,7 @@ export function bindHeroInput(
     pointer = event;
     canvas.focus({ preventScroll: true });
     if (event.button === 0) attack();
-    else dodge(
-      Number(pressed.has(bindings.right)) - Number(pressed.has(bindings.left)),
-      Number(pressed.has(bindings.forward)) - Number(pressed.has(bindings.backward)),
-    );
+    else dodge();
   }, options);
   window.addEventListener("blur", clearInput, options);
   document.addEventListener("visibilitychange", () => {
@@ -64,6 +61,7 @@ export function bindHeroInput(
 
   return {
     clearAim,
+    clearInput,
     setBindings(next: HeroKeys) {
       bindings = next;
       pressed.clear();

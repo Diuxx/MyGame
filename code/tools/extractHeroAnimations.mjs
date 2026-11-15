@@ -68,13 +68,11 @@ function writeGlb(path, document, remap) {
 }
 
 const { asset, scene, scenes, nodes, animations, ...geometry } = model;
-const clips = manifest.animations.map(({ name, source }) => {
+const clips = manifest.animations.filter(({ fbx }) => !fbx).map(({ name, source }) => {
   const clip = animations?.find((animation) => animation.name === source);
   if (!clip) throw new Error("Missing source animation: " + source);
   return { ...clip, name };
 });
-if (clips.length !== animations.length) throw new Error("The manifest must account for every source clip.");
-
 const directory = join(publicDir, manifest.directory);
 mkdirSync(directory, { recursive: true });
 const rigNodes = nodes.map(({ mesh, skin, ...node }) => node);
