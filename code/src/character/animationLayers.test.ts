@@ -366,3 +366,33 @@ test("W cycles targets and X cancels the lock through the same hero input contro
   assert.equal(hero.position.x, 0, "target shortcuts must not alter normal movement");
   assert.equal(hero.position.z, 0);
 });
+
+test("clicking an eligible enemy locks and faces it without launching a sword attack", (t) => {
+  const { player, scene } = createPlayer(t);
+  const { canvas, pointer } = createManualInputFixture(t);
+  const hero = new TransformNode("hero", scene);
+  const controller = createCharacterController(
+    scene, canvas, hero, 20, { alpha: 0, follow() {} },
+    player, new AbortController().signal,
+  );
+  player.play("idle");
+  let selected = false;
+  let canSelect = true;
+  controller.setTargetingProvider(() => selected
+    ? { target: { x: 5, z: 0 }, movementReference: "camera", turnSpeed: 12 }
+    : undefined);
+  controller.setTargetClickHandler(() => {
+    if (!canSelect) return false;
+    selected = true;
+    return true;
+  });
+
+  pointer("pointerdown", 0);
+  assert.equal(controller.isAttacking, false, "selecting a target must not trigger a slash");
+  assert.ok(Math.abs(hero.rotation.y - Math.PI / 2) < 1e-8,
+    "explicit target click turns the hero to face the enemy immediately");
+
+  canSelect = false;
+  pointer("pointerdown", 0);
+  assert.equal(controller.isAttacking, true, "clicking elsewhere still performs the normal attack");
+});
