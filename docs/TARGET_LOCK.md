@@ -6,21 +6,22 @@ Le Target Lock utilise un **ZQSD relatif à la caméra par défaut**, sans suivi
 
 1. Depuis `code/`, lancer `npm run dev-playground` ou `npm run dev-gameplay`.
 2. **Coup réussi :** la première cible vivante réellement touchée est verrouillée si aucune cible n'est encore sélectionnée. Une attaque ratée ne déclenche rien.
-3. **W :** sélectionner l'ennemi vivant le plus proche dans le rayon d'acquisition, puis parcourir les autres cibles à portée.
-4. **X :** annuler immédiatement le ciblage et revenir au ZQSD classique.
-5. **Cible trop éloignée :** au-delà du rayon de perte, elle est automatiquement libérée. Même si elle revient dans la zone, aucune nouvelle cible n'est choisie avant un prochain coup réussi ou un appui sur W.
-6. **Mort / suppression / inactivité de la cible :** déverrouillage immédiat sans nouveau ciblage automatique.
+3. **Clic gauche sur un ennemi à portée :** le sélectionner directement et orienter immédiatement le héros vers lui, sans lancer d'attaque. Si un autre ennemi était verrouillé, il est remplacé. Un clic dans le vide ou hors de portée garde le comportement normal d'attaque.
+4. **W :** sélectionner l'ennemi vivant le plus proche dans le rayon d'acquisition, puis parcourir les autres cibles à portée.
+5. **X :** annuler immédiatement le ciblage et revenir au ZQSD classique.
+6. **Cible trop éloignée :** au-delà du rayon de perte, elle est automatiquement libérée. Même si elle revient dans la zone, aucune nouvelle cible n'est choisie avant un prochain coup réussi ou un appui sur W.
+7. **Mort / suppression / inactivité de la cible :** déverrouillage immédiat sans nouveau ciblage automatique.
 
 En mode normal, la direction des touches ZQSD dépend de la caméra et le héros regarde le sens du mouvement ; à l'arrêt, il garde sa dernière orientation. La souris ne détermine jamais la direction des mouvements ou des attaques. Avec un verrouillage, le héros regarde sa cible, que le référentiel de déplacement sélectionné soit **Caméra** (ZQSD dans les directions visibles) ou **Cible** (Z/S avancent/reculent et Q/D tournent autour).
 
-Le verrouillage automatique par attaque réussie, l'annulation X et la sélection W sont disponibles dans le Playground **et** dans le mode Gameplay. Le Playground permet en plus de modifier à chaud les paramètres et de remapper W/X dans **Commandes**. Une case permet de désactiver complètement le ciblage pour tester le mode libre.
+Le verrouillage sur attaque réussie, le ciblage direct par clic, l'annulation X et la sélection W sont disponibles dans le Playground **et** dans le mode Gameplay. Le Playground permet en plus de modifier à chaud les paramètres et de remapper W/X dans **Commandes**. Une case permet de désactiver complètement le ciblage pour tester le mode libre.
 
 ## Configuration
 
 `code/TARGETING.json` est la source versionnée :
 
 - `enabled` — autoriser l'acquisition sur coup réussi et via W.
-- `acquireRadius` — rayon dans lequel W peut sélectionner les cibles.
+- `acquireRadius` — rayon dans lequel W ou le clic gauche peuvent sélectionner les cibles.
 - `releaseRadius` — distance maximale de conservation de la cible, même si l'ennemi recule.
 - `turnSpeed` — vitesse de rotation du héros vers sa cible.
 - `movementReference` — `camera` ou `target`.
@@ -34,6 +35,7 @@ Dans le Playground, les changements sont appliqués immédiatement et mémorisé
 - `character/targetSelection.ts` : conservation de cible, cycle des cibles, orientation et calculs indépendants du moteur 3D.
 - `character/targetingSettings.ts` : validation du manifeste et valeurs éditables.
 - `character/targetLockSystem.ts` : état actif, acquisition explicite, perte de cible, indicateurs Babylon.js et nettoyage.
+- `character/targetPicking.ts` et `character/targetClickHandler.ts` : clic sur un volume vertical cohérent avec la hitbox de l'ennemi, sans rendre les GLB pickables.
 - `enemies/targetCandidates.ts` : adaptation des ennemis mobiles des maps, utilisée par les deux modes.
 - `playground/targetLockSources.ts` : ajout des cibles d'entraînement du Playground.
 - `playground/targetLockTools.ts` : réglages et import/export JSON.
