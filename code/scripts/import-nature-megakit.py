@@ -62,6 +62,8 @@ def install(archive_path: Path, destination: Path) -> int:
         for name, item in members.items():
             # The files live in the same directory so glTF relative URIs resolve.
             (destination / name).write_bytes(archive.read(item))
+        if "License_Standard.txt" in archive.namelist():
+            (destination / "LICENSE.txt").write_bytes(archive.read("License_Standard.txt"))
     return sum(name.endswith(".gltf") for name in members)
 
 
