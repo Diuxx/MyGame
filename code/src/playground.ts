@@ -20,6 +20,9 @@ import { bindTransitionTools } from "./playground/transitionTools";
 import { bindModuleWindows } from "./playground/moduleWindows";
 import { bindControlSettings } from "./playground/controlSettings";
 import { bindAnimationTools } from "./playground/animationTools";
+import { createTargetLockSystem } from "./character/targetLockSystem";
+import { collectTargetCandidates } from "./playground/targetLockSources";
+import { bindTargetLockTools } from "./playground/targetLockTools";
 import { requireElement } from "./ui/dom";
 import { degreesToRadians } from "./world/cameraMath";
 import { createPlaygroundEnvironment, PLAYGROUND_MOVEMENT_LIMIT } from "./world/environments";
@@ -98,6 +101,11 @@ export async function startPlayground(
   const collisions = bindCollisionTools(scene, character.root, enemies, signal,
     (start, step, radius, height) => maps.world?.resolveMovement(start, step, radius, height) ?? step);
   const attackTools = bindAttackTools(scene, character.root, signal, () => heroState.stats.attack);
+  const targetLock = createTargetLockSystem(scene, character.root,
+    () => collectTargetCandidates(enemies.list(), maps.world?.simulation.list() ?? []),
+    () => vitals.isAlive && !worldEditor.enabled && !maps.isEditing,
+    signal);
+  const updateTargetLockUi = bindTargetLockTools(targetLock, signal);
   const facingInput = requireElement<HTMLInputElement>("facing");
   const facingOutput = requireElement<HTMLOutputElement>("facingOutput");
   controller = createCharacterController(scene, canvas, character.root,
@@ -119,6 +127,7 @@ export async function startPlayground(
       hud.flashSpell(actionId);
       floatingText.showAction('hero', actionId, character.root);
     }, maps.interact);
+  controller.setTargetingProvider(() => targetLock.motion);
   requireElement<HTMLButtonElement>("simulateHeroHit").addEventListener("click", controller.receiveHit, { signal });
   const simulateHeroDeath = requireElement<HTMLButtonElement>("simulateHeroDeath");
   simulateHeroDeath.addEventListener("click", () => {
@@ -137,6 +146,7 @@ export async function startPlayground(
   scene.onBeforeRenderObservable.add(() => {
     const delta = scene.getEngine().getDeltaTime() / 1000;
     enemies.update(document.hidden ? 0 : delta);
+    updateTargetLockUi();
     refreshEnemyHealth();
     attackTools.setAttacking(controller.isAttacking);
     lifecycle.update(delta, controller, maps.active?.definition.spawnPoints.find((point) => point.type === "player"));
