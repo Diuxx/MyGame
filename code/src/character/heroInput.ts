@@ -1,6 +1,7 @@
 export const DEFAULT_HERO_KEYS = {
   forward: "z", left: "q", backward: "s", right: "d", run: "shift",
   spell1: "a", spell2: "e", spell3: "r", spell4: "1", interact: "f",
+  nextTarget: "w", cancelTarget: "x",
 };
 export type HeroKeys = typeof DEFAULT_HERO_KEYS;
 export const HERO_SPELL_SLOTS = ["spell1", "spell2", "spell3", "spell4"] as const;
@@ -21,6 +22,8 @@ export function bindHeroInput(
   signal: AbortSignal,
   spell: (slot: HeroSpellSlot) => void,
   interact: () => void,
+  nextTarget: () => void = () => {},
+  cancelTarget: () => void = () => {},
 ) {
   const pressed = new Set<string>();
   const taps = new Set<string>();
@@ -51,6 +54,15 @@ export function bindHeroInput(
     if (event.target instanceof HTMLElement &&
         (event.target.isContentEditable || event.target.matches("input:not([type=range]):not([type=checkbox]), textarea, select"))) return;
     const key = bindingKey(event);
+    if (key === bindings.nextTarget || key === bindings.cancelTarget) {
+      if (event.target instanceof HTMLInputElement) return;
+      event.preventDefault();
+      if (!event.repeat) {
+        if (key === bindings.nextTarget) nextTarget();
+        else cancelTarget();
+      }
+      return;
+    }
     const slot = HERO_SPELL_SLOTS.find((id) => bindings[id] === key);
     if (slot || key === bindings.interact) {
       if (event.target instanceof HTMLInputElement) return;
