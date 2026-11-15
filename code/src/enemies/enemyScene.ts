@@ -1,6 +1,6 @@
 import {
   Color3, Mesh, MeshBuilder, StandardMaterial, TransformNode,
-  type Scene, type ShadowGenerator,
+  type AbstractMesh, type Scene, type ShadowGenerator,
 } from "@babylonjs/core";
 import { MapModelRegistry } from "../world/maps/modelRegistry.ts";
 import type { Hurtbox, Position, SwordSwing } from "../combat/combat";
@@ -48,6 +48,7 @@ export function createEnemyScene(scene: Scene, shadows: ShadowGenerator, groundY
     const model = new TransformNode(`${id}-model`, scene);
     model.parent = root;
     let instance: Awaited<ReturnType<MapModelRegistry["instantiate"]>> = null;
+    const casters: AbstractMesh[] = [];
     try {
       instance = await models.instantiate(definition.modelPath, model);
       if (disposed) throw new Error("Scène des cibles libérée pendant le chargement.");
@@ -91,6 +92,7 @@ export function createEnemyScene(scene: Scene, shadows: ShadowGenerator, groundY
       for (const mesh of geometry) {
         mesh.computeWorldMatrix(true);
         shadows.addShadowCaster(mesh, false);
+        casters.push(mesh);
       }
 
       const entry = {
@@ -112,13 +114,9 @@ export function createEnemyScene(scene: Scene, shadows: ShadowGenerator, groundY
           collider.setEnabled(visible && solid.solid && !enemy.defeated);
         },
         dispose() {
-          for (const mesh of geometry) shadows.removeShadowCaster(mesh, false);
+          for (const mesh of casters) shadows.removeShadowCaster(mesh, false);
           instance?.dispose();
-          bar.dispose();
-          hurtbox.dispose();
-          collider.dispose();
-          model.dispose(true);
-          root?.dispose(true);
+          root.dispose(false, false);
         },
       };
       entries.set(id, entry);
@@ -126,6 +124,7 @@ export function createEnemyScene(scene: Scene, shadows: ShadowGenerator, groundY
       entry.update();
       return enemy;
     } catch (error) {
+      for (const mesh of casters) shadows.removeShadowCaster(mesh, false);
       instance?.dispose();
       root.dispose(false, false);
       throw error;
