@@ -1,10 +1,10 @@
 import type { AnimationPlayer } from "../character/animations";
-import { createTransitionSettings } from "../character/transitionSettings";
+import { createTransitionSettings, type TransitionSettings } from "../character/transitionSettings";
 import { requireElement } from "../ui/dom";
 
 const STORAGE_KEY = "mygame.playground.animation-transitions.v1";
 
-export function bindTransitionTools(player: AnimationPlayer, signal: AbortSignal): void {
+export function bindTransitionTools(player: AnimationPlayer, signal: AbortSignal): () => TransitionSettings {
   const status = requireElement<HTMLParagraphElement>("transitionStatus");
   const controls = [
     { id: "transitionMove", output: "transitionMoveValue", name: "move" },
@@ -38,4 +38,5 @@ export function bindTransitionTools(player: AnimationPlayer, signal: AbortSignal
       }
     }, { signal });
   }
+  return () => settings;
 }

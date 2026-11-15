@@ -1,7 +1,11 @@
-import { ANIMATION_DEFINITIONS, ANIMATION_RANGES, createAnimationSettings, effectivePlaybackSpeed, getAnimationDefinition } from "../character/animationSettings";
+import {
+  ANIMATION_DEFINITIONS, ANIMATION_RANGES, createAnimationSettings, effectivePlaybackSpeed,
+  getAnimationDefinition, serializeAnimationManifest,
+} from "../character/animationSettings";
 import type { AnimationPlayer } from "../character/animations";
 import type { createCharacterController } from "../character/characterController";
-import { requireElement } from "../ui/dom";
+import type { TransitionSettings } from "../character/transitionSettings";
+import { downloadJson, requireElement } from "../ui/dom";
 
 const STORAGE_KEY = "mon-rpg.playground.animations.v2";
 const format = (value: number, digits: number) => value.toFixed(digits).replace(".", ",");
@@ -10,6 +14,7 @@ export function bindAnimationTools(
   player: AnimationPlayer,
   controller: ReturnType<typeof createCharacterController>,
   available: ReadonlySet<string>,
+  getTransitions: () => TransitionSettings,
   signal: AbortSignal,
 ): () => void {
   let settings = createAnimationSettings();
@@ -22,6 +27,9 @@ export function bindAnimationTools(
     console.warn("Réglages d’animation illisibles. Valeurs par défaut utilisées.", error);
   }
   controller.setAnimationSettings(settings);
+  requireElement<HTMLButtonElement>("exportAnimationManifest").addEventListener("click", () => {
+    downloadJson("ANIMATIONS.json", serializeAnimationManifest(settings, getTransitions()));
+  }, { signal });
 
   for (const category of ["movement", "action"] as const) {
     const movement = category === "movement";

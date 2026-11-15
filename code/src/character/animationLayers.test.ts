@@ -3,6 +3,8 @@ import test, { type TestContext } from "node:test";
 import { Animation, AnimationGroup, NullEngine, Scene, TransformNode } from "@babylonjs/core";
 import { allowsLocomotion, attackLayerWeight, isUpperBodyBone } from "./animationLayers.ts";
 import { AnimationPlayer } from "./animations.ts";
+import { createAnimationSettings, effectivePlaybackSpeed, getAnimationDefinition, HERO_ANIMATIONS } from "./animationSettings.ts";
+import { HERO_TUNING } from "./heroTuning.ts";
 
 test("upper-body mask includes the spine, arms, hands and fingers", () => {
   for (const name of [
@@ -21,17 +23,18 @@ test("hips, legs, feet and mesh roots stay in the locomotion layer", () => {
 });
 
 test("attack blending ramps in, remains full, then fades before the clip ends", () => {
-  assert.equal(attackLayerWeight(0, 1), 0);
-  assert.equal(attackLayerWeight(0.06, 1), 0.5);
-  assert.equal(attackLayerWeight(0.4, 0.4), 1);
-  assert.ok(Math.abs(attackLayerWeight(0.8, 0.03) - 0.25) < 1e-9);
-  assert.equal(attackLayerWeight(0.9, 0), 0);
-  assert.equal(attackLayerWeight(Number.NaN, 1), 0);
+  const fade = HERO_TUNING.blending.attackFadeSeconds;
+  assert.equal(attackLayerWeight(0, fade), 0);
+  assert.equal(attackLayerWeight(fade / 2, fade), 0.5);
+  assert.equal(attackLayerWeight(fade, fade), 1);
+  assert.equal(attackLayerWeight(fade, fade / 4), 0.25);
+  assert.equal(attackLayerWeight(fade, 0), 0);
+  assert.equal(attackLayerWeight(Number.NaN, fade), 0);
 });
 
 test("light attacks permit movement but dodge and full-body previews do not", () => {
   assert.equal(allowsLocomotion(), true);
-  assert.equal(allowsLocomotion("attack"), true);
+  assert.equal(allowsLocomotion("attack"), HERO_TUNING.attack.allowMovement);
   assert.equal(allowsLocomotion("dodge"), false);
   assert.equal(allowsLocomotion("preview"), false);
 });
@@ -41,7 +44,8 @@ function createPlayer(t: TestContext) {
   const scene = new Scene(engine);
   t.after(() => engine.dispose());
   const bones = ["mixamorig:Spine", "mixamorig:LeftUpLeg"].map((name) => new TransformNode(name, scene));
-  const clips = ["idle", "walk", "run", "stop", "attack", "dodge", "dying", "combat-stance"].map((name) => {
+  const names = new Set(["idle", "walk", "run", "stop", "attack", "dodge", "dying", "combat-stance", HERO_TUNING.blending.combatLegsClip]);
+  const clips = [...names].map((name) => {
     const group = new AnimationGroup(name, scene);
     for (const bone of bones) {
       const track = new Animation(name, "rotation.x", 30, Animation.ANIMATIONTYPE_FLOAT);
@@ -71,15 +75,18 @@ test("combat stance keeps its upper pose while the legs transition from stance t
   assert.equal(idleLegs.weight, 1);
   assert.ok(!walkingLegs.isStarted);
 
-  player.updateLocomotion("combat-stance", 0.06);
+  player.updateLocomotion("combat-stance", HERO_TUNING.transition.move / 2);
   assert.equal(upper.weight, 1);
   assert.equal(upper.getCurrentFrame(), 18);
   assert.equal(idleLegs.weight, 0.5);
   assert.equal(walkingLegs.weight, 0.5);
-  assert.equal(walkingLegs.targetedAnimations[0].animation.name, "walk");
+  assert.equal(walkingLegs.targetedAnimations[0].animation.name, HERO_TUNING.blending.combatLegsClip);
   assert.equal(upper.to, 50);
-  assert.equal(walkingLegs.to, 60);
-  assert.equal(walkingLegs.speedRatio, 0.65);
+  assert.equal(walkingLegs.to, HERO_TUNING.blending.combatLegsClip === "combat-stance" ? 50 : 60);
+  const reference = getAnimationDefinition(HERO_TUNING.blending.combatLegsClip)!.movement!.syncReference;
+  const stance = HERO_ANIMATIONS.combatStance;
+  const rate = effectivePlaybackSpeed(stance, createAnimationSettings()[stance.id]);
+  assert.equal(walkingLegs.speedRatio, rate * (reference.playbackSpeed * stance.movement!.syncReference.speed / reference.speed));
   player.updateLocomotion("combat-stance", 1);
   assert.equal(idleLegs.isStarted, false);
   assert.equal(upper.weight, 1);
@@ -103,19 +110,21 @@ test("the attack animates idle legs and hands the legs back to walk or run durin
   player.play("attack", true, true);
   upperAttack.goToFrame(18);
   lowerAttack.goToFrame(18);
-  player.updateLocomotion(undefined, 0.2);
-  assert.equal(upperAttack.weight, 1);
-  assert.equal(lowerAttack.weight, 1);
-  assert.equal(layer("idle-lower").weight, 0);
+  const fade = HERO_TUNING.blending.attackFadeSeconds;
+  player.updateLocomotion(undefined, fade);
+  const weight = attackLayerWeight(fade, 0.7 * player.duration("attack")!);
+  assert.equal(upperAttack.weight, weight);
+  assert.equal(lowerAttack.weight, weight);
+  assert.equal(layer("idle-lower").weight, 1 - weight);
 
   for (const movement of ["walk", "run"]) {
     player.updateLocomotion(movement, 1);
-    assert.equal(upperAttack.weight, 1);
+    assert.equal(upperAttack.weight, weight);
     assert.equal(lowerAttack.weight, 0);
     assert.equal(layer(movement + "-lower").weight, 1);
   }
   player.updateLocomotion(undefined, 1);
-  assert.equal(lowerAttack.weight, 1);
+  assert.equal(lowerAttack.weight, weight);
   assert.equal(lowerAttack.getCurrentFrame(), 18);
   assert.equal(player.actionProgress, 0.3);
 

@@ -26,6 +26,15 @@ npm run build
 ## Ce qu'on peut tester
 
 - Les neuf clips du héros sont chargés depuis `public/assets/animations/hero/`. Leurs noms figurent dans `ANIMATIONS.json`. Relâcher les touches de déplacement en pleine course déclenche l’animation d’arrêt.
+
+### Paramètres du héros dans ANIMATIONS.json
+
+- `animations` décrit les clips, leur nom affiché, leur catégorie et leur boucle. `durationSeconds` documente la durée du GLB. Le moteur lit la durée réelle du clip pour calculer les fenêtres d’action.
+- `settings` contient les valeurs par défaut de déplacement, de lecture, d’impact et d’esquive. `syncReference` dans chaque clip de locomotion indique la cadence de référence pour l’option de synchronisation.
+- `transitions` et `blending` règlent les fondus, le masque haut du corps et le clip qui anime les jambes en garde.
+- `controller` règle la garde après un coup donné ou reçu, le verrouillage de l’orientation, le déplacement pendant l’attaque, l’orientation générale et le recul de l’esquive.
+
+Dans **Animations de déplacement**, **Exporter ANIMATIONS.json** inclut les valeurs réglées dans le Playground et conserve les autres sections. Le fichier téléchargé peut remplacer le manifeste. Les préférences du navigateur restent prioritaires dans le Playground.
 - **Z/S** rapprochent ou éloignent le héros du curseur. **Q/D** le déplacent perpendiculairement à gauche ou à droite. **Maj** permet de courir. Le module **Commandes** permet de modifier ces touches dans le Playground. À l’arrêt, le héros garde sa dernière orientation.
 - **Clic droit** lance une esquive dans la direction demandée, ou dans la direction du regard si aucune touche de déplacement n’est enfoncée. La direction reste fixe durant la roulade. La fenêtre d’invulnérabilité couvre 15 % à 90 % du clip par défaut (réglable) et le délai de réactivation est de 500 ms à partir du départ. Le contrôleur expose `isInvulnerable` pour la future réception de dégâts du héros.
 - L'attaque est jouée une fois. À la fin, le héros reprend le déplacement si une direction est maintenue, ou revient au repos.

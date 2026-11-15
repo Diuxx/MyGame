@@ -6,7 +6,7 @@ import type { createEnemyScene } from "../enemies/enemyScene";
 import type { MapEditorKind, MapPlacementKind, VisualOverride } from "../world/maps/editorSchema";
 import { findTerrainCell, tileCenter } from "../world/maps/validation";
 import type { createMapSystem } from "../world/maps/mapSystem";
-import { requireElement } from "../ui/dom";
+import { downloadJson, requireElement } from "../ui/dom";
 
 type SelectionKind = MapEditorKind | "practice";
 interface Selection { kind: SelectionKind; id: string; mapId: string }
@@ -21,15 +21,6 @@ function numerical(id: string): number {
 function setNumber(id: string, value: number): void {
   requireElement<HTMLInputElement>(id).value = String(Number(value.toFixed(3)));
 }
-function downloadJson(filename: string, json: string): void {
-  const url = URL.createObjectURL(new Blob([json], { type: "application/json" }));
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  link.click();
-  queueMicrotask(() => URL.revokeObjectURL(url));
-}
-
 /**
  * Explicit edit mode prevents combat actions while dragging. Every operation
  * mutates the same validated map data exported by the Playground.

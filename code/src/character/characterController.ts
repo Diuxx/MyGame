@@ -72,7 +72,7 @@ export function createCharacterController(
     if (action?.kind === "stop") finishAction();
     wasSprinting = false;
     action = next;
-    animations.play(clip, true, next.kind === "attack");
+    animations.play(clip, true, next.kind === "attack" && HERO_TUNING.attack.allowMovement);
     if (next.kind === 'attack' || next.kind === 'dodge') onActionStarted(next.kind);
     onAnimationChange();
   }
@@ -110,7 +110,7 @@ export function createCharacterController(
   }
 
   function refreshCombatStance(): void {
-    combatStanceRemaining = HERO_TUNING.combatStanceDuration;
+    combatStanceRemaining = HERO_TUNING.combatStance.duration;
   }
 
   function isInvulnerable(): boolean {
@@ -129,7 +129,7 @@ export function createCharacterController(
       active.progress = progress;
     } else if (active.kind === "attack") {
       for (const hit of active.hits) {
-        if (consumeImpactWindow(hit, active.progress, progress) && onAttackImpact()) {
+        if (consumeImpactWindow(hit, active.progress, progress) && onAttackImpact() && HERO_TUNING.combatStance.onHitDealt) {
           refreshCombatStance();
         }
       }
@@ -174,9 +174,14 @@ export function createCharacterController(
     combatStanceRemaining = Math.max(0, combatStanceRemaining - delta);
     if (action?.kind === "stop" && wantsMovement) finishAction();
     if (action) updateAction(action);
-    if (!allowsLocomotion(action?.kind)) return;
 
     const attacking = action?.kind === "attack";
+    const facingLocked = attacking && HERO_TUNING.attack.lockFacing;
+    if (attacking && !facingLocked) {
+      const aim = updateCursorYaw() ?? cursorYaw;
+      if (aim !== undefined) turn(Math.sin(aim), Math.cos(aim), delta);
+    }
+    if (!allowsLocomotion(action?.kind)) return;
     // Combat stance resumes after the strike; running is not slowed mid-attack.
     const inCombat = combatStanceRemaining > 0 && !attacking;
     const restChanged = animations.setCombatIdle(inCombat);
@@ -189,9 +194,8 @@ export function createCharacterController(
     }
     let actual: GroundVector = { x: 0, z: 0 };
     if (wantsMovement) {
-      const movementYaw = attacking
-        ? root.rotation.y
-        : (cursorYaw = updateCursorYaw() ?? cursorYaw ?? root.rotation.y);
+      if (!attacking) cursorYaw = updateCursorYaw() ?? cursorYaw ?? root.rotation.y;
+      const movementYaw = facingLocked ? root.rotation.y : cursorYaw ?? root.rotation.y;
       const direction = mouseRelativeDirection(horizontal, vertical, movementYaw);
       const speed = settings[movement.id].movement!.speed;
       actual = move(calculateMovementStep(direction, delta, speed));
@@ -221,7 +225,7 @@ export function createCharacterController(
       onFacingChange(root.rotation.y);
     },
     receiveHit() {
-      if (!isInvulnerable()) refreshCombatStance();
+      if (HERO_TUNING.combatStance.onHitReceived && !isInvulnerable()) refreshCombatStance();
     },
     preview(id: string) {
       if (!canStartAction()) return;

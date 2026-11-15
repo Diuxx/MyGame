@@ -42,7 +42,8 @@ export function dodgeDirection(yaw: number): GroundVector {
 
 /** Match the windup, push-off and landing in dodging-back.fbx. */
 export function dodgeTravelProgress(progress: number): number {
-  const travel = Math.min(1, Math.max(0, (progress - 0.05) / 0.8));
+  const { from, until } = HERO_TUNING.dodge.travel;
+  const travel = Math.min(1, Math.max(0, (progress - from) / (until - from)));
   return travel * travel * (3 - 2 * travel);
 }
 

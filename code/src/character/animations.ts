@@ -2,9 +2,11 @@ import { AnimationGroup, type Scene } from "@babylonjs/core";
 import { attackLayerWeight, isUpperBodyBone } from "./animationLayers.ts";
 import { createTransitionSettings, type TransitionSettings } from "./transitionSettings.ts";
 import { createAnimationSettings, effectivePlaybackSpeed, getAnimationDefinition, HERO_ANIMATIONS, type AnimationSettings } from "./animationSettings.ts";
+import { HERO_TUNING } from "./heroTuning.ts";
 
 export const IDLE_ANIMATION = HERO_ANIMATIONS.idle.id;
 const COMBAT_STANCE_ANIMATION = HERO_ANIMATIONS.combatStance.id;
+const COMBAT_LEGS_ANIMATION = HERO_TUNING.blending.combatLegsClip;
 export const ATTACK_ANIMATION = HERO_ANIMATIONS.attack.id;
 export const DODGE_ANIMATION = HERO_ANIMATIONS.dodge.id;
 export const DEATH_ANIMATION = HERO_ANIMATIONS.dying.id;
@@ -36,6 +38,7 @@ export class AnimationPlayer {
   private readonly animations: AnimationGroup[];
   private readonly bodyLayers = new Map<string, BodyLayers>();
   private readonly combatWalk: BodyLayers;
+  private readonly combatLegsPlaybackRate: number;
   private readonly attackUpper: AnimationGroup;
   private readonly attackLower: AnimationGroup;
   private locomotion = new Map<BodyLayers, number>();
@@ -61,7 +64,7 @@ export class AnimationPlayer {
     }
     for (const source of animations) {
       source.enableBlending = true;
-      source.blendingSpeed = 0.15;
+      source.blendingSpeed = HERO_TUNING.blending.fullBodySpeed;
       if (getAnimationDefinition(source.name)?.category === "movement") {
         this.bodyLayers.set(source.name, {
           name: source.name,
@@ -77,9 +80,12 @@ export class AnimationPlayer {
       });
     }
 
+    const legs = getAnimationDefinition(COMBAT_LEGS_ANIMATION)?.movement?.syncReference;
+    if (!legs) throw new Error("ANIMATIONS.json · le clip des jambes en combat requiert une référence de synchronisation.");
+    this.combatLegsPlaybackRate = legs.playbackSpeed * HERO_ANIMATIONS.combatStance.movement!.syncReference.speed / legs.speed;
     this.combatWalk = {
       name: COMBAT_STANCE_ANIMATION,
-      lower: createBodyLayer(scene, this.requireClip(HERO_ANIMATIONS.walk.id), false, "combat-walk-lower"),
+      lower: createBodyLayer(scene, this.requireClip(COMBAT_LEGS_ANIMATION), false, "combat-walk-lower"),
       upper: this.bodyLayers.get(COMBAT_STANCE_ANIMATION)!.upper,
     };
 
@@ -197,7 +203,7 @@ export class AnimationPlayer {
     this.paused = false;
     selected.enableBlending = true;
     selected.weight = -1;
-    const loop = getAnimationDefinition(name)?.loop ?? false;
+    const loop = !controlled && (getAnimationDefinition(name)?.loop ?? false);
     selected.start(loop, this.playbackSpeed(name), selected.from, selected.to);
   }
 
@@ -261,7 +267,8 @@ export class AnimationPlayer {
       for (const layer of [primary.lower, primary.upper]) {
         if (layer.isStarted) continue;
         layer.weight = 0;
-        layer.start(true, this.locomotionSpeed(primary, layer));
+        const source = primary === this.combatWalk && layer === primary.lower ? COMBAT_LEGS_ANIMATION : primary.name;
+        layer.start(getAnimationDefinition(source)?.loop ?? false, this.locomotionSpeed(primary, layer));
       }
       this.locomotion.set(primary, 0);
     }
@@ -303,8 +310,7 @@ export class AnimationPlayer {
   private locomotionSpeed(layers: BodyLayers, layer: AnimationGroup): number {
     const speed = this.playbackSpeed(layers.name);
     if (layers !== this.combatWalk || layer !== layers.lower) return speed;
-    const { walk, combatStance } = HERO_ANIMATIONS;
-    return speed * walk.playbackSpeed * combatStance.movement!.speed / walk.movement!.speed;
+    return speed * this.combatLegsPlaybackRate;
   }
 
   duration(name: string): number | undefined {

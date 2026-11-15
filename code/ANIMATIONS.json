@@ -1,17 +1,186 @@
 {
   "directory": "/assets/animations/hero",
   "animations": [
-    { "name": "run", "source": "Running", "fbx": "fbx/run.fbx", "durationSeconds": 0.7333, "loop": true },
-    { "name": "walk", "source": "Walking", "fbx": "fbx/walk.fbx", "durationSeconds": 1.4333, "loop": true },
-    { "name": "combat-stance", "source": "Combat_Stance", "durationSeconds": 1.6667, "loop": true },
-    { "name": "idle", "source": "Idle_9", "durationSeconds": 2, "loop": true },
-    { "name": "jump", "source": "Regular_Jump", "durationSeconds": 1.8667, "loop": false },
-    { "name": "dodge", "source": "Roll_Dodge_3", "fbx": "fbx/dodging-back.fbx", "durationSeconds": 2.6667, "loop": false },
-    { "name": "stop", "source": "Sprint_and_Sudden_Stop", "durationSeconds": 2, "loop": false },
-    { "name": "attack", "source": "Thrust_Slash", "fbx": "fbx/sword-slash.fbx", "durationSeconds": 2.0333, "loop": false },
-    { "name": "dying", "fbx": "fbx/dying.fbx", "durationSeconds": 4.6, "loop": false }
+    {
+      "name": "run",
+      "source": "Running",
+      "fbx": "fbx/run.fbx",
+      "durationSeconds": 0.7333,
+      "loop": true,
+      "displayName": "Course",
+      "category": "movement",
+      "syncReference": {
+        "speed": 4.5,
+        "playbackSpeed": 1
+      }
+    },
+    {
+      "name": "walk",
+      "source": "Walking",
+      "fbx": "fbx/walk.fbx",
+      "durationSeconds": 1.4333,
+      "loop": true,
+      "displayName": "Marche",
+      "category": "movement",
+      "syncReference": {
+        "speed": 3,
+        "playbackSpeed": 1.3
+      }
+    },
+    {
+      "name": "combat-stance",
+      "source": "Combat_Stance",
+      "durationSeconds": 1.6667,
+      "loop": true,
+      "displayName": "Posture de combat",
+      "category": "movement",
+      "facingOffset": 0,
+      "syncReference": {
+        "speed": 1.5,
+        "playbackSpeed": 1
+      }
+    },
+    {
+      "name": "idle",
+      "source": "Idle_9",
+      "durationSeconds": 2,
+      "loop": true,
+      "displayName": "Repos",
+      "category": "movement"
+    },
+    {
+      "name": "jump",
+      "source": "Regular_Jump",
+      "durationSeconds": 1.8667,
+      "loop": false,
+      "displayName": "Saut",
+      "category": "action"
+    },
+    {
+      "name": "dodge",
+      "source": "Roll_Dodge_3",
+      "fbx": "fbx/dodging-back.fbx",
+      "durationSeconds": 2.6667,
+      "loop": false,
+      "displayName": "Esquive",
+      "category": "action"
+    },
+    {
+      "name": "stop",
+      "source": "Sprint_and_Sudden_Stop",
+      "durationSeconds": 2,
+      "loop": false,
+      "displayName": "Arrêt brusque après sprint",
+      "category": "action"
+    },
+    {
+      "name": "attack",
+      "source": "Thrust_Slash",
+      "fbx": "fbx/sword-slash.fbx",
+      "durationSeconds": 2.0333,
+      "loop": false,
+      "displayName": "Attaque à l’épée",
+      "category": "action"
+    },
+    {
+      "name": "dying",
+      "fbx": "fbx/dying.fbx",
+      "durationSeconds": 4.6,
+      "loop": false,
+      "displayName": "Mort",
+      "category": "lifecycle"
+    }
   ],
   "skinCount": 1,
   "meshCount": 1,
-  "armatureRootScale": 0.01
+  "armatureRootScale": 0.01,
+  "settings": {
+    "run": {
+      "playbackSpeed": 1,
+      "movement": {
+        "speed": 4.5,
+        "sync": false
+      }
+    },
+    "walk": {
+      "playbackSpeed": 1.3,
+      "movement": {
+        "speed": 3,
+        "sync": false
+      }
+    },
+    "combat-stance": {
+      "playbackSpeed": 1,
+      "movement": {
+        "speed": 1.5,
+        "sync": false
+      }
+    },
+    "idle": {
+      "playbackSpeed": 1
+    },
+    "dodge": {
+      "playbackSpeed": 2.5,
+      "dodge": {
+        "distance": 2,
+        "window": {
+          "from": 0.15,
+          "until": 0.9
+        }
+      }
+    },
+    "attack": {
+      "playbackSpeed": 2,
+      "impact": {
+        "from": 0.39,
+        "until": 0.46,
+        "doubleHit": false,
+        "second": {
+          "from": 0.63,
+          "until": 0.7
+        }
+      }
+    },
+    "jump": {
+      "playbackSpeed": 1.5
+    },
+    "stop": {
+      "playbackSpeed": 1
+    },
+    "dying": {
+      "playbackSpeed": 1
+    }
+  },
+  "transitions": {
+    "move": 0.12,
+    "idle": 0.15,
+    "slowDown": 0.15
+  },
+  "controller": {
+    "maxMovementDelta": 0.05,
+    "turnSpeed": 18,
+    "aimDeadZone": 0.12,
+    "combatStance": {
+      "duration": 5,
+      "onHitDealt": true,
+      "onHitReceived": true
+    },
+    "attack": {
+      "allowMovement": true,
+      "lockFacing": true
+    },
+    "dodge": {
+      "cooldown": 0.5,
+      "travel": {
+        "from": 0.05,
+        "until": 0.85
+      }
+    }
+  },
+  "blending": {
+    "fullBodySpeed": 0.15,
+    "attackFadeSeconds": 0.12,
+    "combatLegsClip": "walk",
+    "upperBodyBonePattern": "^(?:Spine\\d*|Neck\\d*|Head(?:Top_End)?|(?:Left|Right)(?:Shoulder|Arm|ForeArm|Hand.*))$"
+  }
 }

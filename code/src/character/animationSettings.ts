@@ -1,49 +1,19 @@
 import animationManifest from "../../ANIMATIONS.json" with { type: "json" };
+import { animationFlag, animationNumber, animationWindow } from "./heroTuning.ts";
+import { createTransitionSettings, type TransitionSettings } from "./transitionSettings.ts";
 
-type Movement = { speed: number; facingOffset?: number };
 type Window = { from: number; until: number };
 type AttackImpact = Window & { doubleHit: boolean; second: Window };
-type Definition = {
+type Definition = AnimationSetting & {
   id: string;
   displayName: string;
   category: "movement" | "action" | "lifecycle";
   loop: boolean;
-  playbackSpeed: number;
-  movement?: Movement;
-  dodge?: { distance: number; window: Window };
-  impact?: AttackImpact;
+  movement?: AnimationSetting["movement"] & {
+    facingOffset?: number;
+    syncReference: { speed: number; playbackSpeed: number };
+  };
 };
-
-function locomotion(id: string, displayName: string, movement?: Movement, playbackSpeed = 1): Definition {
-  return { id, displayName, category: "movement", loop: true, playbackSpeed, movement };
-}
-
-function action(id: string, displayName: string, settings?: Partial<Pick<Definition, "playbackSpeed" | "dodge" | "impact">>): Definition {
-  return { id, displayName, category: "action", loop: false, playbackSpeed: 1, ...settings };
-}
-
-export const HERO_ANIMATIONS = {
-  run: locomotion("run", "Course", { speed: 4.5 }),
-  walk: locomotion("walk", "Marche", { speed: 3 }, 1.3),
-  combatStance: locomotion("combat-stance", "Posture de combat", { speed: 1.5, facingOffset: 0 }),
-  idle: locomotion("idle", "Repos"),
-  dodge: action("dodge", "Esquive", {
-    playbackSpeed: 2.5,
-    dodge: { distance: 2, window: { from: 0.15, until: 0.9 } },
-  }),
-  attack: action("attack", "Attaque à l’épée", {
-    playbackSpeed: 2,
-    impact: { from: 0.39, until: 0.46, doubleHit: false, second: { from: 0.63, until: 0.70 } },
-  }),
-  jump: action("jump", "Saut", { playbackSpeed: 1.5 }),
-  stop: action("stop", "Arrêt brusque après sprint"),
-  dying: { ...action("dying", "Mort"), category: "lifecycle" as const },
-};
-
-export const ANIMATION_DEFINITIONS = Object.values(HERO_ANIMATIONS);
-const definitions = new Map(ANIMATION_DEFINITIONS.map((definition) => [definition.id, definition]));
-const legacyIds = new Map(animationManifest.animations.flatMap(({ name, source }) => source ? [[name, source] as const] : []));
-export const getAnimationDefinition = (id: string) => definitions.get(id);
 
 export const ANIMATION_RANGES = {
   playback: { min: 0.25, max: 2.5, step: 0.05 },
@@ -59,6 +29,81 @@ export type AnimationSetting = {
   impact?: AttackImpact;
 };
 export type AnimationSettings = Record<string, AnimationSetting>;
+
+function readDefinition(clip: typeof animationManifest.animations[number]): Definition {
+  const { name: id, displayName, category, loop } = clip;
+  const settings = (animationManifest.settings as Partial<AnimationSettings>)[id];
+  const field = "settings." + id;
+  if (!settings || typeof displayName !== "string" || !displayName.trim() ||
+      (category !== "movement" && category !== "action" && category !== "lifecycle")) {
+    throw new Error(`ANIMATIONS.json · définition invalide pour ${id}.`);
+  }
+  const definition: Definition = {
+    id, displayName, category, loop: animationFlag(loop, id + ".loop"),
+    playbackSpeed: animationNumber(settings.playbackSpeed, field + ".playbackSpeed",
+      ANIMATION_RANGES.playback.min, ANIMATION_RANGES.playback.max),
+  };
+  if (settings.movement) {
+    const reference = "syncReference" in clip ? clip.syncReference : undefined;
+    definition.movement = {
+      speed: animationNumber(settings.movement.speed, field + ".movement.speed",
+        ANIMATION_RANGES.movement.min, ANIMATION_RANGES.movement.max),
+      sync: animationFlag(settings.movement.sync, field + ".movement.sync"),
+      syncReference: {
+        speed: animationNumber(reference?.speed, id + ".syncReference.speed", 0.001),
+        playbackSpeed: animationNumber(reference?.playbackSpeed, id + ".syncReference.playbackSpeed", 0.001),
+      },
+      ...("facingOffset" in clip ? { facingOffset: animationNumber(clip.facingOffset, id + ".facingOffset", -Infinity) } : {}),
+    };
+  }
+  if (settings.dodge) {
+    definition.dodge = {
+      distance: animationNumber(settings.dodge.distance, field + ".dodge.distance", 0, ANIMATION_RANGES.distance.max),
+      window: animationWindow(settings.dodge.window, field + ".dodge.window"),
+    };
+  }
+  if (settings.impact) {
+    definition.impact = {
+      ...animationWindow(settings.impact, field + ".impact"),
+      doubleHit: animationFlag(settings.impact.doubleHit, field + ".impact.doubleHit"),
+      second: animationWindow(settings.impact.second, field + ".impact.second"),
+    };
+  }
+  return definition;
+}
+
+const definitions = new Map<string, Definition>();
+for (const clip of animationManifest.animations) {
+  if (definitions.has(clip.name)) throw new Error("ANIMATIONS.json · clip dupliqué : " + clip.name);
+  definitions.set(clip.name, readDefinition(clip));
+}
+export const getAnimationDefinition = (id: string) => definitions.get(id);
+
+function requireDefinition(id: string, category: Definition["category"], setting?: "movement" | "dodge" | "impact"): Definition {
+  const definition = getAnimationDefinition(id);
+  if (!definition || definition.category !== category || (setting && !definition[setting])) {
+    throw new Error("ANIMATIONS.json · configuration requise pour " + id + ".");
+  }
+  return definition;
+}
+
+export const HERO_ANIMATIONS = {
+  run: requireDefinition("run", "movement", "movement"),
+  walk: requireDefinition("walk", "movement", "movement"),
+  combatStance: requireDefinition("combat-stance", "movement", "movement"),
+  idle: requireDefinition("idle", "movement"),
+  dodge: requireDefinition("dodge", "action", "dodge"),
+  attack: requireDefinition("attack", "action", "impact"),
+  jump: requireDefinition("jump", "action"),
+  stop: requireDefinition("stop", "action"),
+  dying: requireDefinition("dying", "lifecycle"),
+};
+const standardAnimations = Object.values(HERO_ANIMATIONS);
+export const ANIMATION_DEFINITIONS = [
+  ...standardAnimations,
+  ...Array.from(definitions.values()).filter((definition) => !standardAnimations.includes(definition)),
+];
+const legacyIds = new Map(animationManifest.animations.flatMap(({ name, source }) => source ? [[name, source] as const] : []));
 
 function record(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" ? value as Record<string, unknown> : {};
@@ -88,7 +133,10 @@ export function createAnimationSettings(saved?: unknown, resetAttackTiming = fal
     };
     if (definition.movement) {
       const { speed, sync } = record(value.movement);
-      settings.movement = { speed: number(speed, definition.movement.speed, ANIMATION_RANGES.movement), sync: sync === true };
+      settings.movement = {
+        speed: number(speed, definition.movement.speed, ANIMATION_RANGES.movement),
+        sync: typeof sync === "boolean" ? sync : definition.movement.sync,
+      };
     }
     if (definition.dodge) {
       const dodge = record(value.dodge);
@@ -115,8 +163,17 @@ export function createAttackHits(impact: AttackImpact) {
 }
 
 export function effectivePlaybackSpeed(definition: Definition, settings: AnimationSetting): number {
-  const speed = settings.movement?.sync && definition.movement
-    ? definition.playbackSpeed * settings.movement.speed / definition.movement.speed
+  const reference = definition.movement?.syncReference;
+  const speed = settings.movement?.sync && reference
+    ? reference.playbackSpeed * settings.movement.speed / reference.speed
     : settings.playbackSpeed;
   return number(speed, definition.playbackSpeed, ANIMATION_RANGES.playback);
+}
+
+export function serializeAnimationManifest(settings: AnimationSettings, transitions: TransitionSettings): string {
+  return JSON.stringify({
+    ...animationManifest,
+    settings: createAnimationSettings(settings),
+    transitions: createTransitionSettings(transitions),
+  }, null, 2) + "\n";
 }
