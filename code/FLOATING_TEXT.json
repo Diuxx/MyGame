@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "enabled": true,
+  "actions": {
+    "enabled": true,
+    "anchorHeight": 2.05,
+    "labels": {
+      "walk": "WALK",
+      "sprint": "SPRINT",
+      "dodge": "DODGE",
+      "attack": "ATTACK"
+    },
+    "styles": {
+      "movement": {
+        "durationMs": 450,
+        "fontSize": 11,
+        "scaleEnd": 1.08,
+        "risePixels": 18,
+        "color": "#D6DED7"
+      },
+      "attack": {
+        "durationMs": 650,
+        "fontSize": 11,
+        "scaleEnd": 1.12,
+        "risePixels": 20,
+        "color": "#ffa3a3"
+      }
+    }
+  },
+  "damage": {
+    "enabled": true,
+    "showZero": false,
+    "showCriticalLabel": false,
+    "normal": {
+      "durationMs": 1100,
+      "fontSize": 15,
+      "scaleEnd": 1.15,
+      "risePixels": 45,
+      "color": "#FFFFFF"
+    },
+    "critical": {
+      "durationMs": 1250,
+      "fontSize": 30,
+      "scaleEnd": 1.35,
+      "risePixels": 55,
+      "color": "#FFCA65"
+    }
+  },
+  "limits": {
+    "maxVisible": 40,
+    "maxPerEntity": 6
+  }
+}
