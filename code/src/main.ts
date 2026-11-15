@@ -9,6 +9,8 @@ import { createCamera } from "./world/scene";
 import { createMapSystem } from "./world/maps/mapSystem";
 import { SWORD_SWING } from "./combat/combat";
 import { createHeroHud } from "./ui/heroHud";
+import { createFloatingTextSystem } from "./ui/floatingTextSystem";
+import { loadFloatingTextConfig } from "./ui/floatingTextConfig";
 
 async function start(): Promise<void> {
   const overlay = requireElement<HTMLDivElement>("loadingOverlay");
@@ -45,6 +47,7 @@ async function start(): Promise<void> {
       const { startPlayground } = await import("./playground");
       await startPlayground(scene, camera, character, animationPlayer, signal);
     } else {
+      const floatingText = createFloatingTextSystem(scene, canvas, loadFloatingTextConfig());
       const { shadows, ambience } = createGameplayEnvironment(scene, character.root);
       const lifecycle = createHeroLifecycle(character.root, camera, animationPlayer);
       const { vitals } = lifecycle;
@@ -55,6 +58,7 @@ async function start(): Promise<void> {
         applyEnvironment: ambience.apply,
         isHeroAlive: () => vitals.isAlive,
         onHeroHit: (damage) => lifecycle.hit(damage, controller),
+        onDamage: floatingText.showDamage,
         onEncounterEvent: hud.event,
         onWorldInteraction: hud.announce,
       });
@@ -72,7 +76,8 @@ async function start(): Promise<void> {
           character.root.position.x, character.root.position.y, character.root.position.z,
         ], character.root.rotation.y, SWORD_SWING) ?? false,
         (start, step) => maps.active?.resolveMovement(start, step, 0.4) ?? step,
-        () => vitals.isAlive);
+        () => vitals.isAlive,
+        (actionId) => floatingText.showAction('hero', actionId, character.root));
       scene.onBeforeRenderObservable.add(() => {
         lifecycle.update(scene.getEngine().getDeltaTime() / 1000, controller,
           maps.active?.definition.spawnPoints.find((entry) => entry.type === "player"));
