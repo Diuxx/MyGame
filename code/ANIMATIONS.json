@@ -151,7 +151,21 @@
         "attackFrom": 0.85,
         "dodgeFrom": 0.65
       },
-      "blendOutSeconds": 0.1
+      "blendOutSeconds": 0.1,
+      "combo": {
+        "enabled": true,
+        "maxChain": 3,
+        "inputBufferMs": 150,
+        "resetAfterMs": 600,
+        "chainWindow": {
+          "from": 0.75,
+          "until": 1
+        },
+        "followUp": {
+          "startProgress": 0.25,
+          "blendSeconds": 0.08
+        }
+      }
     },
     "jump": {
       "playbackSpeed": 1.5
