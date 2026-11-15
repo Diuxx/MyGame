@@ -132,6 +132,14 @@ export function bindAnimationTools(
       const refresh: (() => void)[] = [];
 
       function save(): void {
+        if (config.combo && config.impact) {
+          const latestImpact = config.impact.doubleHit
+            ? Math.max(config.impact.until, config.impact.second.until) : config.impact.until;
+          config.combo.chainWindow.from = Math.max(config.combo.chainWindow.from, latestImpact);
+          config.combo.chainWindow.until = Math.max(config.combo.chainWindow.until, config.combo.chainWindow.from);
+          config.combo.followUp.startProgress = Math.min(config.combo.followUp.startProgress,
+            Math.max(0, config.impact.from - 0.01));
+        }
         controller.setAnimationSettings(settings);
         hasLocalOverrides = true;
         refreshSource();
@@ -247,6 +255,49 @@ export function bindAnimationTools(
           save();
         });
       }
+      if (config.combo && config.impact) {
+        const combo = config.combo;
+        const section = document.createElement("p");
+        section.className = "animation-note";
+        section.textContent = "Combo — attaques successives avec préparation raccourcie";
+        fields.append(section);
+        const enabled = document.createElement("label");
+        enabled.className = "grid-toggle";
+        const enabledInput = document.createElement("input");
+        enabledInput.type = "checkbox";
+        enabledInput.checked = combo.enabled;
+        enabled.append(enabledInput, "Activer les combos");
+        fields.append(enabled);
+        enabledInput.addEventListener("change", () => {
+          combo.enabled = enabledInput.checked;
+          save();
+        }, { signal });
+        slider("comboCount", "Nombre de coups par chaîne", ANIMATION_RANGES.comboChain,
+          () => combo.maxChain, (value) => { combo.maxChain = Math.round(value); },
+          (value) => `${value} coups`);
+        slider("comboBuffer", "Anticipation du clic", ANIMATION_RANGES.comboBuffer,
+          () => combo.inputBufferMs, (value) => { combo.inputBufferMs = value; },
+          (value) => `${value} ms`);
+        slider("comboReset", "Délai après le dernier coup", ANIMATION_RANGES.comboReset,
+          () => combo.resetAfterMs, (value) => { combo.resetAfterMs = value; },
+          (value) => `${value} ms`);
+        slider("comboWindowFrom", "Début d'enchaînement", ANIMATION_RANGES.progress,
+          () => combo.chainWindow.from,
+          (value) => { combo.chainWindow.from = Math.min(value, combo.chainWindow.until); },
+          (value) => `${Math.round(value * 100)} %`);
+        slider("comboWindowUntil", "Fin d'enchaînement", ANIMATION_RANGES.progress,
+          () => combo.chainWindow.until,
+          (value) => { combo.chainWindow.until = Math.max(value, combo.chainWindow.from); },
+          (value) => `${Math.round(value * 100)} %`);
+        slider("comboOffset", "Départ du coup suivant", ANIMATION_RANGES.progress,
+          () => combo.followUp.startProgress,
+          (value) => { combo.followUp.startProgress = value; },
+          (value) => `${Math.round(value * 100)} % (${Math.round(value * (player.duration(clip.id) ?? 0) * 1000)} ms)`);
+        slider("comboBlend", "Fondu entre deux coups", ANIMATION_RANGES.blend,
+          () => combo.followUp.blendSeconds,
+          (value) => { combo.followUp.blendSeconds = value; },
+          (value) => `${Math.round(value * 1000)} ms`);
+      }
       if (config.cancel) {
         const labels = {
           runFrom: "Course / marche autorisée",
@@ -279,6 +330,12 @@ export function bindAnimationTools(
           lanes.push({ label: "Deuxième impact", kind: "impact",
             from: () => config.impact!.doubleHit ? config.impact!.second.from : 0,
             until: () => config.impact!.doubleHit ? config.impact!.second.until : 0 });
+        }
+        if (config.combo) {
+          lanes.push({ label: "Fenêtre d'enchaînement", kind: "combo",
+            from: () => config.combo!.chainWindow.from, until: () => config.combo!.chainWindow.until });
+          lanes.push({ label: "Préparation ignorée (suivant)", kind: "skip",
+            from: () => 0, until: () => config.combo!.followUp.startProgress });
         }
         if (config.cancel) {
           for (const [key, label] of [

@@ -12,7 +12,7 @@ test('versioned JSON provides quieter movement and a separate attack style', () 
   assert.equal(config.version, 1);
   assert.equal(config.actions.styles.movement.fontSize, 11);
   assert.equal(config.actions.styles.movement.durationMs, 450);
-  assert.equal(config.actions.styles.attack.fontSize, 14);
+  assert.equal(config.actions.styles.attack.fontSize, 11);
   assert.equal(config.actions.styles.attack.durationMs, 650);
   for (const id of ['walk', 'sprint', 'dodge'] as const) {
     assert.equal(actionTextStyle(config, id), config.actions.styles.movement);
@@ -29,6 +29,19 @@ test('the editable configuration does not mutate versioned JSON defaults', () =>
   assert.equal(next.actions.labels.attack, 'ATTACK');
   assert.equal(next.actions.styles.movement.fontSize, 11);
   assert.equal(next.damage.normal.color, '#FFFFFF');
+});
+
+test('older exports gain spell splashes and keep their custom labels', () => {
+  const config = createFloatingTextConfig();
+  const { attack, dodge, walk, sprint } = config.actions.labels;
+  const imported = parseFloatingTextManifest({
+    ...config, actions: { ...config.actions, labels: { attack, dodge, walk, sprint, spell2: 'SORT 2' } },
+  });
+  assert.equal(imported.actions.labels.spell1, 'SPELL 1');
+  assert.equal(imported.actions.labels.spell2, 'SORT 2');
+  assert.equal(imported.actions.labels.spell3, 'SPELL 3');
+  assert.equal(imported.actions.labels.spell4, 'SPELL 4');
+  assert.equal(actionTextStyle(imported, 'spell4'), imported.actions.styles.attack);
 });
 
 test('temporary overrides are bounded and invalid values use JSON defaults', () => {

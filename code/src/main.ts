@@ -54,7 +54,7 @@ async function start(): Promise<void> {
       const { shadows, ambience } = createGameplayEnvironment(scene, character.root);
       const lifecycle = createHeroLifecycle(character.root, camera, animationPlayer, heroState.stats.maxHealth);
       const { vitals } = lifecycle;
-      const hud = createHeroHud();
+      const hud = createHeroHud(signal);
       hud.setEquipment(heroState.equipment.mainHand);
       let controller: ReturnType<typeof createCharacterController> | undefined;
       const maps = createMapSystem(scene, {
@@ -81,7 +81,10 @@ async function start(): Promise<void> {
         ], character.root.rotation.y, resolveHeroSwing(SWORD_SWING, heroState.stats.attack)) ?? false,
         (start, step) => maps.active?.resolveMovement(start, step, 0.4) ?? step,
         () => vitals.isAlive,
-        (actionId) => floatingText.showAction('hero', actionId, character.root));
+        (actionId) => {
+          hud.flashSpell(actionId);
+          floatingText.showAction('hero', actionId, character.root);
+        }, maps.interact);
       scene.onBeforeRenderObservable.add(() => {
         lifecycle.update(scene.getEngine().getDeltaTime() / 1000, controller,
           maps.active?.definition.spawnPoints.find((entry) => entry.type === "player"));

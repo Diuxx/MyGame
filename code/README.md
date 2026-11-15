@@ -207,5 +207,5 @@ mannequins du module **Gestion des ennemis**. Ce module conserve la
 sauvegarde et l’export des mannequins d’entraînement existants.
 Exporter le JSON après édition ; les assets importés localement
 doivent être copiés dans `public/assets`. Interactions à proximité
-avec la touche **E** (ramassage, inspection). Guide :
+avec la touche **F** par défaut (ramassage, inspection). Guide :
 [docs/PLAYGROUND_WORLD_EDITOR.md](../docs/PLAYGROUND_WORLD_EDITOR.md).

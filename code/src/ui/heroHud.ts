@@ -2,8 +2,9 @@ import type { createHeroVitals } from "../combat/heroVitals";
 import type { EnemyEvent } from "../enemies/mapEnemySimulation";
 import { requireElement } from "./dom";
 import type { WeaponDefinition } from "../equipment/weaponDefinitions";
+import { DEFAULT_HERO_KEYS, heroKeyLabel } from "../character/heroInput";
 
-export function createHeroHud() {
+export function createHeroHud(signal: AbortSignal) {
   const container = requireElement<HTMLElement>("heroHud");
   const life = requireElement<HTMLOutputElement>("heroLife");
   const fill = requireElement<HTMLElement>("heroLifeFill");
@@ -12,6 +13,16 @@ export function createHeroHud() {
   const weaponName = requireElement<HTMLElement>("heroWeaponName");
   const message = requireElement<HTMLElement>("encounterMessage");
   const prompt = requireElement<HTMLElement>("worldInteractionPrompt");
+  const spellSlots = new Map<string, { element: HTMLElement; timeout?: number }>();
+  container.querySelectorAll<HTMLElement>(".hero-hud-spell-slot[data-spell]").forEach((element) => {
+    spellSlots.set(element.dataset.spell!, { element });
+  });
+  signal.addEventListener("abort", () => {
+    for (const { element, timeout } of spellSlots.values()) {
+      window.clearTimeout(timeout);
+      element.classList.remove("is-highlighted");
+    }
+  }, { once: true });
   container.hidden = false;
   let displayedWeaponId: string | null = null;
   function showFallback(): void {
@@ -37,9 +48,16 @@ export function createHeroHud() {
       weaponIcon.src = weapon.icon;
     },
     announce(text: string): void { message.textContent = text; },
-    nearby(label?: string): void {
+    flashSpell(id: string): void {
+      const slot = spellSlots.get(id);
+      if (!slot) return;
+      window.clearTimeout(slot.timeout);
+      slot.element.classList.add("is-highlighted");
+      slot.timeout = window.setTimeout(() => slot.element.classList.remove("is-highlighted"), 180);
+    },
+    nearby(label?: string, key = DEFAULT_HERO_KEYS.interact): void {
       prompt.hidden = !label;
-      prompt.textContent = label ? "E · " + label : "";
+      prompt.textContent = label ? heroKeyLabel(key) + " · " + label : "";
     },
     refresh(vitals: ReturnType<typeof createHeroVitals>): void {
       life.textContent = vitals.isAlive

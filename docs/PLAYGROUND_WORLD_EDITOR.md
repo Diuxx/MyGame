@@ -70,7 +70,7 @@ Les maps peuvent contenir un tableau `interactions` :
 }
 ```
 
-**Hors mode édition**, s'approcher et appuyer sur **E**.
+**Hors mode édition**, s'approcher et appuyer sur **F** par défaut.
 `pickup` ajoute un objet à l'inventaire de session et le masque
 en jeu ; `inspect` et `interact` affichent un message dans le HUD.
 Les exemples `dojo` (gemme, stèle) et `forest` (herbe, autel)

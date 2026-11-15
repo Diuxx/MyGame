@@ -48,7 +48,6 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
   let showAggroDebug = false;
   let disposed = false;
   let editing = false;
-  const keyboard = new AbortController();
 
   function readProgress(id: string): SavedMapProgress {
     try { return readMapProgress(localStorage, id); }
@@ -230,14 +229,11 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
     world()?.setEditorEnabled(value);
   }
 
-  window.addEventListener("keydown", (event) => {
-    if (editing || event.repeat || event.key.toLowerCase() !== "e" ||
-        event.ctrlKey || event.altKey || event.metaKey ||
-        (event.target instanceof HTMLElement &&
-          (event.target.isContentEditable || event.target.matches("input, textarea, select")))) return;
+  function interact(): void {
+    if (editing) return;
     const result = world()?.interact();
     if (result) options.onWorldInteraction?.(result.message);
-  }, { signal: keyboard.signal });
+  }
 
   function unload(): void {
     session.unload();
@@ -251,7 +247,6 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
   async function dispose(): Promise<void> {
     if (disposed) return;
     disposed = true;
-    keyboard.abort();
     base?.dispose();
     base = undefined;
     await session.dispose();
@@ -260,6 +255,7 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
 
   scene.onDisposeObservable.addOnce(() => { void dispose(); });
   return {
+    interact,
     load, unload, setEditing, openBase,
     get isEditing() { return editing; },
     get active() { return session.active; },

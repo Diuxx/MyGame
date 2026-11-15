@@ -8,7 +8,11 @@
       "walk": "WALK",
       "sprint": "SPRINT",
       "dodge": "DODGE",
-      "attack": "ATTACK"
+      "attack": "ATTACK",
+      "spell1": "SPELL 1",
+      "spell2": "SPELL 2",
+      "spell3": "SPELL 3",
+      "spell4": "SPELL 4"
     },
     "styles": {
       "movement": {
