@@ -127,7 +127,13 @@
           "from": 0.15,
           "until": 0.9
         }
-      }
+      },
+      "cancel": {
+        "runFrom": 0.9,
+        "attackFrom": 1,
+        "dodgeFrom": 1
+      },
+      "blendOutSeconds": 0.1
     },
     "attack": {
       "playbackSpeed": 2,
@@ -139,7 +145,13 @@
           "from": 0.63,
           "until": 0.7
         }
-      }
+      },
+      "cancel": {
+        "runFrom": 1,
+        "attackFrom": 0.85,
+        "dodgeFrom": 0.65
+      },
+      "blendOutSeconds": 0.1
     },
     "jump": {
       "playbackSpeed": 1.5
