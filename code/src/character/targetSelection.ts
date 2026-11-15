@@ -14,6 +14,13 @@ export interface TargetPosition {
   z: number;
 }
 
+/** Render-independent motion request used by the player controller. */
+export interface TargetingMotion {
+  target: TargetPosition;
+  movementReference: TargetingSettings["movementReference"];
+  turnSpeed: number;
+}
+
 function squaredDistance(a: TargetPosition, b: TargetPosition): number {
   const dx = a.x - b.x;
   const dz = a.z - b.z;
@@ -42,7 +49,7 @@ export function selectTarget(
   let distance = settings.acquireRadius ** 2;
   for (const candidate of available) {
     const nextDistance = squaredDistance(origin, candidate);
-    if (nextDistance < distance || (nextDistance === distance && nearest && candidate.id < nearest.id)) {
+    if (nextDistance <= distance && (!nearest || nextDistance < distance || candidate.id < nearest.id)) {
       nearest = candidate;
       distance = nextDistance;
     }
