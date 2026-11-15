@@ -107,6 +107,9 @@ export async function startPlayground(
   const zoneTransitions = createMapTransitions({
     maps, hero: character.root, camera: cameraControls, signal,
     onStatus: hud.announce,
+    onBusyChange: (busy) => {
+      if (busy) controller?.interruptForZoneChange();
+    },
     onMapChanged: (id) => {
       requireElement<HTMLSelectElement>("mapSelect").value = id;
       requireElement("mapActiveId").textContent = id;

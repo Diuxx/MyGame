@@ -60,7 +60,10 @@ export function bindMapTools(
     status.textContent = "Chargement de la map...";
     try {
       const loadedSuccessfully = await transitions.loadManual(selection.value);
-      if (!loadedSuccessfully) return;
+      if (!loadedSuccessfully) {
+        status.textContent = "Chargement impossible. Vérifier le message dans le HUD.";
+        return;
+      }
       const loaded = maps.active;
       if (!loaded) return;
       const absent = loaded.missingModels;

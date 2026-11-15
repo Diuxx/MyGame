@@ -92,6 +92,9 @@ async function start(): Promise<void> {
       const transitions = createMapTransitions({
         maps, hero: character.root, camera, signal,
         onStatus: hud.announce,
+        onBusyChange: (busy) => {
+          if (busy) controller?.interruptForZoneChange();
+        },
       });
       controller = createCharacterController(scene, canvas, character.root,
         () => maps.active ? terrainBounds(maps.active.definition) : {

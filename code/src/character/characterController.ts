@@ -314,6 +314,18 @@ export function createCharacterController(
   return {
     attack,
     dodge: startDodge,
+    interruptForZoneChange(): void {
+      if (action) finishAction();
+      input.clearInput();
+      resetCombo();
+      combatStanceRemaining = 0;
+      wasMoving = false;
+      wasSprinting = false;
+      lastLocomotion = undefined;
+      animations.setCombatIdle(false);
+      animations.play(IDLE_ANIMATION);
+      onAnimationChange();
+    },
     die: () => resetForLifeChange(DEATH_ANIMATION),
     respawn() {
       resetForLifeChange(IDLE_ANIMATION);
