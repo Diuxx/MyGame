@@ -177,6 +177,7 @@ export class AnimationPlayer {
 
   private updateFades(delta: number): void {
     if (!Number.isFinite(delta) || delta <= 0 || this.paused) return;
+    if (this.finishingAttack) this.updateAttackBlend(delta);
     for (const fade of this.fadingGroups) {
       fade.elapsed = Math.min(fade.duration, fade.elapsed + delta);
       fade.group.weight = fade.startingWeight * (1 - fade.elapsed / fade.duration);
@@ -246,10 +247,11 @@ export class AnimationPlayer {
       this.finishingAttack = null;
       this.fadeIn = null;
     }
-    const fadeSeconds = this.fadingGroups.reduce((duration, fade) => Math.max(duration, fade.duration - fade.elapsed), 0);
+    let fadeSeconds = this.fadingGroups.reduce((duration, fade) => Math.max(duration, fade.duration - fade.elapsed), 0);
     if (this.finishingAttack) {
-      this.fadeGroup(this.attackUpper, fadeSeconds || this.finishingAttack.duration);
-      this.fadeGroup(this.attackLower, fadeSeconds || this.finishingAttack.duration);
+      fadeSeconds = Math.max(fadeSeconds, this.finishingAttack.duration - this.finishingAttack.elapsed);
+      this.fadeGroup(this.attackUpper, fadeSeconds);
+      this.fadeGroup(this.attackLower, fadeSeconds);
       this.finishingAttack = null;
     }
     this.stopLocomotion(fadeSeconds);
@@ -389,7 +391,7 @@ export class AnimationPlayer {
     for (const layer of fadedLayers) layer.stop(true);
     this.primary = primary;
     if (returning && returning.elapsed >= returning.duration) this.locomotionActionFade = null;
-    this.updateAttackBlend(delta);
+    if (!this.finishingAttack) this.updateAttackBlend(delta);
   }
 
   private playbackSpeed(name: string): number {
