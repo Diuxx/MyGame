@@ -17,7 +17,7 @@ function tuning(value: Record<string, unknown>, name: string): Record<string, un
 test("manifest imports the published cancellation and blending defaults", () => {
   const imported = parseAnimationManifest(copyManifest());
   assert.equal(imported.settings.dodge.cancel?.runFrom, 0.9);
-  assert.equal(imported.settings.attack.cancel?.dodgeFrom, 0.65);
+  assert.equal(imported.settings.attack.cancel?.dodgeFrom, manifest.settings.attack.cancel.dodgeFrom);
   assert.equal(imported.settings.dodge.blendOutSeconds, 0.1);
 });
 

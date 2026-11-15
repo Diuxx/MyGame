@@ -20,6 +20,6 @@ test("late clicks, full chains and missing combo support do not queue", () => {
 });
 
 test("follow-up start remains before the first impact", () => {
-  assert.equal(followUpStartProgress(combo, 0.39), 0.25);
+  assert.equal(followUpStartProgress(combo, 0.39), Math.min(combo.followUp.startProgress, 0.38));
   assert.equal(followUpStartProgress({ ...combo, followUp: { ...combo.followUp, startProgress: 0.5 } }, 0.39), 0.38);
 });

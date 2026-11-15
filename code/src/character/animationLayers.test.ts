@@ -75,7 +75,7 @@ test("a stationary attack blends directly into combat stance on hit and returns 
     const root = new TransformNode("hero", scene);
     const controller = createCharacterController(
       scene, new EventTarget() as HTMLCanvasElement, root, 10,
-      { follow() {} }, player, new AbortController().signal,
+      { follow() {}, alpha: 0 }, player, new AbortController().signal,
       undefined, undefined, () => hit,
     );
     controller.setAnimationSettings(createAnimationSettings({

@@ -64,6 +64,7 @@
           <button type="button" aria-controls="movementModule" aria-expanded="false">Animations de déplacement</button>
           <button type="button" aria-controls="actionsModule" aria-expanded="false">Animations d’action</button>
           <button type="button" aria-controls="enemiesModule" aria-expanded="false">Gestion des ennemis</button>
+          <button type="button" aria-controls="targetLockModule" aria-expanded="false">Ciblage / Target Lock</button>
           <button type="button" aria-controls="collisionsModule" aria-expanded="false">Collisions et hitbox</button>
           <button type="button" aria-controls="attackHitboxModule" aria-expanded="false">Zone d’attaque / Portée</button>
           <button type="button" aria-controls="mapsModule" aria-expanded="false">Maps 3D modulaires</button>
@@ -190,6 +191,35 @@
           </header>
           <div id="actionButtons" class="animation-buttons"></div>
           <div id="actionAnimationSettings" class="animation-settings"></div>
+        </section>
+        <section id="targetLockModule" class="module-window enemy-tools" aria-labelledby="targetLockHeading" hidden>
+          <header class="module-header">
+            <h2 id="targetLockHeading">Target Lock — déplacement ciblé</h2>
+            <button class="module-close" type="button" aria-label="Fermer le module Target Lock">×</button>
+          </header>
+          <p id="targetLockSource" class="animation-note"></p>
+          <label class="grid-toggle"><input id="targetLockEnabled" type="checkbox" /> Activer le verrouillage automatique</label>
+          <p id="targetLockCurrentTarget" class="animation-note" role="status">Mode libre — verrouillage désactivé</p>
+          <div class="field-row"><label for="targetLockAcquireRadius">Rayon de détection</label><output id="targetLockAcquireRadiusValue"></output></div>
+          <input id="targetLockAcquireRadius" type="range" min="2" max="20" step="0.5" />
+          <div class="field-row"><label for="targetLockReleaseRadius">Rayon de perte de cible</label><output id="targetLockReleaseRadiusValue"></output></div>
+          <input id="targetLockReleaseRadius" type="range" min="2" max="25" step="0.5" />
+          <div class="field-row"><label for="targetLockTurnSpeed">Vitesse de rotation</label><output id="targetLockTurnSpeedValue"></output></div>
+          <input id="targetLockTurnSpeed" type="range" min="2" max="25" step="1" />
+          <label>Référentiel de déplacement
+            <select id="targetLockMovementReference">
+              <option value="camera">Caméra — ZQSD direction écran</option>
+              <option value="target">Cible — Z/S avancer/reculer, Q/D tourner autour</option>
+            </select>
+          </label>
+          <label class="grid-toggle"><input id="targetLockShowRing" type="checkbox" /> Cercle rouge sous la cible</label>
+          <label class="grid-toggle"><input id="targetLockShowRadius" type="checkbox" /> Cercle de détection (debug)</label>
+          <p class="animation-note">Avec une cible : le héros regarde l'ennemi même en se déplaçant. Sans cible : commandes habituelles. Les animations latérales dédiées viendront ensuite.</p>
+          <button id="targetLockExport" type="button" class="secondary wide">Exporter TARGETING.json</button>
+          <button id="targetLockImport" type="button" class="secondary wide">Importer TARGETING.json</button>
+          <input id="targetLockImportFile" type="file" accept=".json,application/json" hidden />
+          <button id="targetLockReset" type="button" class="secondary wide">Rétablir le JSON versionné</button>
+          <p id="targetLockStatus" class="animation-note" role="status"></p>
         </section>
         <section id="enemiesModule" class="module-window enemy-tools" aria-labelledby="enemyHeading" hidden>
           <header class="module-header">
