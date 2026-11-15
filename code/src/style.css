@@ -82,6 +82,13 @@ input[type=range] { accent-color:#a4c49e; display:block; width:100%; margin:0 0 
 #mapStatus { overflow-wrap:anywhere; line-height:1.5; }
 
 .hero-hud { position:absolute; z-index:4; top:64px; left:20px; width:min(290px,calc(100% - 40px)); padding:12px; border-radius:9px; background:rgba(20,33,30,.82); border:1px solid rgba(182,208,184,.26); color:#F0F5F1; font-size:12px; pointer-events:none; }
+.hero-hud-main { display:flex; align-items:center; gap:10px; }
+.hero-hud-weapon { flex:0 0 60px; width:60px; height:60px; display:flex; align-items:center; justify-content:center; border:1px solid rgba(182,208,184,.42); border-radius:9px; background:rgba(7,16,14,.4); overflow:hidden; }
+.hero-hud-weapon img { display:block; width:100%; height:100%; object-fit:contain; padding:4px; box-sizing:border-box; }
+.hero-hud-weapon [hidden] { display:none; }
+#heroWeaponFallback { color:#b8c9bd; font-size:25px; }
+.hero-hud-details { flex:1; min-width:0; }
+.hero-hud-weapon-name { margin:7px 0 0; color:#d6e6d7; font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .hero-hud-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; letter-spacing:.04em; }
 .hero-hud-track { margin-top:8px; height:10px; border-radius:6px; background:#553A3F; overflow:hidden; }
 .interaction-prompt { margin:8px 0 0; font-weight:650; color:#F3E2AF; }

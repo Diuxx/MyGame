@@ -4,6 +4,7 @@ import {
 } from "@babylonjs/core";
 import { defaultSwordSwing, parseSwordSwing, swordHitboxOutline } from "../combat/attackSettings";
 import type { SwordSwing } from "../combat/combat";
+import { resolveHeroSwing } from "../combat/heroAttack";
 import { requireElement } from "../ui/dom";
 
 const STORAGE_KEY = "mygame.playground.attack-hitbox.v1";
@@ -12,6 +13,7 @@ interface AttackVisualSettings {
   visible: boolean;
   alwaysVisible: boolean;
   swing: SwordSwing;
+  forceDamage: boolean;
 }
 
 function parseSettings(value: unknown): AttackVisualSettings {
@@ -19,13 +21,14 @@ function parseSettings(value: unknown): AttackVisualSettings {
     throw new Error("Configuration de l'attaque invalide.");
   }
   const data = value as Record<string, unknown>;
-  if (data.version !== 1 || typeof data.visible !== "boolean" || typeof data.alwaysVisible !== "boolean") {
+  if ((data.version !== 1 && data.version !== 2) || typeof data.visible !== "boolean" || typeof data.alwaysVisible !== "boolean") {
     throw new Error("Version ou affichage de la zone d'attaque invalide.");
   }
   return {
     visible: data.visible,
     alwaysVisible: data.alwaysVisible,
     swing: parseSwordSwing(data.swing),
+    forceDamage: data.version === 2 && data.forceDamage === true,
   };
 }
 
@@ -33,11 +36,14 @@ function parseSettings(value: unknown): AttackVisualSettings {
  * A debug projection of the actual mathematical sword hitbox. Rendered
  * geometry is never used for game rules; strikes read the same swing values.
  */
-export function bindAttackTools(scene: Scene, hero: TransformNode, signal: AbortSignal) {
+export function bindAttackTools(
+  scene: Scene, hero: TransformNode, signal: AbortSignal, getCalculatedAttack: () => number,
+) {
   const quickToggle = requireElement<HTMLInputElement>("attackHitboxQuickToggle");
   const visible = requireElement<HTMLInputElement>("attackHitboxVisible");
   const alwaysVisible = requireElement<HTMLInputElement>("attackHitboxAlwaysVisible");
   const damage = requireElement<HTMLInputElement>("attackDamage");
+  const forceDamage = requireElement<HTMLInputElement>("attackDamageOverrideEnabled");
   const range = requireElement<HTMLInputElement>("attackRange");
   const radius = requireElement<HTMLInputElement>("attackRadius");
   const height = requireElement<HTMLInputElement>("attackHeight");
@@ -48,10 +54,17 @@ export function bindAttackTools(scene: Scene, hero: TransformNode, signal: Abort
     visible: true,
     alwaysVisible: false,
     swing: defaultSwordSwing(),
+    forceDamage: false,
   };
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) settings = parseSettings(JSON.parse(saved));
+    if (saved) {
+      const parsed = JSON.parse(saved) as unknown;
+      settings = parseSettings(parsed);
+      if ((parsed as { version?: unknown }).version === 1) {
+        status.textContent = "Ancien réglage chargé : les dégâts sont désormais calculés par le héros. Activez l'override pour utiliser une valeur de test.";
+      }
+    }
   } catch (error) {
     status.textContent = `Réglages d’attaque ignorés : ${error instanceof Error ? error.message : String(error)}`;
   }
@@ -108,7 +121,9 @@ export function bindAttackTools(scene: Scene, hero: TransformNode, signal: Abort
     visible.checked = settings.visible;
     quickToggle.checked = settings.visible;
     alwaysVisible.checked = settings.alwaysVisible;
-    damage.value = String(settings.swing.damage);
+    forceDamage.checked = settings.forceDamage;
+    damage.disabled = !settings.forceDamage;
+    damage.value = String(settings.forceDamage ? settings.swing.damage : getCalculatedAttack());
     range.value = String(settings.swing.range);
     radius.value = String(settings.swing.radius);
     height.value = String(settings.swing.height);
@@ -123,9 +138,9 @@ export function bindAttackTools(scene: Scene, hero: TransformNode, signal: Abort
         radius: radius.valueAsNumber,
         height: height.valueAsNumber,
       });
-      settings = { visible: visible.checked, alwaysVisible: alwaysVisible.checked, swing };
+      settings = { visible: visible.checked, alwaysVisible: alwaysVisible.checked, swing, forceDamage: forceDamage.checked };
       syncControls();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, ...settings }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 2, ...settings }));
       status.textContent = "";
     } catch (error) {
       syncControls();
@@ -133,7 +148,7 @@ export function bindAttackTools(scene: Scene, hero: TransformNode, signal: Abort
     }
   }
 
-  for (const input of [visible, alwaysVisible, damage, range, radius, height]) {
+  for (const input of [visible, alwaysVisible, forceDamage, damage, range, radius, height]) {
     input.addEventListener("change", applyControls, { signal });
   }
   quickToggle.addEventListener("change", () => {
@@ -141,7 +156,7 @@ export function bindAttackTools(scene: Scene, hero: TransformNode, signal: Abort
     applyControls();
   }, { signal });
   reset.addEventListener("click", () => {
-    settings = { visible: true, alwaysVisible: false, swing: defaultSwordSwing() };
+    settings = { visible: true, alwaysVisible: false, swing: defaultSwordSwing(), forceDamage: false };
     syncControls();
     applyControls();
   }, { signal });
@@ -155,7 +170,9 @@ export function bindAttackTools(scene: Scene, hero: TransformNode, signal: Abort
   syncControls();
 
   return {
-    getSwing(): SwordSwing { return { ...settings.swing }; },
+    getSwing(): SwordSwing {
+      return resolveHeroSwing(settings.swing, getCalculatedAttack(), settings.forceDamage ? settings.swing.damage : undefined);
+    },
     setAttacking(active: boolean): void {
       attacking = active;
       draw();
