@@ -12,7 +12,7 @@ test('versioned JSON provides quieter movement and a separate attack style', () 
   assert.equal(config.version, 1);
   assert.equal(config.actions.styles.movement.fontSize, 11);
   assert.equal(config.actions.styles.movement.durationMs, 450);
-  assert.equal(config.actions.styles.attack.fontSize, 14);
+  assert.equal(config.actions.styles.attack.fontSize, 11);
   assert.equal(config.actions.styles.attack.durationMs, 650);
   for (const id of ['walk', 'sprint', 'dodge'] as const) {
     assert.equal(actionTextStyle(config, id), config.actions.styles.movement);
