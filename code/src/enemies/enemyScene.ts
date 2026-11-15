@@ -3,7 +3,7 @@ import {
   type AbstractMesh, type Scene, type ShadowGenerator,
 } from "@babylonjs/core";
 import { MapModelRegistry } from "../world/maps/modelRegistry.ts";
-import type { Hurtbox, Position, SwordSwing } from "../combat/combat";
+import type { DamageResolved, Hurtbox, Position, SwordSwing } from "../combat/combat";
 import type { EnemyDefinition, EnemySettings } from "./enemyDefinitions";
 import { createEnemy, getEnemyCollision, type Enemy } from "./enemyState.ts";
 import type { GroundStep } from "../combat/bodyCollision";
@@ -14,7 +14,10 @@ function footprint(box: Hurtbox): number {
   return radius + Math.hypot(box.offset[0], box.offset[2]);
 }
 
-export function createEnemyScene(scene: Scene, shadows: ShadowGenerator, groundY: number) {
+export function createEnemyScene(
+  scene: Scene, shadows: ShadowGenerator, groundY: number,
+  onDamage?: (event: DamageResolved) => void,
+) {
   const entries = new Map<string, { enemy: Enemy; root: TransformNode; update(): void; select(selected: boolean): void;
     showHurtbox(visible: boolean): void; showCollider(visible: boolean): void; dispose(): void }>();
   const manager = createEnemyManager();
@@ -208,7 +211,7 @@ export function createEnemyScene(scene: Scene, shadows: ShadowGenerator, groundY
       for (const entry of entries.values()) entry.update();
     },
     strike(origin: Position, yaw: number, swing?: SwordSwing) {
-      return manager.strike(origin, yaw, swing);
+      return manager.strike(origin, yaw, swing, onDamage);
     },
   };
 }

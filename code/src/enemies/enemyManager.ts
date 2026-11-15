@@ -1,4 +1,4 @@
-import { applyDamage, intersectsSwing, regenerate, SWORD_SWING, type Position, type SwordSwing } from "../combat/combat.ts";
+import { applyDamage, intersectsSwing, regenerate, SWORD_SWING, type DamageResolved, type Position, type SwordSwing } from "../combat/combat.ts";
 import { resolveCircleMovement, type GroundStep } from "../combat/bodyCollision.ts";
 import { getEnemyCollision, type Enemy } from "./enemyState.ts";
 
@@ -35,13 +35,19 @@ export function createEnemyManager() {
       });
       return resolveCircleMovement(start, desired, heroRadius, solids);
     },
-    strike(origin: Position, facingYaw: number, swing: SwordSwing = SWORD_SWING): boolean {
+    strike(origin: Position, facingYaw: number, swing: SwordSwing = SWORD_SWING,
+           onDamage?: (event: DamageResolved) => void): boolean {
       let hit = false;
       for (const enemy of instances.values()) {
-        if (intersectsSwing(origin, facingYaw, enemy.position, enemy.definition.hurtbox, 0, swing) &&
-            applyDamage(enemy, swing.damage)) {
-          hit = true;
-        }
+        if (!intersectsSwing(origin, facingYaw, enemy.position, enemy.definition.hurtbox, 0, swing)) continue;
+        const before = enemy.health;
+        if (!applyDamage(enemy, swing.damage)) continue;
+        hit = true;
+        const [offsetX, offsetY, offsetZ] = enemy.definition.hurtbox.offset;
+        onDamage?.({
+          targetId: enemy.id, finalDamage: before - enemy.health, isCritical: false,
+          hitPosition: [enemy.position[0] + offsetX, enemy.position[1] + offsetY, enemy.position[2] + offsetZ],
+        });
       }
       return hit;
     },
