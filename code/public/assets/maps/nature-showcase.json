@@ -1,0 +1,3582 @@
+{
+  "version": 1,
+  "id": "nature-showcase",
+  "name": "Forêt stylisée — Nature MegaKit",
+  "tileSize": 2,
+  "terrain": {
+    "origin": [
+      -32,
+      0,
+      -32
+    ],
+    "tiles": [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    "groundCollider": {
+      "enabled": true,
+      "thickness": 0.25
+    },
+    "primitiveGround": {
+      "color": "#718b60",
+      "pattern": "nature"
+    }
+  },
+  "objects": [
+    {
+      "id": "nature_pine_1-01",
+      "asset": "nature_pine_1",
+      "position": [
+        5.84,
+        0,
+        25.89
+      ],
+      "rotationY": 68,
+      "visual": {
+        "scale": 1.04
+      }
+    },
+    {
+      "id": "nature_pine_1-02",
+      "asset": "nature_pine_1",
+      "position": [
+        14.75,
+        0,
+        -8.52
+      ],
+      "rotationY": 0,
+      "visual": {
+        "scale": 0.98
+      }
+    },
+    {
+      "id": "nature_pine_1-03",
+      "asset": "nature_pine_1",
+      "position": [
+        -27.52,
+        0,
+        0.07
+      ],
+      "rotationY": 245,
+      "visual": {
+        "scale": 1.11
+      }
+    },
+    {
+      "id": "nature_pine_1-04",
+      "asset": "nature_pine_1",
+      "position": [
+        -24.38,
+        0,
+        11.32
+      ],
+      "rotationY": 26,
+      "visual": {
+        "scale": 0.97
+      }
+    },
+    {
+      "id": "nature_pine_1-05",
+      "asset": "nature_pine_1",
+      "position": [
+        20.82,
+        0,
+        16.39
+      ],
+      "rotationY": 82,
+      "visual": {
+        "scale": 0.97
+      }
+    },
+    {
+      "id": "nature_pine_1-06",
+      "asset": "nature_pine_1",
+      "position": [
+        -20.98,
+        0,
+        4.69
+      ],
+      "rotationY": 299,
+      "visual": {
+        "scale": 0.96
+      }
+    },
+    {
+      "id": "nature_pine_1-07",
+      "asset": "nature_pine_1",
+      "position": [
+        -23.28,
+        0,
+        -24.83
+      ],
+      "rotationY": 14,
+      "visual": {
+        "scale": 1.02
+      }
+    },
+    {
+      "id": "nature_pine_1-08",
+      "asset": "nature_pine_1",
+      "position": [
+        8.93,
+        0,
+        -9.86
+      ],
+      "rotationY": 105,
+      "visual": {
+        "scale": 1.06
+      }
+    },
+    {
+      "id": "nature_pine_1-09",
+      "asset": "nature_pine_1",
+      "position": [
+        8.45,
+        0,
+        16.58
+      ],
+      "rotationY": 72,
+      "visual": {
+        "scale": 1.07
+      }
+    },
+    {
+      "id": "nature_pine_1-10",
+      "asset": "nature_pine_1",
+      "position": [
+        -18.71,
+        0,
+        12.56
+      ],
+      "rotationY": 62,
+      "visual": {
+        "scale": 0.99
+      }
+    },
+    {
+      "id": "nature_pine_1-11",
+      "asset": "nature_pine_1",
+      "position": [
+        -28.8,
+        0,
+        19.43
+      ],
+      "rotationY": 290,
+      "visual": {
+        "scale": 1.05
+      }
+    },
+    {
+      "id": "nature_pine_1-12",
+      "asset": "nature_pine_1",
+      "position": [
+        19.05,
+        0,
+        7.4
+      ],
+      "rotationY": 315,
+      "visual": {
+        "scale": 0.92
+      }
+    },
+    {
+      "id": "nature_pine_3-01",
+      "asset": "nature_pine_3",
+      "position": [
+        17.59,
+        0,
+        -18.17
+      ],
+      "rotationY": 214,
+      "visual": {
+        "scale": 0.81
+      }
+    },
+    {
+      "id": "nature_pine_3-02",
+      "asset": "nature_pine_3",
+      "position": [
+        -27.28,
+        0,
+        -18.03
+      ],
+      "rotationY": 293,
+      "visual": {
+        "scale": 1.11
+      }
+    },
+    {
+      "id": "nature_pine_3-03",
+      "asset": "nature_pine_3",
+      "position": [
+        -9.9,
+        0,
+        -23.25
+      ],
+      "rotationY": 217,
+      "visual": {
+        "scale": 0.98
+      }
+    },
+    {
+      "id": "nature_pine_3-04",
+      "asset": "nature_pine_3",
+      "position": [
+        -27.84,
+        0,
+        -22.2
+      ],
+      "rotationY": 97,
+      "visual": {
+        "scale": 0.98
+      }
+    },
+    {
+      "id": "nature_pine_3-05",
+      "asset": "nature_pine_3",
+      "position": [
+        -20.64,
+        0,
+        -10.96
+      ],
+      "rotationY": 43,
+      "visual": {
+        "scale": 1.09
+      }
+    },
+    {
+      "id": "nature_pine_3-06",
+      "asset": "nature_pine_3",
+      "position": [
+        24.09,
+        0,
+        27.72
+      ],
+      "rotationY": 307,
+      "visual": {
+        "scale": 1.02
+      }
+    },
+    {
+      "id": "nature_pine_3-07",
+      "asset": "nature_pine_3",
+      "position": [
+        -15.96,
+        0,
+        -11.12
+      ],
+      "rotationY": 94,
+      "visual": {
+        "scale": 0.89
+      }
+    },
+    {
+      "id": "nature_pine_3-08",
+      "asset": "nature_pine_3",
+      "position": [
+        27.69,
+        0,
+        -10.5
+      ],
+      "rotationY": 242,
+      "visual": {
+        "scale": 0.92
+      }
+    },
+    {
+      "id": "nature_pine_3-09",
+      "asset": "nature_pine_3",
+      "position": [
+        25.03,
+        0,
+        -17.64
+      ],
+      "rotationY": 335,
+      "visual": {
+        "scale": 1.12
+      }
+    },
+    {
+      "id": "nature_common_tree_1-01",
+      "asset": "nature_common_tree_1",
+      "position": [
+        -10.86,
+        0,
+        -4.2
+      ],
+      "rotationY": 146,
+      "visual": {
+        "scale": 1.16
+      }
+    },
+    {
+      "id": "nature_common_tree_1-02",
+      "asset": "nature_common_tree_1",
+      "position": [
+        -17.25,
+        0,
+        -23
+      ],
+      "rotationY": 93,
+      "visual": {
+        "scale": 1
+      }
+    },
+    {
+      "id": "nature_common_tree_1-03",
+      "asset": "nature_common_tree_1",
+      "position": [
+        -7.24,
+        0,
+        6.9
+      ],
+      "rotationY": 30,
+      "visual": {
+        "scale": 0.83
+      }
+    },
+    {
+      "id": "nature_common_tree_1-04",
+      "asset": "nature_common_tree_1",
+      "position": [
+        18.85,
+        0,
+        -4.71
+      ],
+      "rotationY": 54,
+      "visual": {
+        "scale": 1
+      }
+    },
+    {
+      "id": "nature_common_tree_1-05",
+      "asset": "nature_common_tree_1",
+      "position": [
+        -12.66,
+        0,
+        13.66
+      ],
+      "rotationY": 111,
+      "visual": {
+        "scale": 0.98
+      }
+    },
+    {
+      "id": "nature_common_tree_1-06",
+      "asset": "nature_common_tree_1",
+      "position": [
+        -22.9,
+        0,
+        26.7
+      ],
+      "rotationY": 99,
+      "visual": {
+        "scale": 1.03
+      }
+    },
+    {
+      "id": "nature_common_tree_1-07",
+      "asset": "nature_common_tree_1",
+      "position": [
+        23.54,
+        0,
+        20.53
+      ],
+      "rotationY": 196,
+      "visual": {
+        "scale": 0.92
+      }
+    },
+    {
+      "id": "nature_common_tree_1-08",
+      "asset": "nature_common_tree_1",
+      "position": [
+        19.42,
+        0,
+        -12.46
+      ],
+      "rotationY": 208,
+      "visual": {
+        "scale": 1
+      }
+    },
+    {
+      "id": "nature_common_tree_3-01",
+      "asset": "nature_common_tree_3",
+      "position": [
+        -27.98,
+        0,
+        -7.92
+      ],
+      "rotationY": 64,
+      "visual": {
+        "scale": 0.84
+      }
+    },
+    {
+      "id": "nature_common_tree_3-02",
+      "asset": "nature_common_tree_3",
+      "position": [
+        -8.55,
+        0,
+        -16.19
+      ],
+      "rotationY": 184,
+      "visual": {
+        "scale": 0.8
+      }
+    },
+    {
+      "id": "nature_common_tree_3-03",
+      "asset": "nature_common_tree_3",
+      "position": [
+        -10,
+        0,
+        -28.47
+      ],
+      "rotationY": 325,
+      "visual": {
+        "scale": 0.92
+      }
+    },
+    {
+      "id": "nature_common_tree_3-04",
+      "asset": "nature_common_tree_3",
+      "position": [
+        -28.8,
+        0,
+        24.44
+      ],
+      "rotationY": 127,
+      "visual": {
+        "scale": 0.8
+      }
+    },
+    {
+      "id": "nature_common_tree_3-05",
+      "asset": "nature_common_tree_3",
+      "position": [
+        -27.77,
+        0,
+        -27.9
+      ],
+      "rotationY": 212,
+      "visual": {
+        "scale": 0.96
+      }
+    },
+    {
+      "id": "nature_common_tree_3-06",
+      "asset": "nature_common_tree_3",
+      "position": [
+        23.45,
+        0,
+        -22.16
+      ],
+      "rotationY": 307,
+      "visual": {
+        "scale": 0.76
+      }
+    },
+    {
+      "id": "nature_twisted_tree_2-01",
+      "asset": "nature_twisted_tree_2",
+      "position": [
+        8.56,
+        0,
+        -24.64
+      ],
+      "rotationY": 190,
+      "visual": {
+        "scale": 0.56
+      }
+    },
+    {
+      "id": "nature_twisted_tree_2-02",
+      "asset": "nature_twisted_tree_2",
+      "position": [
+        14.38,
+        0,
+        -23.5
+      ],
+      "rotationY": 99,
+      "visual": {
+        "scale": 0.56
+      }
+    },
+    {
+      "id": "nature_rock_medium_1-01",
+      "asset": "nature_rock_medium_1",
+      "position": [
+        16.74,
+        0,
+        8.17
+      ],
+      "rotationY": 95,
+      "visual": {
+        "scale": 0.79
+      }
+    },
+    {
+      "id": "nature_rock_medium_1-02",
+      "asset": "nature_rock_medium_1",
+      "position": [
+        8.1,
+        0,
+        21.95
+      ],
+      "rotationY": 89,
+      "visual": {
+        "scale": 0.97
+      }
+    },
+    {
+      "id": "nature_rock_medium_1-03",
+      "asset": "nature_rock_medium_1",
+      "position": [
+        14.6,
+        0,
+        -11.2
+      ],
+      "rotationY": 115,
+      "visual": {
+        "scale": 1.2
+      }
+    },
+    {
+      "id": "nature_rock_medium_1-04",
+      "asset": "nature_rock_medium_1",
+      "position": [
+        -26.2,
+        0,
+        23.94
+      ],
+      "rotationY": 125,
+      "visual": {
+        "scale": 0.95
+      }
+    },
+    {
+      "id": "nature_rock_medium_1-05",
+      "asset": "nature_rock_medium_1",
+      "position": [
+        28.26,
+        0,
+        10.81
+      ],
+      "rotationY": 13,
+      "visual": {
+        "scale": 0.74
+      }
+    },
+    {
+      "id": "nature_rock_medium_1-06",
+      "asset": "nature_rock_medium_1",
+      "position": [
+        21.85,
+        0,
+        26.16
+      ],
+      "rotationY": 19,
+      "visual": {
+        "scale": 0.92
+      }
+    },
+    {
+      "id": "nature_rock_medium_1-07",
+      "asset": "nature_rock_medium_1",
+      "position": [
+        23.15,
+        0,
+        -5.98
+      ],
+      "rotationY": 289,
+      "visual": {
+        "scale": 1.03
+      }
+    },
+    {
+      "id": "nature_rock_medium_2-01",
+      "asset": "nature_rock_medium_2",
+      "position": [
+        12.27,
+        0,
+        5.46
+      ],
+      "rotationY": 151,
+      "visual": {
+        "scale": 1.09
+      }
+    },
+    {
+      "id": "nature_rock_medium_2-02",
+      "asset": "nature_rock_medium_2",
+      "position": [
+        -27.41,
+        0,
+        28.55
+      ],
+      "rotationY": 216,
+      "visual": {
+        "scale": 1.11
+      }
+    },
+    {
+      "id": "nature_rock_medium_2-03",
+      "asset": "nature_rock_medium_2",
+      "position": [
+        -27.17,
+        0,
+        17.46
+      ],
+      "rotationY": 282,
+      "visual": {
+        "scale": 1.01
+      }
+    },
+    {
+      "id": "nature_rock_medium_2-04",
+      "asset": "nature_rock_medium_2",
+      "position": [
+        7.35,
+        0,
+        26.75
+      ],
+      "rotationY": 163,
+      "visual": {
+        "scale": 1
+      }
+    },
+    {
+      "id": "nature_rock_medium_2-05",
+      "asset": "nature_rock_medium_2",
+      "position": [
+        -25.03,
+        0,
+        11.29
+      ],
+      "rotationY": 105,
+      "visual": {
+        "scale": 1.12
+      }
+    },
+    {
+      "id": "nature_rock_medium_2-06",
+      "asset": "nature_rock_medium_2",
+      "position": [
+        7.17,
+        0,
+        -11.93
+      ],
+      "rotationY": 133,
+      "visual": {
+        "scale": 1.02
+      }
+    },
+    {
+      "id": "nature_rock_medium_2-07",
+      "asset": "nature_rock_medium_2",
+      "position": [
+        -19.29,
+        0,
+        26.38
+      ],
+      "rotationY": 282,
+      "visual": {
+        "scale": 0.96
+      }
+    },
+    {
+      "id": "nature_bush_common-01",
+      "asset": "nature_bush_common",
+      "position": [
+        27.41,
+        0,
+        27.6
+      ],
+      "rotationY": 79,
+      "visual": {
+        "scale": 1.25
+      }
+    },
+    {
+      "id": "nature_bush_common-02",
+      "asset": "nature_bush_common",
+      "position": [
+        23.01,
+        0,
+        -18.72
+      ],
+      "rotationY": 140,
+      "visual": {
+        "scale": 0.85
+      }
+    },
+    {
+      "id": "nature_bush_common-03",
+      "asset": "nature_bush_common",
+      "position": [
+        6.37,
+        0,
+        -19.04
+      ],
+      "rotationY": 320,
+      "visual": {
+        "scale": 0.88
+      }
+    },
+    {
+      "id": "nature_bush_common-04",
+      "asset": "nature_bush_common",
+      "position": [
+        25.98,
+        0,
+        12.93
+      ],
+      "rotationY": 282,
+      "visual": {
+        "scale": 1.07
+      }
+    },
+    {
+      "id": "nature_bush_common-05",
+      "asset": "nature_bush_common",
+      "position": [
+        17.59,
+        0,
+        -18.16
+      ],
+      "rotationY": 316,
+      "visual": {
+        "scale": 1.3
+      }
+    },
+    {
+      "id": "nature_bush_common-06",
+      "asset": "nature_bush_common",
+      "position": [
+        -6.27,
+        0,
+        23.77
+      ],
+      "rotationY": 351,
+      "visual": {
+        "scale": 0.84
+      }
+    },
+    {
+      "id": "nature_bush_common-07",
+      "asset": "nature_bush_common",
+      "position": [
+        -15.61,
+        0,
+        8.89
+      ],
+      "rotationY": 271,
+      "visual": {
+        "scale": 1.2
+      }
+    },
+    {
+      "id": "nature_bush_common-08",
+      "asset": "nature_bush_common",
+      "position": [
+        16.09,
+        0,
+        -22.52
+      ],
+      "rotationY": 125,
+      "visual": {
+        "scale": 0.92
+      }
+    },
+    {
+      "id": "nature_bush_common-09",
+      "asset": "nature_bush_common",
+      "position": [
+        10.52,
+        0,
+        24.31
+      ],
+      "rotationY": 271,
+      "visual": {
+        "scale": 0.95
+      }
+    },
+    {
+      "id": "nature_bush_common-10",
+      "asset": "nature_bush_common",
+      "position": [
+        20.57,
+        0,
+        16.08
+      ],
+      "rotationY": 131,
+      "visual": {
+        "scale": 1.13
+      }
+    },
+    {
+      "id": "nature_bush_common-11",
+      "asset": "nature_bush_common",
+      "position": [
+        18.15,
+        0,
+        6.05
+      ],
+      "rotationY": 83,
+      "visual": {
+        "scale": 1.07
+      }
+    },
+    {
+      "id": "nature_bush_common-12",
+      "asset": "nature_bush_common",
+      "position": [
+        28.39,
+        0,
+        19.63
+      ],
+      "rotationY": 310,
+      "visual": {
+        "scale": 0.86
+      }
+    },
+    {
+      "id": "nature_bush_common_flowers-01",
+      "asset": "nature_bush_common_flowers",
+      "position": [
+        27.6,
+        0,
+        -12.19
+      ],
+      "rotationY": 228,
+      "visual": {
+        "scale": 1.01
+      }
+    },
+    {
+      "id": "nature_bush_common_flowers-02",
+      "asset": "nature_bush_common_flowers",
+      "position": [
+        22.82,
+        0,
+        -18.46
+      ],
+      "rotationY": 65,
+      "visual": {
+        "scale": 0.87
+      }
+    },
+    {
+      "id": "nature_bush_common_flowers-03",
+      "asset": "nature_bush_common_flowers",
+      "position": [
+        -8.89,
+        0,
+        -13.37
+      ],
+      "rotationY": 97,
+      "visual": {
+        "scale": 1.19
+      }
+    },
+    {
+      "id": "nature_bush_common_flowers-04",
+      "asset": "nature_bush_common_flowers",
+      "position": [
+        9.49,
+        0,
+        -18.52
+      ],
+      "rotationY": 31,
+      "visual": {
+        "scale": 1.3
+      }
+    },
+    {
+      "id": "nature_bush_common_flowers-05",
+      "asset": "nature_bush_common_flowers",
+      "position": [
+        -7.22,
+        0,
+        -7.86
+      ],
+      "rotationY": 322,
+      "visual": {
+        "scale": 0.8
+      }
+    },
+    {
+      "id": "nature_bush_common_flowers-06",
+      "asset": "nature_bush_common_flowers",
+      "position": [
+        -21.04,
+        0,
+        -12.05
+      ],
+      "rotationY": 186,
+      "visual": {
+        "scale": 1.03
+      }
+    },
+    {
+      "id": "nature_bush_common_flowers-07",
+      "asset": "nature_bush_common_flowers",
+      "position": [
+        2.67,
+        0,
+        17.42
+      ],
+      "rotationY": 42,
+      "visual": {
+        "scale": 0.93
+      }
+    },
+    {
+      "id": "nature_bush_common_flowers-08",
+      "asset": "nature_bush_common_flowers",
+      "position": [
+        3.28,
+        0,
+        12.43
+      ],
+      "rotationY": 55,
+      "visual": {
+        "scale": 0.81
+      }
+    },
+    {
+      "id": "nature_bush_common_flowers-09",
+      "asset": "nature_bush_common_flowers",
+      "position": [
+        6.09,
+        0,
+        -13.31
+      ],
+      "rotationY": 197,
+      "visual": {
+        "scale": 0.85
+      }
+    },
+    {
+      "id": "nature_bush_common_flowers-10",
+      "asset": "nature_bush_common_flowers",
+      "position": [
+        14.77,
+        0,
+        9.18
+      ],
+      "rotationY": 58,
+      "visual": {
+        "scale": 0.96
+      }
+    },
+    {
+      "id": "nature_grass_common_short-01",
+      "asset": "nature_grass_common_short",
+      "position": [
+        -22.04,
+        0,
+        6.1
+      ],
+      "rotationY": 148,
+      "visual": {
+        "scale": 0.96
+      }
+    },
+    {
+      "id": "nature_grass_common_short-02",
+      "asset": "nature_grass_common_short",
+      "position": [
+        -7.04,
+        0,
+        -14.95
+      ],
+      "rotationY": 343,
+      "visual": {
+        "scale": 1.1
+      }
+    },
+    {
+      "id": "nature_grass_common_short-03",
+      "asset": "nature_grass_common_short",
+      "position": [
+        -8.84,
+        0,
+        6.7
+      ],
+      "rotationY": 263,
+      "visual": {
+        "scale": 1.03
+      }
+    },
+    {
+      "id": "nature_grass_common_short-04",
+      "asset": "nature_grass_common_short",
+      "position": [
+        -8.66,
+        0,
+        -3.85
+      ],
+      "rotationY": 105,
+      "visual": {
+        "scale": 1.29
+      }
+    },
+    {
+      "id": "nature_grass_common_short-05",
+      "asset": "nature_grass_common_short",
+      "position": [
+        2.96,
+        0,
+        21.33
+      ],
+      "rotationY": 101,
+      "visual": {
+        "scale": 1.04
+      }
+    },
+    {
+      "id": "nature_grass_common_short-06",
+      "asset": "nature_grass_common_short",
+      "position": [
+        -24.4,
+        0,
+        -18.77
+      ],
+      "rotationY": 57,
+      "visual": {
+        "scale": 1.25
+      }
+    },
+    {
+      "id": "nature_grass_common_short-07",
+      "asset": "nature_grass_common_short",
+      "position": [
+        -27.1,
+        0,
+        -19.45
+      ],
+      "rotationY": 93,
+      "visual": {
+        "scale": 0.95
+      }
+    },
+    {
+      "id": "nature_grass_common_short-08",
+      "asset": "nature_grass_common_short",
+      "position": [
+        10.11,
+        0,
+        14.29
+      ],
+      "rotationY": 251,
+      "visual": {
+        "scale": 0.76
+      }
+    },
+    {
+      "id": "nature_grass_common_short-09",
+      "asset": "nature_grass_common_short",
+      "position": [
+        -5.16,
+        0,
+        -21.7
+      ],
+      "rotationY": 296,
+      "visual": {
+        "scale": 0.75
+      }
+    },
+    {
+      "id": "nature_grass_common_short-10",
+      "asset": "nature_grass_common_short",
+      "position": [
+        -7.07,
+        0,
+        -8.02
+      ],
+      "rotationY": 53,
+      "visual": {
+        "scale": 0.84
+      }
+    },
+    {
+      "id": "nature_grass_common_short-11",
+      "asset": "nature_grass_common_short",
+      "position": [
+        12.02,
+        0,
+        -9.8
+      ],
+      "rotationY": 345,
+      "visual": {
+        "scale": 1.03
+      }
+    },
+    {
+      "id": "nature_grass_common_short-12",
+      "asset": "nature_grass_common_short",
+      "position": [
+        17.94,
+        0,
+        -8.24
+      ],
+      "rotationY": 40,
+      "visual": {
+        "scale": 1.23
+      }
+    },
+    {
+      "id": "nature_grass_common_short-13",
+      "asset": "nature_grass_common_short",
+      "position": [
+        -14.75,
+        0,
+        -27.61
+      ],
+      "rotationY": 226,
+      "visual": {
+        "scale": 0.86
+      }
+    },
+    {
+      "id": "nature_grass_common_short-14",
+      "asset": "nature_grass_common_short",
+      "position": [
+        -27.81,
+        0,
+        24.55
+      ],
+      "rotationY": 47,
+      "visual": {
+        "scale": 1.17
+      }
+    },
+    {
+      "id": "nature_grass_common_short-15",
+      "asset": "nature_grass_common_short",
+      "position": [
+        -7.66,
+        0,
+        -6.91
+      ],
+      "rotationY": 92,
+      "visual": {
+        "scale": 1.24
+      }
+    },
+    {
+      "id": "nature_grass_common_short-16",
+      "asset": "nature_grass_common_short",
+      "position": [
+        -7.73,
+        0,
+        -5.92
+      ],
+      "rotationY": 199,
+      "visual": {
+        "scale": 0.82
+      }
+    },
+    {
+      "id": "nature_grass_common_short-17",
+      "asset": "nature_grass_common_short",
+      "position": [
+        26.49,
+        0,
+        -9.27
+      ],
+      "rotationY": 188,
+      "visual": {
+        "scale": 0.82
+      }
+    },
+    {
+      "id": "nature_grass_common_short-18",
+      "asset": "nature_grass_common_short",
+      "position": [
+        -18.15,
+        0,
+        -21.15
+      ],
+      "rotationY": 273,
+      "visual": {
+        "scale": 0.95
+      }
+    },
+    {
+      "id": "nature_grass_common_short-19",
+      "asset": "nature_grass_common_short",
+      "position": [
+        15.93,
+        0,
+        28.72
+      ],
+      "rotationY": 166,
+      "visual": {
+        "scale": 1.07
+      }
+    },
+    {
+      "id": "nature_grass_common_short-20",
+      "asset": "nature_grass_common_short",
+      "position": [
+        -11.65,
+        0,
+        24.73
+      ],
+      "rotationY": 232,
+      "visual": {
+        "scale": 1.14
+      }
+    },
+    {
+      "id": "nature_grass_common_short-21",
+      "asset": "nature_grass_common_short",
+      "position": [
+        6.65,
+        0,
+        2.84
+      ],
+      "rotationY": 318,
+      "visual": {
+        "scale": 1
+      }
+    },
+    {
+      "id": "nature_grass_common_short-22",
+      "asset": "nature_grass_common_short",
+      "position": [
+        -11.3,
+        0,
+        28.11
+      ],
+      "rotationY": 163,
+      "visual": {
+        "scale": 1.24
+      }
+    },
+    {
+      "id": "nature_grass_common_tall-01",
+      "asset": "nature_grass_common_tall",
+      "position": [
+        -13.79,
+        0,
+        19.28
+      ],
+      "rotationY": 36,
+      "visual": {
+        "scale": 0.96
+      }
+    },
+    {
+      "id": "nature_grass_common_tall-02",
+      "asset": "nature_grass_common_tall",
+      "position": [
+        12.3,
+        0,
+        -0.19
+      ],
+      "rotationY": 328,
+      "visual": {
+        "scale": 0.95
+      }
+    },
+    {
+      "id": "nature_grass_common_tall-03",
+      "asset": "nature_grass_common_tall",
+      "position": [
+        -13.23,
+        0,
+        -6.74
+      ],
+      "rotationY": 345,
+      "visual": {
+        "scale": 0.84
+      }
+    },
+    {
+      "id": "nature_grass_common_tall-04",
+      "asset": "nature_grass_common_tall",
+      "position": [
+        21,
+        0,
+        13.46
+      ],
+      "rotationY": 245,
+      "visual": {
+        "scale": 0.88
+      }
+    },
+    {
+      "id": "nature_grass_common_tall-05",
+      "asset": "nature_grass_common_tall",
+      "position": [
+        -16.6,
+        0,
+        -8.73
+      ],
+      "rotationY": 243,
+      "visual": {
+        "scale": 0.89
+      }
+    },
+    {
+      "id": "nature_grass_common_tall-06",
+      "asset": "nature_grass_common_tall",
+      "position": [
+        -22.61,
+        0,
+        -12.12
+      ],
+      "rotationY": 278,
+      "visual": {
+        "scale": 0.76
+      }
+    },
+    {
+      "id": "nature_grass_common_tall-07",
+      "asset": "nature_grass_common_tall",
+      "position": [
+        -19.17,
+        0,
+        14.25
+      ],
+      "rotationY": 78,
+      "visual": {
+        "scale": 0.79
+      }
+    },
+    {
+      "id": "nature_grass_common_tall-08",
+      "asset": "nature_grass_common_tall",
+      "position": [
+        -11.26,
+        0,
+        0.61
+      ],
+      "rotationY": 205,
+      "visual": {
+        "scale": 0.63
+      }
+    },
+    {
+      "id": "nature_grass_common_tall-09",
+      "asset": "nature_grass_common_tall",
+      "position": [
+        10.34,
+        0,
+        20
+      ],
+      "rotationY": 16,
+      "visual": {
+        "scale": 0.93
+      }
+    },
+    {
+      "id": "nature_grass_common_tall-10",
+      "asset": "nature_grass_common_tall",
+      "position": [
+        4.35,
+        0,
+        1.93
+      ],
+      "rotationY": 151,
+      "visual": {
+        "scale": 1
+      }
+    },
+    {
+      "id": "nature_grass_common_tall-11",
+      "asset": "nature_grass_common_tall",
+      "position": [
+        -5.08,
+        0,
+        12.26
+      ],
+      "rotationY": 314,
+      "visual": {
+        "scale": 0.84
+      }
+    },
+    {
+      "id": "nature_grass_common_tall-12",
+      "asset": "nature_grass_common_tall",
+      "position": [
+        -14.47,
+        0,
+        14.15
+      ],
+      "rotationY": 185,
+      "visual": {
+        "scale": 0.86
+      }
+    },
+    {
+      "id": "nature_grass_wispy_short-01",
+      "asset": "nature_grass_wispy_short",
+      "position": [
+        -14.27,
+        0,
+        -17.25
+      ],
+      "rotationY": 108,
+      "visual": {
+        "scale": 1.22
+      }
+    },
+    {
+      "id": "nature_grass_wispy_short-02",
+      "asset": "nature_grass_wispy_short",
+      "position": [
+        28.43,
+        0,
+        23.19
+      ],
+      "rotationY": 337,
+      "visual": {
+        "scale": 1.19
+      }
+    },
+    {
+      "id": "nature_grass_wispy_short-03",
+      "asset": "nature_grass_wispy_short",
+      "position": [
+        -8.55,
+        0,
+        -11.74
+      ],
+      "rotationY": 74,
+      "visual": {
+        "scale": 0.99
+      }
+    },
+    {
+      "id": "nature_grass_wispy_short-04",
+      "asset": "nature_grass_wispy_short",
+      "position": [
+        -20.3,
+        0,
+        -27.56
+      ],
+      "rotationY": 263,
+      "visual": {
+        "scale": 1.28
+      }
+    },
+    {
+      "id": "nature_grass_wispy_short-05",
+      "asset": "nature_grass_wispy_short",
+      "position": [
+        16.7,
+        0,
+        -17.07
+      ],
+      "rotationY": 5,
+      "visual": {
+        "scale": 1.12
+      }
+    },
+    {
+      "id": "nature_grass_wispy_short-06",
+      "asset": "nature_grass_wispy_short",
+      "position": [
+        17.43,
+        0,
+        -27.61
+      ],
+      "rotationY": 135,
+      "visual": {
+        "scale": 1.06
+      }
+    },
+    {
+      "id": "nature_grass_wispy_short-07",
+      "asset": "nature_grass_wispy_short",
+      "position": [
+        -13.02,
+        0,
+        12.63
+      ],
+      "rotationY": 358,
+      "visual": {
+        "scale": 1.06
+      }
+    },
+    {
+      "id": "nature_grass_wispy_short-08",
+      "asset": "nature_grass_wispy_short",
+      "position": [
+        16.95,
+        0,
+        13.97
+      ],
+      "rotationY": 212,
+      "visual": {
+        "scale": 0.85
+      }
+    },
+    {
+      "id": "nature_grass_wispy_short-09",
+      "asset": "nature_grass_wispy_short",
+      "position": [
+        18.3,
+        0,
+        -20.06
+      ],
+      "rotationY": 246,
+      "visual": {
+        "scale": 0.74
+      }
+    },
+    {
+      "id": "nature_grass_wispy_short-10",
+      "asset": "nature_grass_wispy_short",
+      "position": [
+        21.35,
+        0,
+        -9.23
+      ],
+      "rotationY": 81,
+      "visual": {
+        "scale": 1.19
+      }
+    },
+    {
+      "id": "nature_grass_wispy_short-11",
+      "asset": "nature_grass_wispy_short",
+      "position": [
+        -13.4,
+        0,
+        10.17
+      ],
+      "rotationY": 158,
+      "visual": {
+        "scale": 0.92
+      }
+    },
+    {
+      "id": "nature_grass_wispy_short-12",
+      "asset": "nature_grass_wispy_short",
+      "position": [
+        10.31,
+        0,
+        19.97
+      ],
+      "rotationY": 338,
+      "visual": {
+        "scale": 0.71
+      }
+    },
+    {
+      "id": "nature_grass_wispy_short-13",
+      "asset": "nature_grass_wispy_short",
+      "position": [
+        -11,
+        0,
+        -20.67
+      ],
+      "rotationY": 87,
+      "visual": {
+        "scale": 0.95
+      }
+    },
+    {
+      "id": "nature_grass_wispy_short-14",
+      "asset": "nature_grass_wispy_short",
+      "position": [
+        6.73,
+        0,
+        6.29
+      ],
+      "rotationY": 183,
+      "visual": {
+        "scale": 1.05
+      }
+    },
+    {
+      "id": "nature_grass_wispy_short-15",
+      "asset": "nature_grass_wispy_short",
+      "position": [
+        25.16,
+        0,
+        13.74
+      ],
+      "rotationY": 257,
+      "visual": {
+        "scale": 1.04
+      }
+    },
+    {
+      "id": "nature_fern_1-01",
+      "asset": "nature_fern_1",
+      "position": [
+        16.82,
+        0,
+        -26.01
+      ],
+      "rotationY": 300,
+      "visual": {
+        "scale": 0.32
+      }
+    },
+    {
+      "id": "nature_fern_1-02",
+      "asset": "nature_fern_1",
+      "position": [
+        26.17,
+        0,
+        0.77
+      ],
+      "rotationY": 209,
+      "visual": {
+        "scale": 0.35
+      }
+    },
+    {
+      "id": "nature_fern_1-03",
+      "asset": "nature_fern_1",
+      "position": [
+        6.28,
+        0,
+        -21.78
+      ],
+      "rotationY": 34,
+      "visual": {
+        "scale": 0.27
+      }
+    },
+    {
+      "id": "nature_fern_1-04",
+      "asset": "nature_fern_1",
+      "position": [
+        -20.74,
+        0,
+        6.49
+      ],
+      "rotationY": 52,
+      "visual": {
+        "scale": 0.32
+      }
+    },
+    {
+      "id": "nature_fern_1-05",
+      "asset": "nature_fern_1",
+      "position": [
+        -18.68,
+        0,
+        -9.98
+      ],
+      "rotationY": 253,
+      "visual": {
+        "scale": 0.3
+      }
+    },
+    {
+      "id": "nature_fern_1-06",
+      "asset": "nature_fern_1",
+      "position": [
+        21.69,
+        0,
+        15.23
+      ],
+      "rotationY": 346,
+      "visual": {
+        "scale": 0.38
+      }
+    },
+    {
+      "id": "nature_fern_1-07",
+      "asset": "nature_fern_1",
+      "position": [
+        9.18,
+        0,
+        -11.14
+      ],
+      "rotationY": 26,
+      "visual": {
+        "scale": 0.38
+      }
+    },
+    {
+      "id": "nature_fern_1-08",
+      "asset": "nature_fern_1",
+      "position": [
+        20.76,
+        0,
+        -19.63
+      ],
+      "rotationY": 97,
+      "visual": {
+        "scale": 0.26
+      }
+    },
+    {
+      "id": "nature_flower_3_group-01",
+      "asset": "nature_flower_3_group",
+      "position": [
+        24.73,
+        0,
+        0.84
+      ],
+      "rotationY": 51,
+      "visual": {
+        "scale": 0.79
+      }
+    },
+    {
+      "id": "nature_flower_3_group-02",
+      "asset": "nature_flower_3_group",
+      "position": [
+        -15.96,
+        0,
+        -5.15
+      ],
+      "rotationY": 58,
+      "visual": {
+        "scale": 0.66
+      }
+    },
+    {
+      "id": "nature_flower_3_group-03",
+      "asset": "nature_flower_3_group",
+      "position": [
+        3.26,
+        0,
+        24.49
+      ],
+      "rotationY": 277,
+      "visual": {
+        "scale": 0.94
+      }
+    },
+    {
+      "id": "nature_flower_3_group-04",
+      "asset": "nature_flower_3_group",
+      "position": [
+        23.7,
+        0,
+        1.31
+      ],
+      "rotationY": 232,
+      "visual": {
+        "scale": 0.77
+      }
+    },
+    {
+      "id": "nature_flower_3_group-05",
+      "asset": "nature_flower_3_group",
+      "position": [
+        -22.67,
+        0,
+        18.16
+      ],
+      "rotationY": 328,
+      "visual": {
+        "scale": 0.61
+      }
+    },
+    {
+      "id": "nature_flower_3_group-06",
+      "asset": "nature_flower_3_group",
+      "position": [
+        -9.12,
+        0,
+        27.79
+      ],
+      "rotationY": 166,
+      "visual": {
+        "scale": 0.86
+      }
+    },
+    {
+      "id": "nature_flower_3_group-07",
+      "asset": "nature_flower_3_group",
+      "position": [
+        13.79,
+        0,
+        7.12
+      ],
+      "rotationY": 218,
+      "visual": {
+        "scale": 0.77
+      }
+    },
+    {
+      "id": "nature_flower_3_group-08",
+      "asset": "nature_flower_3_group",
+      "position": [
+        14.25,
+        0,
+        19.44
+      ],
+      "rotationY": 37,
+      "visual": {
+        "scale": 0.87
+      }
+    },
+    {
+      "id": "nature_flower_3_group-09",
+      "asset": "nature_flower_3_group",
+      "position": [
+        16.72,
+        0,
+        12.23
+      ],
+      "rotationY": 26,
+      "visual": {
+        "scale": 0.48
+      }
+    },
+    {
+      "id": "nature_flower_3_group-10",
+      "asset": "nature_flower_3_group",
+      "position": [
+        5.59,
+        0,
+        -27.9
+      ],
+      "rotationY": 324,
+      "visual": {
+        "scale": 0.55
+      }
+    },
+    {
+      "id": "nature_flower_3_group-11",
+      "asset": "nature_flower_3_group",
+      "position": [
+        -6.66,
+        0,
+        -2.87
+      ],
+      "rotationY": 278,
+      "visual": {
+        "scale": 0.64
+      }
+    },
+    {
+      "id": "nature_flower_3_group-12",
+      "asset": "nature_flower_3_group",
+      "position": [
+        22.84,
+        0,
+        13.33
+      ],
+      "rotationY": 123,
+      "visual": {
+        "scale": 0.59
+      }
+    },
+    {
+      "id": "nature_flower_3_group-13",
+      "asset": "nature_flower_3_group",
+      "position": [
+        -24.87,
+        0,
+        -9.62
+      ],
+      "rotationY": 345,
+      "visual": {
+        "scale": 0.72
+      }
+    },
+    {
+      "id": "nature_flower_3_group-14",
+      "asset": "nature_flower_3_group",
+      "position": [
+        17.19,
+        0,
+        13.74
+      ],
+      "rotationY": 247,
+      "visual": {
+        "scale": 0.86
+      }
+    },
+    {
+      "id": "nature_mushroom_common-01",
+      "asset": "nature_mushroom_common",
+      "position": [
+        -5.67,
+        0,
+        -22.3
+      ],
+      "rotationY": 278,
+      "visual": {
+        "scale": 1.04
+      }
+    },
+    {
+      "id": "nature_mushroom_common-02",
+      "asset": "nature_mushroom_common",
+      "position": [
+        -21.25,
+        0,
+        13.3
+      ],
+      "rotationY": 218,
+      "visual": {
+        "scale": 1.58
+      }
+    },
+    {
+      "id": "nature_mushroom_common-03",
+      "asset": "nature_mushroom_common",
+      "position": [
+        4.92,
+        0,
+        -1.08
+      ],
+      "rotationY": 192,
+      "visual": {
+        "scale": 1.69
+      }
+    },
+    {
+      "id": "nature_mushroom_common-04",
+      "asset": "nature_mushroom_common",
+      "position": [
+        17.26,
+        0,
+        -13.84
+      ],
+      "rotationY": 347,
+      "visual": {
+        "scale": 1.6
+      }
+    },
+    {
+      "id": "nature_mushroom_common-05",
+      "asset": "nature_mushroom_common",
+      "position": [
+        16.4,
+        0,
+        -13.15
+      ],
+      "rotationY": 257,
+      "visual": {
+        "scale": 1.13
+      }
+    },
+    {
+      "id": "nature_mushroom_common-06",
+      "asset": "nature_mushroom_common",
+      "position": [
+        22.08,
+        0,
+        -28.19
+      ],
+      "rotationY": 37,
+      "visual": {
+        "scale": 1.07
+      }
+    },
+    {
+      "id": "nature_mushroom_common-07",
+      "asset": "nature_mushroom_common",
+      "position": [
+        -8.95,
+        0,
+        -17.66
+      ],
+      "rotationY": 33,
+      "visual": {
+        "scale": 1.03
+      }
+    },
+    {
+      "id": "nature_mushroom_common-08",
+      "asset": "nature_mushroom_common",
+      "position": [
+        14.09,
+        0,
+        -20.63
+      ],
+      "rotationY": 19,
+      "visual": {
+        "scale": 1.39
+      }
+    },
+    {
+      "id": "nature_clover_1-01",
+      "asset": "nature_clover_1",
+      "position": [
+        -21.29,
+        0,
+        15.25
+      ],
+      "rotationY": 295,
+      "visual": {
+        "scale": 1.25
+      }
+    },
+    {
+      "id": "nature_clover_1-02",
+      "asset": "nature_clover_1",
+      "position": [
+        11.93,
+        0,
+        8.21
+      ],
+      "rotationY": 64,
+      "visual": {
+        "scale": 0.98
+      }
+    },
+    {
+      "id": "nature_clover_1-03",
+      "asset": "nature_clover_1",
+      "position": [
+        26.05,
+        0,
+        -9.51
+      ],
+      "rotationY": 131,
+      "visual": {
+        "scale": 0.95
+      }
+    },
+    {
+      "id": "nature_clover_1-04",
+      "asset": "nature_clover_1",
+      "position": [
+        20.56,
+        0,
+        -5.52
+      ],
+      "rotationY": 258,
+      "visual": {
+        "scale": 0.96
+      }
+    },
+    {
+      "id": "nature_clover_1-05",
+      "asset": "nature_clover_1",
+      "position": [
+        -22.41,
+        0,
+        11.76
+      ],
+      "rotationY": 307,
+      "visual": {
+        "scale": 1.22
+      }
+    },
+    {
+      "id": "nature_clover_1-06",
+      "asset": "nature_clover_1",
+      "position": [
+        -13.93,
+        0,
+        -4.34
+      ],
+      "rotationY": 21,
+      "visual": {
+        "scale": 1.05
+      }
+    },
+    {
+      "id": "nature_clover_1-07",
+      "asset": "nature_clover_1",
+      "position": [
+        -17.21,
+        0,
+        17.09
+      ],
+      "rotationY": 207,
+      "visual": {
+        "scale": 0.82
+      }
+    },
+    {
+      "id": "nature_clover_1-08",
+      "asset": "nature_clover_1",
+      "position": [
+        21.24,
+        0,
+        1.67
+      ],
+      "rotationY": 191,
+      "visual": {
+        "scale": 1.04
+      }
+    },
+    {
+      "id": "nature_clover_1-09",
+      "asset": "nature_clover_1",
+      "position": [
+        21.4,
+        0,
+        -1.09
+      ],
+      "rotationY": 217,
+      "visual": {
+        "scale": 0.94
+      }
+    },
+    {
+      "id": "nature_clover_1-10",
+      "asset": "nature_clover_1",
+      "position": [
+        16.83,
+        0,
+        -16.32
+      ],
+      "rotationY": 79,
+      "visual": {
+        "scale": 1.09
+      }
+    },
+    {
+      "id": "nature_clover_1-11",
+      "asset": "nature_clover_1",
+      "position": [
+        17.87,
+        0,
+        -21.71
+      ],
+      "rotationY": 6,
+      "visual": {
+        "scale": 1.23
+      }
+    },
+    {
+      "id": "nature_clover_1-12",
+      "asset": "nature_clover_1",
+      "position": [
+        28.19,
+        0,
+        -6.1
+      ],
+      "rotationY": 189,
+      "visual": {
+        "scale": 1.24
+      }
+    },
+    {
+      "id": "nature_pebble_round_1-01",
+      "asset": "nature_pebble_round_1",
+      "position": [
+        12.23,
+        0,
+        -11.76
+      ],
+      "rotationY": 68,
+      "visual": {
+        "scale": 1.42
+      }
+    },
+    {
+      "id": "nature_pebble_round_1-02",
+      "asset": "nature_pebble_round_1",
+      "position": [
+        15.39,
+        0,
+        -10.5
+      ],
+      "rotationY": 79,
+      "visual": {
+        "scale": 1.21
+      }
+    },
+    {
+      "id": "nature_pebble_round_1-03",
+      "asset": "nature_pebble_round_1",
+      "position": [
+        -21.52,
+        0,
+        -25.77
+      ],
+      "rotationY": 123,
+      "visual": {
+        "scale": 1.38
+      }
+    },
+    {
+      "id": "nature_pebble_round_1-04",
+      "asset": "nature_pebble_round_1",
+      "position": [
+        -24.65,
+        0,
+        -4.05
+      ],
+      "rotationY": 79,
+      "visual": {
+        "scale": 1.14
+      }
+    },
+    {
+      "id": "nature_pebble_round_1-05",
+      "asset": "nature_pebble_round_1",
+      "position": [
+        8,
+        0,
+        -14.74
+      ],
+      "rotationY": 259,
+      "visual": {
+        "scale": 1.43
+      }
+    },
+    {
+      "id": "nature_pebble_round_1-06",
+      "asset": "nature_pebble_round_1",
+      "position": [
+        16.34,
+        0,
+        -9.11
+      ],
+      "rotationY": 206,
+      "visual": {
+        "scale": 1.23
+      }
+    },
+    {
+      "id": "nature_pebble_round_1-07",
+      "asset": "nature_pebble_round_1",
+      "position": [
+        20.11,
+        0,
+        21.64
+      ],
+      "rotationY": 1,
+      "visual": {
+        "scale": 1.06
+      }
+    },
+    {
+      "id": "nature_pebble_round_1-08",
+      "asset": "nature_pebble_round_1",
+      "position": [
+        -23.03,
+        0,
+        -2.43
+      ],
+      "rotationY": 142,
+      "visual": {
+        "scale": 1.31
+      }
+    },
+    {
+      "id": "nature_pebble_round_1-09",
+      "asset": "nature_pebble_round_1",
+      "position": [
+        -0.77,
+        0,
+        -14.69
+      ],
+      "rotationY": 53,
+      "visual": {
+        "scale": 1.09
+      }
+    },
+    {
+      "id": "nature_pebble_round_1-10",
+      "asset": "nature_pebble_round_1",
+      "position": [
+        20.42,
+        0,
+        -21.02
+      ],
+      "rotationY": 49,
+      "visual": {
+        "scale": 1.37
+      }
+    },
+    {
+      "id": "nature_path_stone_01",
+      "asset": "nature_rockpath_round_small_1",
+      "position": [
+        -0.6,
+        0.015,
+        -28
+      ],
+      "rotationY": 239,
+      "visual": {
+        "scale": 1.82
+      }
+    },
+    {
+      "id": "nature_path_stone_02",
+      "asset": "nature_rockpath_round_small_1",
+      "position": [
+        0.22,
+        0.015,
+        -23.5
+      ],
+      "rotationY": 173,
+      "visual": {
+        "scale": 1.7
+      }
+    },
+    {
+      "id": "nature_path_stone_03",
+      "asset": "nature_rockpath_round_small_1",
+      "position": [
+        -1.15,
+        0.015,
+        -19
+      ],
+      "rotationY": 130,
+      "visual": {
+        "scale": 2.03
+      }
+    },
+    {
+      "id": "nature_path_stone_04",
+      "asset": "nature_rockpath_round_small_1",
+      "position": [
+        0.89,
+        0.015,
+        -14.5
+      ],
+      "rotationY": 219,
+      "visual": {
+        "scale": 1.85
+      }
+    },
+    {
+      "id": "nature_path_stone_05",
+      "asset": "nature_rockpath_round_small_1",
+      "position": [
+        -1.54,
+        0.015,
+        -10
+      ],
+      "rotationY": 147,
+      "visual": {
+        "scale": 1.79
+      }
+    },
+    {
+      "id": "nature_path_stone_06",
+      "asset": "nature_rockpath_round_small_1",
+      "position": [
+        0.6,
+        0.015,
+        -5.5
+      ],
+      "rotationY": 255,
+      "visual": {
+        "scale": 1.5
+      }
+    },
+    {
+      "id": "nature_path_stone_07",
+      "asset": "nature_rockpath_round_small_1",
+      "position": [
+        -0.4,
+        0.015,
+        -1
+      ],
+      "rotationY": 148,
+      "visual": {
+        "scale": 1.85
+      }
+    },
+    {
+      "id": "nature_path_stone_08",
+      "asset": "nature_rockpath_round_small_1",
+      "position": [
+        1.55,
+        0.015,
+        3.5
+      ],
+      "rotationY": 164,
+      "visual": {
+        "scale": 1.5
+      }
+    },
+    {
+      "id": "nature_path_stone_09",
+      "asset": "nature_rockpath_round_small_1",
+      "position": [
+        -0.26,
+        0.015,
+        8
+      ],
+      "rotationY": 80,
+      "visual": {
+        "scale": 1.94
+      }
+    },
+    {
+      "id": "nature_path_stone_10",
+      "asset": "nature_rockpath_round_small_1",
+      "position": [
+        -0.58,
+        0.015,
+        12.5
+      ],
+      "rotationY": 56,
+      "visual": {
+        "scale": 1.6
+      }
+    },
+    {
+      "id": "nature_path_stone_11",
+      "asset": "nature_rockpath_round_small_1",
+      "position": [
+        0.1,
+        0.015,
+        17
+      ],
+      "rotationY": 13,
+      "visual": {
+        "scale": 2.18
+      }
+    },
+    {
+      "id": "nature_path_stone_12",
+      "asset": "nature_rockpath_round_small_1",
+      "position": [
+        -0.21,
+        0.015,
+        21.5
+      ],
+      "rotationY": 274,
+      "visual": {
+        "scale": 1.51
+      }
+    },
+    {
+      "id": "nature_path_stone_13",
+      "asset": "nature_rockpath_round_small_1",
+      "position": [
+        0.19,
+        0.015,
+        26
+      ],
+      "rotationY": 321,
+      "visual": {
+        "scale": 1.9
+      }
+    }
+  ],
+  "spawnPoints": [
+    {
+      "id": "player-start",
+      "type": "player",
+      "position": [
+        0,
+        0,
+        -21
+      ],
+      "rotationY": 0
+    }
+  ],
+  "environment": {
+    "background": "#B5C9A8",
+    "ambient": {
+      "color": "#E9E5CC",
+      "intensity": 0.7
+    },
+    "sun": {
+      "color": "#FFF0CC",
+      "intensity": 1.05,
+      "direction": [
+        -0.65,
+        -1.3,
+        0.45
+      ],
+      "shadows": {
+        "enabled": true,
+        "darkness": 0.26,
+        "resolution": 1024
+      }
+    },
+    "fog": {
+      "enabled": true,
+      "color": "#B5C9A8",
+      "density": 0.003
+    }
+  }
+}
