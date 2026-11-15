@@ -16,7 +16,7 @@ export function aimYaw(yaw: number, dx: number, dz: number, delta: number, speed
 }
 
 /** Normalized ground direction relative to the cursor heading (+Z at yaw zero). */
-export function mouseRelativeDirection(horizontal: number, vertical: number, yaw: number): GroundVector {
+export function relativeMovementDirection(horizontal: number, vertical: number, yaw: number): GroundVector {
   const length = Math.hypot(horizontal, vertical);
   if (length === 0) return { x: 0, z: 0 };
   const cos = Math.cos(yaw);
