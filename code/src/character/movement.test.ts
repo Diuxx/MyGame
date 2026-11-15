@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { aimYaw, calculateMovementStep, consumeImpactWindow, crossesImpactWindow, dodgeDirection, dodgeInvulnerable, dodgeTravelProgress, mouseRelativeDirection } from "./movement.ts";
+import { aimYaw, calculateMovementStep, consumeImpactWindow, crossesImpactWindow, dodgeDirection, dodgeInvulnerable, dodgeTravelProgress, relativeMovementDirection } from "./movement.ts";
 import { ANIMATION_RANGES, createAnimationSettings, createAttackHits, effectivePlaybackSpeed, HERO_ANIMATIONS, serializeAnimationManifest } from "./animationSettings.ts";
 import { HERO_TUNING } from "./heroTuning.ts";
 import { createTransitionSettings } from "./transitionSettings.ts";
@@ -14,18 +14,18 @@ test("aim keeps its heading near the hero and turns across the shortest arc", ()
 });
 
 test("forward and backward follow the cursor axis while left and right follow its perpendicular", () => {
-  assert.equal(mouseRelativeDirection(0, 1, 0).z, 1);
-  assert.equal(mouseRelativeDirection(0, -1, 0).z, -1);
-  assert.equal(mouseRelativeDirection(-1, 0, 0).x, -1);
-  assert.equal(mouseRelativeDirection(1, 0, 0).x, 1);
-  const forward = mouseRelativeDirection(0, 1, Math.PI / 2);
+  assert.equal(relativeMovementDirection(0, 1, 0).z, 1);
+  assert.equal(relativeMovementDirection(0, -1, 0).z, -1);
+  assert.equal(relativeMovementDirection(-1, 0, 0).x, -1);
+  assert.equal(relativeMovementDirection(1, 0, 0).x, 1);
+  const forward = relativeMovementDirection(0, 1, Math.PI / 2);
   assert.equal(forward.x, 1);
   assert.ok(Math.abs(forward.z) < 1e-12);
-  assert.equal(mouseRelativeDirection(1, 0, Math.PI / 2).z, -1);
+  assert.equal(relativeMovementDirection(1, 0, Math.PI / 2).z, -1);
 });
 
 test("diagonal movement keeps the same speed and running increases it", () => {
-  const direction = mouseRelativeDirection(1, 1, 1);
+  const direction = relativeMovementDirection(1, 1, 1);
   const walk = calculateMovementStep(direction, 0.02, 1.5);
   const run = calculateMovementStep(direction, 0.02, 3.5);
   const delta = Math.min(0.02, HERO_TUNING.maxMovementDelta);
@@ -34,10 +34,10 @@ test("diagonal movement keeps the same speed and running increases it", () => {
 });
 
 test("no input gives no movement and slow frames cap the distance", () => {
-  assert.deepEqual(calculateMovementStep(mouseRelativeDirection(0, 0, 1), 0.02, 1.5), { x: 0, z: 0 });
+  assert.deepEqual(calculateMovementStep(relativeMovementDirection(0, 0, 1), 0.02, 1.5), { x: 0, z: 0 });
   assert.deepEqual(
-    calculateMovementStep(mouseRelativeDirection(1, 0, 1), 1, 1.5),
-    calculateMovementStep(mouseRelativeDirection(1, 0, 1), HERO_TUNING.maxMovementDelta, 1.5),
+    calculateMovementStep(relativeMovementDirection(1, 0, 1), 1, 1.5),
+    calculateMovementStep(relativeMovementDirection(1, 0, 1), HERO_TUNING.maxMovementDelta, 1.5),
   );
 });
 
