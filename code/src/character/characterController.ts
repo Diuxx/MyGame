@@ -4,6 +4,7 @@ import { createAnimationSettings, createAttackHits, getAnimationDefinition, HERO
 import { clamp } from "../world/cameraMath";
 import type { Position } from "../combat/combat";
 import { bindHeroInput } from "./heroInput";
+import { canCancelAction, type CancelTarget } from "./actionCancelling.ts";
 import { allowsLocomotion } from "./animationLayers";
 import { HERO_TUNING } from "./heroTuning";
 import { aimYaw, calculateMovementStep, consumeImpactWindow, dodgeDirection, dodgeInvulnerable, dodgeTravelProgress, mouseRelativeDirection, type GroundVector } from "./movement";
@@ -64,12 +65,29 @@ export function createCharacterController(
     onFacingChange(root.rotation.y);
   }
 
-  function canStartAction(): boolean {
-    return isInputEnabled() && (!action || action.kind === "stop") && !animations.isPaused;
+  function actionAnimationId(kind: ActiveAction["kind"]): string | undefined {
+    if (kind === "attack") return ATTACK_ANIMATION;
+    if (kind === "dodge") return DODGE_ANIMATION;
+    return undefined;
+  }
+
+  function actionBlendOut(): number {
+    const id = action && actionAnimationId(action.kind);
+    return id ? settings[id]?.blendOutSeconds ?? 0 : 0;
+  }
+
+  function canInterrupt(target: CancelTarget): boolean {
+    if (!action || action.kind === "stop") return true;
+    const id = actionAnimationId(action.kind);
+    return !!id && canCancelAction(animations.actionProgress, settings[id]?.cancel, target);
+  }
+
+  function canStartAction(target: "attack" | "dodge"): boolean {
+    return isInputEnabled() && !animations.isPaused && canInterrupt(target);
   }
 
   function beginAction(clip: string, next: ActiveAction): void {
-    if (action?.kind === "stop") finishAction();
+    if (action) finishAction(actionBlendOut());
     wasSprinting = false;
     action = next;
     animations.play(clip, true, next.kind === "attack" && HERO_TUNING.attack.allowMovement);
@@ -78,14 +96,14 @@ export function createCharacterController(
   }
 
   function attack(): void {
-    if (!canStartAction()) return;
+    if (!canStartAction("attack")) return;
     const yaw = updateCursorYaw() ?? root.rotation.y;
     turn(Math.sin(yaw), Math.cos(yaw), 1, Infinity);
     beginAction(ATTACK_ANIMATION, { kind: "attack", progress: 0, hits: createAttackHits(settings[ATTACK_ANIMATION].impact!) });
   }
 
   function startDodge(): void {
-    if (!canStartAction() || cooldown > 0) return;
+    if (!canStartAction("dodge") || cooldown > 0) return;
     const direction = dodgeDirection(root.rotation.y);
     cooldown = HERO_TUNING.dodge.cooldown;
     beginAction(DODGE_ANIMATION, { kind: "dodge", direction, progress: 0, distance: settings[DODGE_ANIMATION].dodge!.distance });
@@ -135,11 +153,11 @@ export function createCharacterController(
       }
       active.progress = progress;
     }
-    if (progress >= 1) finishAction();
+    if (progress >= 1) finishAction(actionBlendOut());
   }
 
-  function finishAction(): void {
-    animations.finishAction();
+  function finishAction(blendOutSeconds = 0): void {
+    animations.finishAction(blendOutSeconds);
     action = undefined;
     // Force one locomotion update even when no movement key is held.
     wasMoving = true;
@@ -174,6 +192,8 @@ export function createCharacterController(
     combatStanceRemaining = Math.max(0, combatStanceRemaining - delta);
     if (action?.kind === "stop" && wantsMovement) finishAction();
     if (action) updateAction(action);
+    // Read held movement even while dodging, then cancel on the first permitted frame.
+    if (action && wantsMovement && canInterrupt("run")) finishAction(actionBlendOut());
 
     const attacking = action?.kind === "attack";
     const facingLocked = attacking && HERO_TUNING.attack.lockFacing;
@@ -228,7 +248,7 @@ export function createCharacterController(
       if (HERO_TUNING.combatStance.onHitReceived && !isInvulnerable()) refreshCombatStance();
     },
     preview(id: string) {
-      if (!canStartAction()) return;
+      if (!isInputEnabled() || animations.isPaused || (action && action.kind !== "stop")) return;
       if (action?.kind === "stop") finishAction();
       if (getAnimationDefinition(id)?.category === "action") {
         beginAction(id, { kind: id === HERO_ANIMATIONS.stop.id ? "stop" : "preview" });
