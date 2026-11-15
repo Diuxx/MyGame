@@ -80,12 +80,15 @@ test("saved hero animation settings migrate to lowercase clip names", () => {
   const settings = createAnimationSettings({
     Idle_9: { playbackSpeed: 0.75 },
     Running: { playbackSpeed: 1.5, movement: { speed: 5, sync: true } },
+    "crouch-walk": { playbackSpeed: 1.1, movement: { speed: 1.8, sync: true } },
     Thrust_Slash: { playbackSpeed: 1.25 },
     attack: { playbackSpeed: 2.25 },
   });
   assert.equal(settings.idle.playbackSpeed, 0.75);
   assert.deepEqual(settings.run.movement, { speed: 5, sync: true });
   assert.equal(settings.attack.playbackSpeed, 2.25);
+  assert.equal(settings["combat-stance"].playbackSpeed, 1.1);
+  assert.deepEqual(settings["combat-stance"].movement, { speed: 1.8, sync: true });
 });
 
 test("action timing uses progress and catches an impact window crossed in a single step", () => {

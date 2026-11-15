@@ -34,7 +34,7 @@ export function createCharacterController(
   let cursorYaw: number | undefined;
   let action: ActiveAction | undefined;
   let cooldown = 0;
-  let combatCrouchRemaining = 0;
+  let combatStanceRemaining = 0;
   let settings = createAnimationSettings();
   let selectedMovement = HERO_ANIMATIONS.walk;
 
@@ -106,8 +106,8 @@ export function createCharacterController(
     return actual;
   }
 
-  function refreshCombatCrouch(): void {
-    combatCrouchRemaining = HERO_TUNING.combatCrouchDuration;
+  function refreshCombatStance(): void {
+    combatStanceRemaining = HERO_TUNING.combatStanceDuration;
   }
 
   function isInvulnerable(): boolean {
@@ -127,7 +127,7 @@ export function createCharacterController(
     } else if (active.kind === "attack") {
       for (const hit of active.hits) {
         if (consumeImpactWindow(hit, active.progress, progress) && onAttackImpact()) {
-          refreshCombatCrouch();
+          refreshCombatStance();
         }
       }
       active.progress = progress;
@@ -148,7 +148,7 @@ export function createCharacterController(
     wasSprinting = false;
     wasMoving = false;
     cooldown = 0;
-    combatCrouchRemaining = 0;
+    combatStanceRemaining = 0;
     cursorYaw = undefined;
     input.clearInput();
     animations.setCombatIdle(false);
@@ -166,17 +166,17 @@ export function createCharacterController(
     const previousAnimation = animations.activeName;
     const delta = scene.getEngine().getDeltaTime() / 1000;
     cooldown = Math.max(0, cooldown - delta);
-    combatCrouchRemaining = Math.max(0, combatCrouchRemaining - delta);
+    combatStanceRemaining = Math.max(0, combatStanceRemaining - delta);
     if (action?.kind === "stop" && wantsMovement) finishAction();
     if (action) updateAction(action);
     if (!allowsLocomotion(action?.kind)) return;
 
     const attacking = action?.kind === "attack";
-    // Combat crouch resumes after the strike; running is not slowed mid-attack.
-    const inCombat = combatCrouchRemaining > 0 && !attacking;
+    // Combat stance resumes after the strike; running is not slowed mid-attack.
+    const inCombat = combatStanceRemaining > 0 && !attacking;
     const restChanged = animations.setCombatIdle(inCombat);
     const movement = inCombat
-      ? HERO_ANIMATIONS.crouch
+      ? HERO_ANIMATIONS.combatStance
       : running ? HERO_ANIMATIONS.run : selectedMovement;
     if (wasSprinting && !wantsMovement && !action) {
       beginAction(HERO_ANIMATIONS.stop.id, { kind: "stop" });
@@ -213,7 +213,7 @@ export function createCharacterController(
       onFacingChange(root.rotation.y);
     },
     receiveHit() {
-      if (!isInvulnerable()) refreshCombatCrouch();
+      if (!isInvulnerable()) refreshCombatStance();
     },
     preview(id: string) {
       if (!canStartAction()) return;

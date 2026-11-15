@@ -58,13 +58,16 @@ export async function loadCharacter(scene: Scene): Promise<LoadedCharacter> {
   }
   const skeleton = skinnedMesh.skeleton;
 
-  const loadedClips = await Promise.allSettled(animationManifest.animations.map(async ({ name }) => {
+  const loadedClips = await Promise.allSettled(animationManifest.animations.map(async ({ name, source: sourceName }) => {
     const path = `${animationManifest.directory}/${name}.glb`;
     const source = await LoadAssetContainerAsync(path, scene, importOptions);
     try {
-      const clip = source.animationGroups.find((group) => group.name === name);
+      const clip = source.animationGroups.find((group) => group.name === name) ??
+        source.animationGroups.find((group) => group.name === sourceName);
       if (!clip) throw new Error(`Clip ${name} absent de ${path}.`);
-      return bindAnimationGroup(clip, [skeleton]);
+      const bound = bindAnimationGroup(clip, [skeleton]);
+      bound.name = name;
+      return bound;
     } finally {
       source.dispose();
     }

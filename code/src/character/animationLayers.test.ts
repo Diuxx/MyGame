@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import test from "node:test";
+import test, { type TestContext } from "node:test";
 import { Animation, AnimationGroup, NullEngine, Scene, TransformNode } from "@babylonjs/core";
 import { allowsLocomotion, attackLayerWeight, isUpperBodyBone } from "./animationLayers.ts";
 import { AnimationPlayer } from "./animations.ts";
@@ -36,16 +36,16 @@ test("light attacks permit movement but dodge and full-body previews do not", ()
   assert.equal(allowsLocomotion("preview"), false);
 });
 
-test("the attack animates idle legs and hands the legs back to walk or run during the same strike", (t) => {
+function createPlayer(t: TestContext) {
   const engine = new NullEngine();
   const scene = new Scene(engine);
   t.after(() => engine.dispose());
   const bones = ["mixamorig:Spine", "mixamorig:LeftUpLeg"].map((name) => new TransformNode(name, scene));
-  const clips = ["idle", "walk", "run", "stop", "attack", "dodge", "dying"].map((name) => {
+  const clips = ["idle", "walk", "run", "stop", "attack", "dodge", "dying", "combat-stance"].map((name) => {
     const group = new AnimationGroup(name, scene);
     for (const bone of bones) {
       const track = new Animation(name, "rotation.x", 30, Animation.ANIMATIONTYPE_FLOAT);
-      track.setKeys([{ frame: 0, value: 0 }, { frame: 60, value: 1 }]);
+      track.setKeys([{ frame: 0, value: 0 }, { frame: name === "combat-stance" ? 50 : 60, value: 1 }]);
       group.addTargetedAnimation(track, bone);
     }
     return group;
@@ -56,6 +56,47 @@ test("the attack animates idle legs and hands the legs back to walk or run durin
     assert.ok(group, name);
     return group;
   };
+  return { player, layer };
+}
+
+test("combat stance keeps its upper pose while the legs transition from stance to walk and back", (t) => {
+  const { player, layer } = createPlayer(t);
+  player.setCombatIdle(true);
+  player.updateLocomotion(undefined, 1);
+  const upper = layer("combat-stance-upper");
+  const idleLegs = layer("combat-stance-lower");
+  const walkingLegs = layer("combat-walk-lower");
+  upper.goToFrame(18);
+  assert.equal(upper.weight, 1);
+  assert.equal(idleLegs.weight, 1);
+  assert.ok(!walkingLegs.isStarted);
+
+  player.updateLocomotion("combat-stance", 0.06);
+  assert.equal(upper.weight, 1);
+  assert.equal(upper.getCurrentFrame(), 18);
+  assert.equal(idleLegs.weight, 0.5);
+  assert.equal(walkingLegs.weight, 0.5);
+  assert.equal(walkingLegs.targetedAnimations[0].animation.name, "walk");
+  assert.equal(upper.to, 50);
+  assert.equal(walkingLegs.to, 60);
+  assert.equal(walkingLegs.speedRatio, 0.65);
+  player.updateLocomotion("combat-stance", 1);
+  assert.equal(idleLegs.isStarted, false);
+  assert.equal(upper.weight, 1);
+  assert.equal(upper.getCurrentFrame(), 18);
+
+  player.updateLocomotion(undefined, 1);
+  assert.equal(walkingLegs.isStarted, false);
+  assert.equal(idleLegs.weight, 1);
+  assert.equal(upper.getCurrentFrame(), 18);
+  player.setCombatIdle(false);
+  player.updateLocomotion(undefined, 1);
+  assert.equal(player.activeName, "idle");
+  assert.equal(upper.isStarted, false);
+});
+
+test("the attack animates idle legs and hands the legs back to walk or run during the same strike", (t) => {
+  const { player, layer } = createPlayer(t);
   const upperAttack = layer("attack-upper");
   const lowerAttack = layer("attack-lower");
 

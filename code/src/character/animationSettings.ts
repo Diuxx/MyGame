@@ -25,9 +25,8 @@ function action(id: string, displayName: string, settings?: Partial<Pick<Definit
 export const HERO_ANIMATIONS = {
   run: locomotion("run", "Course", { speed: 4.5 }),
   walk: locomotion("walk", "Marche", { speed: 3 }, 1.3),
-  crouch: locomotion("crouch-walk", "Marche accroupie", { speed: 1.5, facingOffset: 0 }),
+  combatStance: locomotion("combat-stance", "Posture de combat", { speed: 1.5, facingOffset: 0 }),
   idle: locomotion("idle", "Repos"),
-  combatIdle: locomotion("combat-idle", "Repos en combat"),
   dodge: action("dodge", "Esquive", {
     playbackSpeed: 2.5,
     dodge: { distance: 2, window: { from: 0.15, until: 0.9 } },
@@ -44,7 +43,6 @@ export const HERO_ANIMATIONS = {
 export const ANIMATION_DEFINITIONS = Object.values(HERO_ANIMATIONS);
 const definitions = new Map(ANIMATION_DEFINITIONS.map((definition) => [definition.id, definition]));
 const legacyIds = new Map(animationManifest.animations.flatMap(({ name, source }) => source ? [[name, source] as const] : []));
-legacyIds.set(HERO_ANIMATIONS.combatIdle.id, "Idle_5");
 export const getAnimationDefinition = (id: string) => definitions.get(id);
 
 export const ANIMATION_RANGES = {
@@ -81,7 +79,10 @@ export function createAnimationSettings(saved?: unknown, resetAttackTiming = fal
   const entries = record(saved);
   return Object.fromEntries(ANIMATION_DEFINITIONS.map((definition) => {
     const legacyId = legacyIds.get(definition.id);
-    const value = record(entries[definition.id] ?? (legacyId ? entries[legacyId] : undefined));
+    const legacyCombat = definition === HERO_ANIMATIONS.combatStance
+      ? entries["crouch-walk"] ?? entries.Cautious_Crouch_Walk_Forward_inplace
+      : undefined;
+    const value = record(entries[definition.id] ?? (legacyId ? entries[legacyId] : undefined) ?? legacyCombat);
     const settings: AnimationSetting = {
       playbackSpeed: number(value.playbackSpeed, definition.playbackSpeed, ANIMATION_RANGES.playback),
     };

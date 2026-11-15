@@ -64,7 +64,7 @@ Ces valeurs sont des réglages de **playground**, pas des mesures exactes issues
 ## Limites
 
 - Le déplacement est limité au sol du playground. Le héros et les mannequins disposent de colliders physiques circulaires au sol : marche, course et esquive ne traversent pas les mannequins solides. Les ennemis restent statiques ; leurs statistiques d'attaque et de vitesse ne déclenchent encore aucun comportement. Les ennemis mobiles, l'IA et la magie ne sont pas implémentés dans ce playground.
-- Le repos de combat utilise `Idle_9`. Le nœud `mixamorig:RightHand` est exposé pour le futur attachement d'une épée.
+- Après un coup porté ou reçu, le héros passe en posture de combat pendant 5 secondes. À l’arrêt il joue `combat-stance`. En mouvement, le haut du corps reste en garde et les jambes jouent `walk` à la cadence de combat.
 - Le déplacement horizontal du bassin est neutralisé au chargement. La hauteur du bassin reste animée et les pieds ne sont pas verrouillés au sol.
 - Le modèle pèse environ 12 Mo. Il faudra optimiser textures et géométrie avant de cibler les mobiles.
 - Cette archive ne contient pas `node_modules` ni `dist`. Les dépendances sont téléchargées par `npm install`.

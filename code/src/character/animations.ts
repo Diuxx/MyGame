@@ -4,18 +4,23 @@ import { createTransitionSettings, type TransitionSettings } from "./transitionS
 import { createAnimationSettings, effectivePlaybackSpeed, getAnimationDefinition, HERO_ANIMATIONS, type AnimationSettings } from "./animationSettings.ts";
 
 export const IDLE_ANIMATION = HERO_ANIMATIONS.idle.id;
+const COMBAT_STANCE_ANIMATION = HERO_ANIMATIONS.combatStance.id;
 export const ATTACK_ANIMATION = HERO_ANIMATIONS.attack.id;
 export const DODGE_ANIMATION = HERO_ANIMATIONS.dodge.id;
 export const DEATH_ANIMATION = HERO_ANIMATIONS.dying.id;
 
 interface BodyLayers {
+  name: string;
   lower: AnimationGroup;
   upper: AnimationGroup;
 }
 
 /** Split tracks rather than blending two full-body clips on the same bones. */
-function createBodyLayer(scene: Scene, source: AnimationGroup, upper: boolean): AnimationGroup {
-  const layer = new AnimationGroup(source.name + (upper ? "-upper" : "-lower"), scene);
+function createBodyLayer(
+  scene: Scene, source: AnimationGroup, upper: boolean,
+  name = source.name + (upper ? "-upper" : "-lower"),
+): AnimationGroup {
+  const layer = new AnimationGroup(name, scene);
   for (const { animation, target } of source.targetedAnimations) {
     const name: string = typeof target?.name === "string" ? target.name : "";
     if (isUpperBodyBone(name) === upper) layer.addTargetedAnimation(animation, target);
@@ -29,11 +34,12 @@ function createBodyLayer(scene: Scene, source: AnimationGroup, upper: boolean): 
  */
 export class AnimationPlayer {
   private readonly animations: AnimationGroup[];
-  private readonly bodyLayers = new Map<AnimationGroup, BodyLayers>();
+  private readonly bodyLayers = new Map<string, BodyLayers>();
+  private readonly combatWalk: BodyLayers;
   private readonly attackUpper: AnimationGroup;
   private readonly attackLower: AnimationGroup;
-  private locomotion = new Map<AnimationGroup, number>();
-  private primary: AnimationGroup | null = null;
+  private locomotion = new Map<BodyLayers, number>();
+  private primary: BodyLayers | null = null;
   private fullBody: AnimationGroup | null = null;
   private action: AnimationGroup | null = null;
   private actionSource: AnimationGroup | null = null;
@@ -45,22 +51,20 @@ export class AnimationPlayer {
   private transitioning = false;
   private transitions = createTransitionSettings();
   private transitionDuration = this.transitions.move;
-  private readonly combatIdleClip: string;
   private combatIdle = false;
 
   constructor(animations: AnimationGroup[], scene: Scene) {
     this.animations = animations;
     const available = new Set(animations.map(({ name }) => name));
-    const combatIdle = HERO_ANIMATIONS.combatIdle.id;
-    this.combatIdleClip = available.has(combatIdle) ? combatIdle : IDLE_ANIMATION;
-    for (const clip of [IDLE_ANIMATION, HERO_ANIMATIONS.walk.id, HERO_ANIMATIONS.run.id, HERO_ANIMATIONS.stop.id, ATTACK_ANIMATION, DODGE_ANIMATION, DEATH_ANIMATION]) {
+    for (const clip of [IDLE_ANIMATION, COMBAT_STANCE_ANIMATION, HERO_ANIMATIONS.walk.id, HERO_ANIMATIONS.run.id, HERO_ANIMATIONS.stop.id, ATTACK_ANIMATION, DODGE_ANIMATION, DEATH_ANIMATION]) {
       if (!available.has(clip)) throw new Error("Clip du héros requis : " + clip);
     }
     for (const source of animations) {
       source.enableBlending = true;
       source.blendingSpeed = 0.15;
       if (getAnimationDefinition(source.name)?.category === "movement") {
-        this.bodyLayers.set(source, {
+        this.bodyLayers.set(source.name, {
+          name: source.name,
           lower: createBodyLayer(scene, source, false),
           upper: createBodyLayer(scene, source, true),
         });
@@ -72,6 +76,12 @@ export class AnimationPlayer {
         }
       });
     }
+
+    this.combatWalk = {
+      name: COMBAT_STANCE_ANIMATION,
+      lower: createBodyLayer(scene, this.requireClip(HERO_ANIMATIONS.walk.id), false, "combat-walk-lower"),
+      upper: this.bodyLayers.get(COMBAT_STANCE_ANIMATION)!.upper,
+    };
 
     const attack = this.requireClip(ATTACK_ANIMATION);
     this.attackUpper = createBodyLayer(scene, attack, true);
@@ -85,6 +95,7 @@ export class AnimationPlayer {
     scene.onDisposeObservable.addOnce(() => {
       this.attackUpper.dispose();
       this.attackLower.dispose();
+      this.combatWalk.lower.dispose();
       for (const { lower, upper } of this.bodyLayers.values()) {
         lower.dispose();
         upper.dispose();
@@ -93,7 +104,7 @@ export class AnimationPlayer {
   }
 
   get restClip(): string {
-    return this.combatIdle ? this.combatIdleClip : IDLE_ANIMATION;
+    return this.combatIdle ? COMBAT_STANCE_ANIMATION : IDLE_ANIMATION;
   }
 
   get activeName(): string {
@@ -136,8 +147,7 @@ export class AnimationPlayer {
   }
 
   private stopLocomotion(): void {
-    for (const source of this.locomotion.keys()) {
-      const layers = this.bodyLayers.get(source)!;
+    for (const layers of this.locomotion.keys()) {
       layers.lower.stop(true);
       layers.upper.stop(true);
     }
@@ -187,7 +197,7 @@ export class AnimationPlayer {
     this.paused = false;
     selected.enableBlending = true;
     selected.weight = -1;
-    const loop = getAnimationDefinition(name)?.loop || name === this.combatIdleClip;
+    const loop = getAnimationDefinition(name)?.loop ?? false;
     selected.start(loop, this.playbackSpeed(name), selected.from, selected.to);
   }
 
@@ -205,14 +215,18 @@ export class AnimationPlayer {
 
   private applyLayerWeights(attackWeight: number): void {
     let lowerAttackWeight = 0;
-    for (const [source, weight] of this.locomotion) {
-      const layers = this.bodyLayers.get(source)!;
-      const isIdle = source.name === IDLE_ANIMATION || source.name === this.combatIdleClip;
+    let sharedStanceWeight = 0;
+    for (const [layers, weight] of this.locomotion) {
+      const isIdle = layers !== this.combatWalk &&
+        (layers.name === IDLE_ANIMATION || layers.name === COMBAT_STANCE_ANIMATION);
       const replacement = isIdle ? weight * attackWeight : 0;
       lowerAttackWeight += replacement;
       layers.lower.weight = weight - replacement;
-      layers.upper.weight = weight * (1 - attackWeight);
+      const upperWeight = weight * (1 - attackWeight);
+      if (layers.upper === this.combatWalk.upper) sharedStanceWeight += upperWeight;
+      else layers.upper.weight = upperWeight;
     }
+    this.combatWalk.upper.weight = sharedStanceWeight;
     if (this.action === this.attackUpper) {
       this.attackUpper.weight = attackWeight;
       this.attackLower.weight = lowerAttackWeight;
@@ -230,45 +244,53 @@ export class AnimationPlayer {
   }
 
   updateLocomotion(movementClip: string | undefined, delta: number): void {
-    const primary = this.requireClip(movementClip ?? this.restClip);
+    const name = movementClip ?? this.restClip;
+    const primary = movementClip === COMBAT_STANCE_ANIMATION ? this.combatWalk : this.bodyLayers.get(name);
+    if (!primary) throw new Error("Animation de déplacement inconnue : " + name);
     this.fullBody?.stop(true);
     this.fullBody = null;
     const previous = this.primary;
     const entering = this.locomotion.size === 0;
     if (primary !== previous) {
-      this.transitionDuration = primary.name === this.restClip ? this.transitions.idle :
+      this.transitionDuration = movementClip === undefined ? this.transitions.idle :
         previous?.name === HERO_ANIMATIONS.run.id
           ? this.transitions.slowDown : this.transitions.move;
     }
 
     if (!this.locomotion.has(primary)) {
-      const layers = this.bodyLayers.get(primary)!;
-      for (const layer of [layers.lower, layers.upper]) {
+      for (const layer of [primary.lower, primary.upper]) {
+        if (layer.isStarted) continue;
         layer.weight = 0;
-        layer.start(true, this.playbackSpeed(primary.name), primary.from, primary.to);
+        layer.start(true, this.locomotionSpeed(primary, layer));
       }
       this.locomotion.set(primary, 0);
     }
 
     let difference = 0;
-    for (const [source, current] of this.locomotion) {
-      difference += Math.abs(Number(source === primary) - current);
+    for (const [layers, current] of this.locomotion) {
+      difference += Math.abs(Number(layers === primary) - current);
     }
     const fraction = entering || difference < 1e-8
       ? 1 : Math.min(1, (2 * delta) / (this.transitionDuration * difference));
     this.transitioning = fraction < 1;
-    for (const [source, current] of this.locomotion) {
-      const desired = Number(source === primary);
+    const fadedLayers = new Set<AnimationGroup>();
+    for (const [layers, current] of this.locomotion) {
+      const desired = Number(layers === primary);
       const weight = current + (desired - current) * fraction;
-      if (weight === 0 && source !== primary) {
-        const layers = this.bodyLayers.get(source)!;
-        layers.lower.stop(true);
-        layers.upper.stop(true);
-        this.locomotion.delete(source);
+      if (weight === 0 && layers !== primary) {
+        fadedLayers.add(layers.lower);
+        fadedLayers.add(layers.upper);
+        this.locomotion.delete(layers);
       } else {
-        this.locomotion.set(source, weight);
+        this.locomotion.set(layers, weight);
       }
     }
+    // The same upper-body stance keeps playing when the hero starts or stops walking.
+    for (const layers of this.locomotion.keys()) {
+      fadedLayers.delete(layers.lower);
+      fadedLayers.delete(layers.upper);
+    }
+    for (const layer of fadedLayers) layer.stop(true);
     this.primary = primary;
     this.updateAttackBlend(delta);
   }
@@ -276,6 +298,13 @@ export class AnimationPlayer {
   private playbackSpeed(name: string): number {
     const definition = getAnimationDefinition(name);
     return definition ? effectivePlaybackSpeed(definition, this.settings[name]) : 1;
+  }
+
+  private locomotionSpeed(layers: BodyLayers, layer: AnimationGroup): number {
+    const speed = this.playbackSpeed(layers.name);
+    if (layers !== this.combatWalk || layer !== layers.lower) return speed;
+    const { walk, combatStance } = HERO_ANIMATIONS;
+    return speed * walk.playbackSpeed * combatStance.movement!.speed / walk.movement!.speed;
   }
 
   duration(name: string): number | undefined {
@@ -289,11 +318,9 @@ export class AnimationPlayer {
 
   setSettings(settings: AnimationSettings): void {
     this.settings = settings;
-    for (const source of this.locomotion.keys()) {
-      const speed = this.playbackSpeed(source.name);
-      const layers = this.bodyLayers.get(source)!;
-      layers.lower.speedRatio = speed;
-      layers.upper.speedRatio = speed;
+    for (const layers of this.locomotion.keys()) {
+      layers.lower.speedRatio = this.locomotionSpeed(layers, layers.lower);
+      layers.upper.speedRatio = this.locomotionSpeed(layers, layers.upper);
     }
     if (this.action && this.actionSource) {
       this.action.speedRatio = this.playbackSpeed(this.actionSource.name);
@@ -304,8 +331,7 @@ export class AnimationPlayer {
   togglePause(): boolean {
     if (this.fullBody?.name === DEATH_ANIMATION) return false;
     const groups = new Set<AnimationGroup>();
-    for (const source of this.locomotion.keys()) {
-      const layers = this.bodyLayers.get(source)!;
+    for (const layers of this.locomotion.keys()) {
       groups.add(layers.lower);
       groups.add(layers.upper);
     }
