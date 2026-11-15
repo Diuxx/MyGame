@@ -1,13 +1,12 @@
 import { AnimationGroup, type Scene } from "@babylonjs/core";
 import { attackLayerWeight, isUpperBodyBone } from "./animationLayers";
 import { createTransitionSettings, type TransitionSettings } from "./transitionSettings";
-import { LOCOMOTION_CLIPS, locomotionWeights } from "./locomotion";
-import type { GroundVector, MovementMode } from "./movement";
 import { createAnimationSettings, effectivePlaybackSpeed, getAnimationDefinition, HERO_ANIMATIONS, type AnimationSettings } from "./animationSettings";
 
-export const IDLE_ANIMATION = LOCOMOTION_CLIPS.idle;
+export const IDLE_ANIMATION = HERO_ANIMATIONS.idle.id;
 export const ATTACK_ANIMATION = HERO_ANIMATIONS.attack.id;
 export const DODGE_ANIMATION = HERO_ANIMATIONS.dodge.id;
+export const DEATH_ANIMATION = HERO_ANIMATIONS.dying.id;
 
 interface BodyLayers {
   lower: AnimationGroup;
@@ -29,7 +28,6 @@ function createBodyLayer(scene: Scene, source: AnimationGroup, upper: boolean): 
  * light attacks temporarily replace just that upper-body pose.
  */
 export class AnimationPlayer {
-  private readonly available: Set<string>;
   private readonly bodyLayers = new Map<AnimationGroup, BodyLayers>();
   private readonly attackUpper: AnimationGroup;
   private locomotion = new Map<AnimationGroup, number>();
@@ -49,11 +47,11 @@ export class AnimationPlayer {
   private combatIdle = false;
 
   constructor(private readonly animations: AnimationGroup[], scene: Scene) {
-    this.available = new Set(animations.map(({ name }) => name));
+    const available = new Set(animations.map(({ name }) => name));
     const combatIdle = HERO_ANIMATIONS.combatIdle.id;
-    this.combatIdleClip = this.available.has(combatIdle) ? combatIdle : IDLE_ANIMATION;
-    for (const clip of [IDLE_ANIMATION, LOCOMOTION_CLIPS.walk, LOCOMOTION_CLIPS.backward, LOCOMOTION_CLIPS.run, ATTACK_ANIMATION, DODGE_ANIMATION]) {
-      if (!this.available.has(clip)) throw new Error("Clip du héros requis : " + clip);
+    this.combatIdleClip = available.has(combatIdle) ? combatIdle : IDLE_ANIMATION;
+    for (const clip of [IDLE_ANIMATION, HERO_ANIMATIONS.walk.id, HERO_ANIMATIONS.run.id, HERO_ANIMATIONS.stop.id, ATTACK_ANIMATION, DODGE_ANIMATION, DEATH_ANIMATION]) {
+      if (!available.has(clip)) throw new Error("Clip du héros requis : " + clip);
     }
     for (const source of animations) {
       source.enableBlending = true;
@@ -66,7 +64,7 @@ export class AnimationPlayer {
       }
       source.onAnimationGroupEndObservable.add(() => {
         if (this.action === source && this.actionControlled) this.actionCompleted = true;
-        else if (this.fullBody === source && !this.actionControlled && !source.loopAnimation) {
+        else if (this.fullBody === source && !this.actionControlled && !source.loopAnimation && source.name !== DEATH_ANIMATION) {
           this.play(this.restClip);
         }
       });
@@ -211,50 +209,38 @@ export class AnimationPlayer {
     this.applyLayerWeights(attackLayerWeight(this.overlayElapsed, remaining));
   }
 
-  updateLocomotion(displacement: GroundVector, yaw: number, running: boolean, mode: MovementMode, delta: number, movementClip?: string): void {
-    const weights = movementClip && (displacement.x || displacement.z)
-      ? new Map([[movementClip, 1]])
-      : locomotionWeights(displacement, yaw, running, mode, this.restClip, this.available);
-    const target = new Map<AnimationGroup, number>();
-    let primary: AnimationGroup | undefined;
-    for (const source of this.animations) {
-      const weight = weights.get(source.name);
-      if (weight === undefined || !this.bodyLayers.has(source)) continue;
-      target.set(source, weight);
-      if (!primary || weight > target.get(primary)!) primary = source;
-    }
-
+  updateLocomotion(movementClip: string | undefined, delta: number): void {
+    const primary = this.requireClip(movementClip ?? this.restClip);
     this.fullBody?.stop(true);
     this.fullBody = null;
     const previous = this.primary;
     const entering = this.locomotion.size === 0;
     if (primary !== previous) {
-      this.transitionDuration = weights.has(this.restClip) ? this.transitions.idle :
-        previous?.name === LOCOMOTION_CLIPS.run && !weights.has(LOCOMOTION_CLIPS.run)
+      this.transitionDuration = primary.name === this.restClip ? this.transitions.idle :
+        previous?.name === HERO_ANIMATIONS.run.id
           ? this.transitions.slowDown : this.transitions.move;
     }
 
-    for (const source of target.keys()) {
-      if (this.locomotion.has(source)) continue;
-      const layers = this.bodyLayers.get(source)!;
+    if (!this.locomotion.has(primary)) {
+      const layers = this.bodyLayers.get(primary)!;
       for (const layer of [layers.lower, layers.upper]) {
         layer.weight = 0;
-        layer.start(true, this.playbackSpeed(source.name), source.from, source.to);
+        layer.start(true, this.playbackSpeed(primary.name), primary.from, primary.to);
       }
-      this.locomotion.set(source, 0);
+      this.locomotion.set(primary, 0);
     }
 
     let difference = 0;
     for (const [source, current] of this.locomotion) {
-      difference += Math.abs((target.get(source) ?? 0) - current);
+      difference += Math.abs(Number(source === primary) - current);
     }
     const fraction = entering || difference < 1e-8
       ? 1 : Math.min(1, (2 * delta) / (this.transitionDuration * difference));
     this.transitioning = fraction < 1;
     for (const [source, current] of this.locomotion) {
-      const desired = target.get(source) ?? 0;
+      const desired = Number(source === primary);
       const weight = current + (desired - current) * fraction;
-      if (weight === 0 && !target.has(source)) {
+      if (weight === 0 && source !== primary) {
         const layers = this.bodyLayers.get(source)!;
         layers.lower.stop(true);
         layers.upper.stop(true);
@@ -263,7 +249,7 @@ export class AnimationPlayer {
         this.locomotion.set(source, weight);
       }
     }
-    this.primary = primary ?? null;
+    this.primary = primary;
     this.updateAttackBlend(delta);
   }
 
@@ -294,6 +280,7 @@ export class AnimationPlayer {
   }
 
   togglePause(): boolean {
+    if (this.fullBody?.name === DEATH_ANIMATION) return false;
     const groups = new Set<AnimationGroup>();
     for (const source of this.locomotion.keys()) {
       const layers = this.bodyLayers.get(source)!;

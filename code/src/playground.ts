@@ -9,15 +9,13 @@ import { bindCollisionTools } from "./playground/collisionTools";
 import { bindMapTools } from "./playground/mapTools";
 import { bindWorldEditor } from "./playground/worldEditor";
 import { createMapSystem } from "./world/maps/mapSystem";
-import { createHeroVitals } from "./combat/heroVitals";
+import { createHeroLifecycle } from "./character/heroLifecycle";
 import { createHeroHud } from "./ui/heroHud";
 import { bindAttackTools } from "./playground/attackTools";
 import { bindTransitionTools } from "./playground/transitionTools";
 import { bindModuleWindows } from "./playground/moduleWindows";
 import { bindControlSettings } from "./playground/controlSettings";
 import { bindAnimationTools } from "./playground/animationTools";
-import { bindEquipmentTools } from "./playground/equipmentTools";
-import type { CharacterEquipment } from "./character/equipment";
 import { requireElement } from "./ui/dom";
 import { degreesToRadians } from "./world/cameraMath";
 import { createPlaygroundEnvironment, PLAYGROUND_MOVEMENT_LIMIT } from "./world/environments";
@@ -49,13 +47,11 @@ export async function startPlayground(
   cameraControls: CameraControls,
   character: LoadedCharacter,
   animationPlayer: AnimationPlayer,
-  equipment: CharacterEquipment,
   signal: AbortSignal,
 ): Promise<void> {
   requireElement<HTMLElement>("movementHint").hidden = false;
   bindModuleWindows(signal);
   const { ground, grid, shadows, ambience } = createPlaygroundEnvironment(scene, character.root);
-  for (const mesh of equipment.meshes) shadows.addShadowCaster(mesh, false);
   const enemies = createEnemyScene(scene, shadows, ground.position.y);
   const heroPosition = (): Position => [character.root.position.x, ground.position.y, character.root.position.z];
   const refreshEnemyHealth = await startEnemyTools(enemies, ground.position.y,
@@ -64,16 +60,15 @@ export async function startPlayground(
   gridToggle.checked = false;
   gridToggle.addEventListener("change", () => grid.setEnabled(gridToggle.checked), { signal });
 
-  const vitals = createHeroVitals();
+  const lifecycle = createHeroLifecycle(character.root, cameraControls, animationPlayer);
+  const { vitals } = lifecycle;
   const hud = createHeroHud();
   let controller: ReturnType<typeof createCharacterController> | undefined;
   const maps = createMapSystem(scene, {
     hero: character.root, shadows,
     applyEnvironment: ambience.apply,
     isHeroAlive: () => vitals.isAlive,
-    onHeroHit: (damage) => {
-      if (vitals.hit(damage, controller?.isInvulnerable ?? false)) controller?.receiveHit();
-    },
+    onHeroHit: (damage) => lifecycle.hit(damage, controller),
     onEncounterEvent: hud.event,
     onWorldInteraction: hud.announce,
   });
@@ -86,7 +81,7 @@ export async function startPlayground(
   const facingInput = requireElement<HTMLInputElement>("facing");
   const facingOutput = requireElement<HTMLOutputElement>("facingOutput");
   controller = createCharacterController(scene, canvas, character.root,
-    PLAYGROUND_MOVEMENT_LIMIT, cameraControls, animationPlayer, equipment, signal, () => updateActiveAnimation(), (yaw) => {
+    PLAYGROUND_MOVEMENT_LIMIT, cameraControls, animationPlayer, signal, () => updateActiveAnimation(), (yaw) => {
       const degrees = String(Math.round(yaw * 180 / Math.PI));
       if (facingInput.value !== degrees) {
         facingInput.value = degrees;
@@ -101,9 +96,14 @@ export async function startPlayground(
     collisions.resolveMovement,
     () => vitals.isAlive && !worldEditor.enabled);
   requireElement<HTMLButtonElement>("simulateHeroHit").addEventListener("click", controller.receiveHit, { signal });
+  const simulateHeroDeath = requireElement<HTMLButtonElement>("simulateHeroDeath");
+  simulateHeroDeath.addEventListener("click", () => {
+    lifecycle.defeat(controller);
+    simulateHeroDeath.disabled = !vitals.isAlive;
+    hud.refresh(vitals);
+  }, { signal });
   bindControlSettings(controller.setBindings, signal);
   bindTransitionTools(animationPlayer, signal);
-  const updateEquipment = bindEquipmentTools(equipment, () => controller.isActing, controller.previewAttack, signal);
   const updateActiveAnimation = bindAnimationTools(animationPlayer, controller,
     new Set(character.animationGroups.map(({ name }) => name)), signal);
   for (const animation of character.animationGroups) {
@@ -114,15 +114,9 @@ export async function startPlayground(
     const delta = scene.getEngine().getDeltaTime() / 1000;
     enemies.update(document.hidden ? 0 : delta);
     refreshEnemyHealth();
-    updateEquipment();
     attackTools.setAttacking(controller.isAttacking);
-    if (!document.hidden && vitals.update(Math.min(delta, 0.1))) {
-      const spawn = maps.active?.definition.spawnPoints.find((point) => point.type === "player");
-      if (spawn) {
-        character.root.position.set(...spawn.position);
-        cameraControls.follow(spawn.position[0], spawn.position[2]);
-      }
-    }
+    lifecycle.update(delta, controller, maps.active?.definition.spawnPoints.find((point) => point.type === "player"));
+    simulateHeroDeath.disabled = !vitals.isAlive;
     hud.refresh(vitals);
     hud.nearby(worldEditor.enabled ? undefined : maps.active?.nearInteraction()?.label);
     const activeMap = maps.active;
