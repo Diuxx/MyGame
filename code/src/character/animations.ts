@@ -270,6 +270,9 @@ export class AnimationPlayer {
     for (const layer of [nextUpper, nextLower]) {
       layer.weight = 0;
       layer.start(false, speed, firstFrame, source.to);
+      // Babylon may not expose the initial frame until its next animation tick.
+      // Align both the visible pose and the gameplay progress immediately.
+      layer.goToFrame(firstFrame);
     }
   }
 
