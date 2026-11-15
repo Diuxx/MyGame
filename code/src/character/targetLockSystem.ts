@@ -95,6 +95,17 @@ export function createTargetLockSystem(
       target = undefined;
       update();
     },
+    /** Clicking an enemy replaces the current lock only inside the acquisition radius. */
+    lockOnClick(id: string): boolean {
+      if (disposed || !settings.enabled || !isAvailable()) return false;
+      const candidate = listCandidates().find((entry) => entry.id === id && entry.alive);
+      if (!candidate || Math.hypot(candidate.x - hero.position.x, candidate.z - hero.position.z) > settings.acquireRadius) {
+        return false;
+      }
+      target = candidate;
+      update();
+      return target?.id === id;
+    },
     /** Only a confirmed damaging hit can auto-lock a new enemy. */
     lockOnHit(id: string): void {
       if (disposed || !settings.enabled || !isAvailable() || target) return;
