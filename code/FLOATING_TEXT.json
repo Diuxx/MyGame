@@ -20,10 +20,10 @@
       },
       "attack": {
         "durationMs": 650,
-        "fontSize": 14,
+        "fontSize": 11,
         "scaleEnd": 1.12,
-        "risePixels": 25,
-        "color": "#FFE0A1"
+        "risePixels": 20,
+        "color": "#ffa3a3"
       }
     }
   },
@@ -33,7 +33,7 @@
     "showCriticalLabel": false,
     "normal": {
       "durationMs": 1100,
-      "fontSize": 24,
+      "fontSize": 15,
       "scaleEnd": 1.15,
       "risePixels": 45,
       "color": "#FFFFFF"
