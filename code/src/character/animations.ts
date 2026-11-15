@@ -165,6 +165,7 @@ export class AnimationPlayer {
   }
 
   private fadeGroup(group: AnimationGroup, seconds: number): void {
+    if (this.fadeIn?.group === group) this.fadeIn = null;
     this.fadingGroups = this.fadingGroups.filter((entry) => entry.group !== group);
     if (seconds <= 0 || !group.isStarted) {
       group.stop(true);
