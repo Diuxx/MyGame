@@ -1,10 +1,10 @@
 {
   "version": 1,
   "enabled": true,
-  "acquireRadius": 8,
-  "releaseRadius": 10,
+  "acquireRadius": 4,
+  "releaseRadius": 4,
   "turnSpeed": 12,
   "movementReference": "camera",
   "showTargetRing": true,
-  "showDebugRadius": false
+  "showDebugRadius": true
 }
