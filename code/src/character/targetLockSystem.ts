@@ -1,16 +1,10 @@
 import {
   Color3, MeshBuilder, StandardMaterial, type Scene, type TransformNode,
 } from "@babylonjs/core";
-import { selectTarget, type TargetCandidate, type TargetPosition } from "./targetSelection.ts";
+import { selectTarget, type TargetCandidate, type TargetingMotion } from "./targetSelection.ts";
 import {
   createTargetingSettings, type TargetingSettings,
 } from "./targetingSettings.ts";
-
-export interface TargetingMotion {
-  target: TargetPosition;
-  movementReference: TargetingSettings["movementReference"];
-  turnSpeed: number;
-}
 
 /**
  * Babylon presentation and runtime target state.
