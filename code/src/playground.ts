@@ -23,6 +23,7 @@ import { bindModuleWindows } from "./playground/moduleWindows";
 import { bindControlSettings } from "./playground/controlSettings";
 import { bindAnimationTools } from "./playground/animationTools";
 import { createTargetLockSystem } from "./character/targetLockSystem";
+import { createTargetClickHandler } from "./character/targetClickHandler";
 import { collectTargetCandidates } from "./playground/targetLockSources";
 import { bindTargetLockTools } from "./playground/targetLockTools";
 import { requireElement } from "./ui/dom";
@@ -155,6 +156,7 @@ export async function startPlayground(
     cycle: () => targetLock?.cycleTarget(),
     cancel: () => targetLock?.clearTarget(),
   });
+  controller.setTargetClickHandler(createTargetClickHandler(scene, canvas, targetLock));
   requireElement<HTMLButtonElement>("simulateHeroHit").addEventListener("click", controller.receiveHit, { signal });
   const simulateHeroDeath = requireElement<HTMLButtonElement>("simulateHeroDeath");
   simulateHeroDeath.addEventListener("click", () => {
