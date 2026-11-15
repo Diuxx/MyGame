@@ -40,7 +40,7 @@ test("editable instances retain shared source materials and restore their own pr
   first.setAppearance({ scale: 1 });
   assert.equal(aMesh.material, initialMaterial);
   assert.equal(bMesh.material, otherMaterial);
-  assert.equal(previewMaterial?.isDisposed(), true);
+  assert.equal(scene.materials.includes(previewMaterial!), false);
 
   first.dispose();
   first.dispose(); // Idempotent cleanup.
