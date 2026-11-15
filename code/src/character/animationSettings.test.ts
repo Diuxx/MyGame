@@ -57,3 +57,39 @@ test("interrupted attacks never replay the same hit window", () => {
   assert.equal(consumeImpactWindow(hit, 0, 0.95), true);
   assert.equal(consumeImpactWindow(hit, 0.95, 1), false);
 });
+
+
+test("combo configuration survives export and import without rewriting the animation catalog", () => {
+  const settings = createAnimationSettings();
+  settings.attack.combo!.followUp.startProgress = 0.2;
+  const saved = JSON.parse(serializeAnimationManifest(settings, { move: 0.12, idle: 0.15, slowDown: 0.15 }));
+  const loaded = parseAnimationManifest(saved);
+  assert.deepEqual(saved.animations, manifest.animations);
+  assert.equal(loaded.settings.attack.combo?.followUp.startProgress, 0.2);
+  assert.equal(loaded.settings.attack.combo?.inputBufferMs, 150);
+});
+
+test("old manifests without combo settings inherit the versioned defaults", () => {
+  const legacy = copyManifest();
+  delete tuning(legacy, "attack").combo;
+  assert.deepEqual(parseAnimationManifest(legacy).settings.attack.combo, createAnimationSettings().attack.combo);
+});
+
+test("invalid combos cannot skip an impact or chain before the last hit", () => {
+  const badChain = copyManifest();
+  (tuning(badChain, "attack").combo as Record<string, any>).chainWindow.from = 0.1;
+  assert.throws(() => parseAnimationManifest(badChain), /chainWindow/);
+  const skippedHit = copyManifest();
+  (tuning(skippedHit, "attack").combo as Record<string, any>).followUp.startProgress = 0.5;
+  assert.throws(() => parseAnimationManifest(skippedHit), /followUp.startProgress/);
+  const incorrectCount = copyManifest();
+  (tuning(incorrectCount, "attack").combo as Record<string, any>).maxChain = 2.5;
+  assert.throws(() => parseAnimationManifest(incorrectCount), /maxChain/);
+});
+
+test("double-hit combos cannot interrupt before the second impact", () => {
+  const withDoubleHit = copyManifest();
+  (tuning(withDoubleHit, "attack").impact as Record<string, unknown>).doubleHit = true;
+  (tuning(withDoubleHit, "attack").combo as Record<string, any>).chainWindow.from = 0.65;
+  assert.throws(() => parseAnimationManifest(withDoubleHit), /chainWindow/);
+});
