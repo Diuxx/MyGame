@@ -1,14 +1,14 @@
 import { Plane, type Scene, type TransformNode } from "@babylonjs/core";
-import { ATTACK_ANIMATION, DEATH_ANIMATION, DODGE_ANIMATION, IDLE_ANIMATION, type AnimationPlayer } from "./animations";
-import { createAnimationSettings, createAttackHits, getAnimationDefinition, HERO_ANIMATIONS, type AnimationSettings } from "./animationSettings";
-import { clamp } from "../world/cameraMath";
+import { ATTACK_ANIMATION, DEATH_ANIMATION, DODGE_ANIMATION, IDLE_ANIMATION, type AnimationPlayer } from "./animations.ts";
+import { createAnimationSettings, createAttackHits, getAnimationDefinition, HERO_ANIMATIONS, type AnimationSettings } from "./animationSettings.ts";
+import { clamp } from "../world/cameraMath.ts";
 import type { Position } from "../combat/combat";
-import { bindHeroInput } from "./heroInput";
+import { bindHeroInput } from "./heroInput.ts";
 import { canCancelAction, type CancelTarget } from "./actionCancelling.ts";
 import { canBufferComboInput, canStartBufferedCombo, followUpStartProgress } from "./attackCombo.ts";
-import { allowsLocomotion } from "./animationLayers";
-import { HERO_TUNING } from "./heroTuning";
-import { aimYaw, calculateMovementStep, consumeImpactWindow, dodgeDirection, dodgeInvulnerable, dodgeTravelProgress, mouseRelativeDirection, type GroundVector } from "./movement";
+import { allowsLocomotion } from "./animationLayers.ts";
+import { HERO_TUNING } from "./heroTuning.ts";
+import { aimYaw, calculateMovementStep, consumeImpactWindow, dodgeDirection, dodgeInvulnerable, dodgeTravelProgress, mouseRelativeDirection, type GroundVector } from "./movement.ts";
 import type { CameraControls } from "../world/scene";
 
 type ActiveAction =
@@ -21,7 +21,7 @@ export function createCharacterController(
   canvas: HTMLCanvasElement,
   root: TransformNode,
   movementLimit: number,
-  camera: CameraControls,
+  camera: Pick<CameraControls, "follow">,
   animations: AnimationPlayer,
   signal: AbortSignal,
   onAnimationChange: () => void = () => {},
@@ -265,10 +265,10 @@ export function createCharacterController(
       if (aim !== undefined) turn(Math.sin(aim), Math.cos(aim), delta);
     }
     if (!allowsLocomotion(action?.kind)) return;
-    // Combat stance resumes after the strike; running is not slowed mid-attack.
-    const inCombat = combatStanceRemaining > 0 && !attacking;
+    const inCombat = combatStanceRemaining > 0;
+    // A confirmed hit prepares the resting pose while the attack is still blending.
     const restChanged = animations.setCombatIdle(inCombat);
-    const movement = inCombat
+    const movement = inCombat && !attacking
       ? HERO_ANIMATIONS.combatStance
       : running ? HERO_ANIMATIONS.run : selectedMovement;
     if (wasSprinting && !wantsMovement && !action) {
@@ -293,7 +293,7 @@ export function createCharacterController(
     lastLocomotion = locomotion;
     wasSprinting = moving && movement === HERO_ANIMATIONS.run && !action;
     if (moving || wasMoving || restChanged || attacking) {
-      animations.updateLocomotion(moving ? movement.id : undefined, delta);
+      animations.updateLocomotion(moving ? movement.id : undefined, delta, previousAnimation === ATTACK_ANIMATION);
     }
     if (previousAnimation !== animations.activeName) onAnimationChange();
     wasMoving = moving || animations.isTransitioning;

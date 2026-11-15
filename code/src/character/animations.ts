@@ -395,7 +395,7 @@ export class AnimationPlayer {
     this.applyLayerWeights(attackLayerWeight(this.overlayElapsed, remaining, this.attackFadeInSeconds));
   }
 
-  updateLocomotion(movementClip: string | undefined, delta: number): void {
+  updateLocomotion(movementClip: string | undefined, delta: number, attackWasActive = false): void {
     const name = movementClip ?? this.restClip;
     const primary = movementClip === COMBAT_STANCE_ANIMATION ? this.combatWalk : this.bodyLayers.get(name);
     if (!primary) throw new Error("Animation de déplacement inconnue : " + name);
@@ -426,7 +426,10 @@ export class AnimationPlayer {
     const returning = this.locomotionActionFade;
     if (returning) returning.elapsed = Math.min(returning.duration, returning.elapsed + delta);
     const actionBlend = returning ? returning.elapsed / returning.duration : 1;
-    const fraction = returning || entering || difference < 1e-8
+    // During attack recovery, the combat stance replaces neutral idle as the blend target.
+    const directCombatRecovery = attackWasActive && name === COMBAT_STANCE_ANIMATION && this.combatIdle &&
+      this.locomotion.has(this.bodyLayers.get(IDLE_ANIMATION)!);
+    const fraction = returning || entering || directCombatRecovery || difference < 1e-8
       ? 1 : Math.min(1, (2 * delta) / (this.transitionDuration * difference));
     this.transitioning = actionBlend < 1 || fraction < 1;
     const fadedLayers = new Set<AnimationGroup>();

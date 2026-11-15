@@ -5,6 +5,7 @@ import { allowsLocomotion, attackLayerWeight, isUpperBodyBone } from "./animatio
 import { AnimationPlayer } from "./animations.ts";
 import { createAnimationSettings, effectivePlaybackSpeed, getAnimationDefinition, HERO_ANIMATIONS } from "./animationSettings.ts";
 import { HERO_TUNING } from "./heroTuning.ts";
+import { createCharacterController } from "./characterController.ts";
 
 test("upper-body mask includes the spine, arms, hands and fingers", () => {
   for (const name of [
@@ -60,8 +61,46 @@ function createPlayer(t: TestContext) {
     assert.ok(group, name);
     return group;
   };
-  return { player, layer };
+  return { player, layer, scene };
 }
+
+test("a stationary attack blends directly into combat stance on hit and returns to idle on miss", (t) => {
+  Object.assign(globalThis, { window: new EventTarget(), document: new EventTarget() });
+  t.after(() => {
+    Reflect.deleteProperty(globalThis, "window");
+    Reflect.deleteProperty(globalThis, "document");
+  });
+  for (const hit of [true, false]) {
+    const { player, layer, scene } = createPlayer(t);
+    const root = new TransformNode("hero", scene);
+    const controller = createCharacterController(
+      scene, new EventTarget() as HTMLCanvasElement, root, 10,
+      { follow() {} }, player, new AbortController().signal,
+      undefined, undefined, () => hit,
+    );
+    controller.setAnimationSettings(createAnimationSettings({
+      attack: { impact: { from: 0.95, until: 0.99, doubleHit: false } },
+    }));
+    t.mock.method(scene.getEngine(), "getDeltaTime", () => 16);
+    controller.attack();
+    const attack = layer("attack-upper");
+    const idle = layer("idle-upper");
+    const stance = layer("combat-stance-upper");
+    const tick = (progress: number) => {
+      attack.goToFrame(attack.from + (attack.to - attack.from) * progress);
+      scene.onBeforeRenderObservable.notifyObservers(scene);
+    };
+    tick(0.5);
+    assert.equal(idle.isStarted, true);
+    tick(0.97);
+    assert.equal(Boolean(idle.isStarted), !hit);
+    assert.equal(Boolean(stance.isStarted), hit);
+    assert.equal(player.activeName, "attack");
+    tick(1);
+    assert.equal(player.activeName, hit ? "combat-stance" : "idle");
+    assert.equal(Boolean(idle.isStarted), !hit);
+  }
+});
 
 test("combat stance keeps its upper pose while the legs transition from stance to walk and back", (t) => {
   const { player, layer } = createPlayer(t);
