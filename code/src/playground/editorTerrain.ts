@@ -1,5 +1,7 @@
 import type { MapDefinition, MapPosition } from "../world/maps/types.ts";
 import { terrainBounds } from "../world/maps/validation.ts";
+import { wallFitsTerrain } from "../world/maps/wallPlacement.ts";
+import type { PrefabCatalog } from "../world/maps/prefabDefinitions.ts";
 
 export type ResizeAnchor = "center" | "origin";
 export interface TerrainSize { width: number; depth: number }
@@ -15,6 +17,7 @@ export function resizeTerrain(
   map: MapDefinition,
   size: TerrainSize,
   anchor: ResizeAnchor,
+  prefabCatalog?: PrefabCatalog,
 ): TerrainSnapshot {
   const cellCount = (units: number, dimension: string): number => {
     const cells = units / map.tileSize;
@@ -71,6 +74,10 @@ export function resizeTerrain(
   ];
   if (!positions.every(within)) {
     throw new Error("Des objets ou points d'apparition seraient hors des limites.");
+  }
+  if (prefabCatalog && (map.prefabs ?? []).some((wall) =>
+    !wallFitsTerrain(candidate, prefabCatalog, wall))) {
+    throw new Error("La réduction ferait dépasser un mur du terrain.");
   }
   return { origin, tiles };
 }

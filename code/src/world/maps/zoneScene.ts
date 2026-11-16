@@ -15,6 +15,8 @@ export function createZoneScene(
   const casters: AbstractMesh[] = [];
   const debug: AbstractMesh[] = [];
   let groundMesh: AbstractMesh | undefined;
+  let platformMesh: AbstractMesh | undefined;
+  let platformMaterial: StandardMaterial | undefined;
   let groundWidth = 0;
   let groundDepth = 0;
 
@@ -206,6 +208,55 @@ export function createZoneScene(
         : natureTexture(map.terrain.primitiveGround.color);
     }
   }
+  function updateGround(): void {
+    if (!groundMesh) {
+      if (map.terrain.visual?.style === "platform") {
+        throw new Error("Une plateforme nécessite un sol primitif.");
+      }
+      return;
+    }
+    const width = map.terrain.tiles[0].length * map.tileSize;
+    const depth = map.terrain.tiles.length * map.tileSize;
+    const [x, y, z] = map.terrain.origin;
+    groundMesh.scaling.x = width / groundWidth;
+    groundMesh.scaling.z = depth / groundDepth;
+    groundMesh.position.set(x + width / 2,
+      map.terrain.visual?.style === "platform" ? y + 0.003 : y - 0.01,
+      z + depth / 2);
+
+    if (map.terrain.visual?.style !== "platform") {
+      if (platformMesh) {
+        platformMesh.dispose();
+        const index = meshes.indexOf(platformMesh);
+        if (index >= 0) meshes.splice(index, 1);
+        platformMesh = undefined;
+      }
+      return;
+    }
+
+    const thickness = map.terrain.visual.thickness ?? 1.2;
+    const sideColor = map.terrain.visual.sideColor ?? "#D8D8D8";
+    if (!platformMesh) {
+      // Keep the same material when switching flat/platform repeatedly.
+      if (!platformMaterial) {
+        platformMaterial = new StandardMaterial("zone-platform-side:" + map.id, scene);
+        platformMaterial.specularColor = Color3.Black();
+      }
+      platformMesh = MeshBuilder.CreateBox("zone-platform:" + map.id, { size: 1 }, scene);
+      platformMesh.parent = root;
+      platformMesh.material = platformMaterial;
+      platformMesh.isPickable = false;
+      platformMesh.receiveShadows = true;
+      meshes.push(platformMesh);
+    }
+    platformMaterial!.diffuseColor = Color3.FromHexString(sideColor);
+    platformMesh.scaling.set(width, thickness, depth);
+    // The box's top is at terrain Y. The original ground mesh provides its
+    // visible walking surface a few millimetres above it, avoiding z-fighting.
+    platformMesh.position.set(x + width / 2, y - thickness / 2, z + depth / 2);
+  }
+
+  updateGround();
   for (const item of map.primitives ?? []) primitive(item);
   for (const exit of map.exits ?? []) exitArch(exit.id, exit.position, exit.triggerRadius);
   for (const spawn of map.spawnPoints) {
@@ -213,15 +264,8 @@ export function createZoneScene(
   }
 
   return {
-    resizeGround(): void {
-      if (!groundMesh) return;
-      const width = map.terrain.tiles[0].length * map.tileSize;
-      const depth = map.terrain.tiles.length * map.tileSize;
-      const [x, y, z] = map.terrain.origin;
-      groundMesh.scaling.x = width / groundWidth;
-      groundMesh.scaling.z = depth / groundDepth;
-      groundMesh.position.set(x + width / 2, y - 0.01, z + depth / 2);
-    },
+    resizeGround: updateGround,
+    refreshGround: updateGround,
     setDebug(visible: boolean): void {
       for (const marker of debug) marker.setEnabled(visible);
     },
@@ -229,6 +273,7 @@ export function createZoneScene(
       for (const mesh of casters) shadows?.removeShadowCaster(mesh, false);
       for (const mesh of meshes) mesh.dispose();
       for (const value of materials.values()) value.dispose();
+      platformMaterial?.dispose();
       for (const texture of textures) texture.dispose();
     },
   };

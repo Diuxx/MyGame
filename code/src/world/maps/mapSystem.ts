@@ -14,6 +14,7 @@ import type { MapEditorKind, MapPlacementKind, VisualOverride } from "./editorSc
 import type { MapDefinition, MapPosition } from "./types";
 import { findTerrainCell, MAX_MAP_OBJECTS, validateMapDefinition } from "./validation";
 import { nearestExit } from "./zoneExits";
+import { fitWallToTerrain, isNearTerrain, isWallPrefab } from "./wallPlacement";
 
 const DEFAULT_PLACED_ENEMY_AI: AISettings = {
   profile: "guard", aggroRadius: 6, attackRange: 1.5, leashRadius: 10,
@@ -114,10 +115,15 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
           async place(kind: MapPlacementKind, asset: string, point: MapPosition): Promise<string | undefined> {
             if (placing) throw new Error("Un placement est en cours.");
             const cell = findTerrainCell(map, point[0], point[2]);
-            if (!cell || !point.every(Number.isFinite)) throw new Error("Cliquer à l’intérieur du terrain.");
+            const nearWall = kind === "prefab" && isWallPrefab(asset) &&
+              isNearTerrain(map, point[0], point[2], map.tileSize / 4);
+            if ((!cell && !nearWall) || !point.every(Number.isFinite)) {
+              throw new Error("Cliquer à l’intérieur du terrain.");
+            }
             placing = true;
             try {
               if (kind === "tile") {
+                if (!cell) throw new Error("Case de terrain introuvable.");
                 if (!Object.hasOwn(assets.tiles, asset)) throw new Error("Tuile inconnue : " + asset);
                 await level.replaceTile(cell.row, cell.column, asset);
                 return;
@@ -177,6 +183,7 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
           getPrefabRoot: level.getPrefabRoot,
           getObjectRoot: level.getObjectRoot,
           resizeTerrain: level.resizeTerrain,
+          setTerrainVisual: level.setTerrainVisual,
           scalePrefab: level.scalePrefab,
           removePrefab: level.removePrefab,
           duplicatePrefab(id: string): string {
@@ -187,10 +194,11 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
               ...original, id: placementId(original.prefab, map.prefabs ?? []),
               position: [original.position[0] + 1.5, original.position[1], original.position[2]] as MapPosition,
             };
-            if (!findTerrainCell(map, next.position[0], next.position[2])) {
+            const fitted = fitWallToTerrain(map, assets.prefabs, next);
+            if (!findTerrainCell(map, fitted.position[0], fitted.position[2])) {
               throw new Error("Aucune place disponible pour dupliquer ce prefab.");
             }
-            level.addPrefab(next);
+            level.addPrefab(fitted);
             return next.id;
           },
           setEnemyParameters: enemies.setEnemyParameters,

@@ -5,6 +5,8 @@ import type { createMapSystem } from "../world/maps/mapSystem.ts";
 import type { MapObject, MapPosition } from "../world/maps/types.ts";
 import type { PrefabPlacement } from "../world/maps/prefabDefinitions.ts";
 import { findTerrainCell } from "../world/maps/validation.ts";
+import { fitWallToTerrain, isWallPrefab } from "../world/maps/wallPlacement.ts";
+import type { TerrainVisual } from "../world/maps/zoneContent.ts";
 import { createEditorCommands, groupEditorCommands, type EditorCommand } from "./editorCommands.ts";
 import { copyPrefabs, pastePrefabs, type PrefabClipboard } from "./editorClipboard.ts";
 import { resizeTerrain } from "./editorTerrain.ts";
@@ -154,6 +156,7 @@ export function bindWorldEditorV2(context: EditorContext) {
     if (await history.undo()) {
       context.clearSelection();
       noteChange();
+      syncTerrainFields();
     }
     refreshControls();
   }
@@ -162,6 +165,7 @@ export function bindWorldEditorV2(context: EditorContext) {
     if (await history.redo()) {
       context.clearSelection();
       noteChange();
+      syncTerrainFields();
     }
     refreshControls();
   }
@@ -250,9 +254,17 @@ export function bindWorldEditorV2(context: EditorContext) {
     if (!clipboard) return;
     clipboard.data.items.forEach((item, index) => {
       const offset = item.position.map((axis, i) => axis - clipboard!.data.origin[i]);
-      pasteGhosts[index]?.position.set(
-        position[0] + offset[0], position[1] + offset[1] + 0.5, position[2] + offset[2],
-      );
+      let point = [position[0] + offset[0], position[1] + offset[1],
+        position[2] + offset[2]] as MapPosition;
+      if (clipboard?.kind === "prefab" && maps.world) {
+        try {
+          point = fitWallToTerrain(maps.world.definition, maps.world.assets.prefabs,
+            { ...item as PrefabPlacement, position: point }).position;
+        } catch {
+          // The actual paste validates and reports an oversized wall explicitly.
+        }
+      }
+      pasteGhosts[index]?.position.set(point[0], point[1] + 0.5, point[2]);
     });
   }
 
@@ -266,6 +278,7 @@ export function bindWorldEditorV2(context: EditorContext) {
     );
     const items = clipboard.kind === "prefab"
       ? pastePrefabs(clipboard.data, position, used)
+        .map((item) => fitWallToTerrain(world.definition, world.assets.prefabs, item))
       : clipboard.data.items.map((item) => {
         const id = uniqueId(item.id, used);
         used.add(id);
@@ -422,6 +435,19 @@ export function bindWorldEditorV2(context: EditorContext) {
     context.updateSelection();
   }
 
+  function syncTerrainFields(): void {
+    const terrain = maps.world?.definition.terrain;
+    requireElement<HTMLInputElement>("worldEditorTerrainWidth").value = terrain
+      ? String(terrain.tiles[0].length * maps.world!.definition.tileSize) : "";
+    requireElement<HTMLInputElement>("worldEditorTerrainDepth").value = terrain
+      ? String(terrain.tiles.length * maps.world!.definition.tileSize) : "";
+    requireElement<HTMLSelectElement>("worldEditorGroundStyle").value = terrain?.visual?.style ?? "flat";
+    requireElement<HTMLInputElement>("worldEditorPlatformThickness").value =
+      String(terrain?.visual?.thickness ?? 1.2);
+    requireElement<HTMLInputElement>("worldEditorPlatformSideColor").value =
+      terrain?.visual?.sideColor ?? "#d8d8d8";
+  }
+
   async function resizeMap(): Promise<void> {
     const world = active();
     const size = {
@@ -430,14 +456,35 @@ export function bindWorldEditorV2(context: EditorContext) {
     };
     const anchor = requireElement<HTMLSelectElement>("worldEditorTerrainAnchor").value;
     if (anchor !== "center" && anchor !== "origin") throw new Error("Ancrage invalide.");
-    const next = resizeTerrain(world.definition, size, anchor);
+    const next = resizeTerrain(world.definition, size, anchor, world.assets.prefabs);
     const previous = structuredClone(world.definition.terrain);
     await execute({
       label: "Redimensionner le terrain",
       run: () => world.editor.resizeTerrain(next),
       undo: () => world.editor.resizeTerrain({ origin: previous.origin, tiles: previous.tiles }),
     });
+    syncTerrainFields();
     status.textContent = "Dimensions du terrain actualisées.";
+  }
+
+  async function changeGroundStyle(): Promise<void> {
+    const world = active();
+    const style = requireElement<HTMLSelectElement>("worldEditorGroundStyle").value;
+    const thickness = requireElement<HTMLInputElement>("worldEditorPlatformThickness").valueAsNumber;
+    const sideColor = requireElement<HTMLInputElement>("worldEditorPlatformSideColor").value;
+    if (style !== "flat" && style !== "platform") throw new Error("Style de terrain inconnu.");
+    const previous = world.definition.terrain.visual
+      ? structuredClone(world.definition.terrain.visual) : undefined;
+    const next: TerrainVisual = style === "platform"
+      ? { style, thickness, sideColor }
+      : { style: "flat" };
+    if (JSON.stringify(previous ?? { style: "flat" }) === JSON.stringify(next)) return;
+    await execute({
+      label: "Changer l'apparence du terrain",
+      run: () => world.editor.setTerrainVisual(next),
+      undo: () => world.editor.setTerrainVisual(previous),
+    });
+    syncTerrainFields();
   }
 
   async function resizePrefab(): Promise<void> {
@@ -504,12 +551,29 @@ export function bindWorldEditorV2(context: EditorContext) {
     const world = maps.world;
     if (!world || world !== current) return;
     const ref = gizmoRef;
-    const currentPosition: MapPosition = [
+    let currentPosition: MapPosition = [
       gizmoNode.position.x, gizmoNode.position.y, gizmoNode.position.z,
     ];
     const rotated = gizmoNode.rotation.y * 180 / Math.PI;
     const scaled: MapPosition = [gizmoNode.scaling.x, gizmoNode.scaling.y, gizmoNode.scaling.z];
     const before = structuredClone(gizmoBase);
+    if (ref.kind === "prefab") {
+      const placement = world.definition.prefabs?.find((item) => item.id === ref.id);
+      if (placement && isWallPrefab(placement.prefab)) {
+        try {
+          const axes: MapPosition = scaled.map((value) => value / placement.scale) as unknown as MapPosition;
+          currentPosition = fitWallToTerrain(world.definition, world.assets.prefabs, {
+            ...placement, position: currentPosition, rotationY: rotated, scaleAxes: axes,
+          }).position;
+        } catch (error) {
+          status.textContent = error instanceof Error ? error.message : String(error);
+          gizmoNode.position.set(...before.position);
+          gizmoNode.rotation.y = before.rotation;
+          gizmoNode.scaling.set(...before.axes);
+          return;
+        }
+      }
+    }
     const positionChanged = currentPosition.some((v, i) => v !== before.position[i]);
     const rotationChanged = Math.abs(rotated - before.rotation * 180 / Math.PI) > 0.0001;
     const scaleChanged = scaled.some((v, i) => Math.abs(v - before.axes[i]) > 0.0001);
@@ -568,6 +632,10 @@ export function bindWorldEditorV2(context: EditorContext) {
     ["worldEditorResizeTerrain", resizeMap],
   ] as const) {
     requireElement<HTMLButtonElement>(id).addEventListener("click", () => report(action()), { signal });
+  }
+  for (const id of ["worldEditorGroundStyle", "worldEditorPlatformThickness",
+    "worldEditorPlatformSideColor"]) {
+    requireElement<HTMLElement>(id).addEventListener("change", () => report(changeGroundStyle()), { signal });
   }
   requireElement("worldEditorCopy").addEventListener("click", () => {
     try { copy(); } catch (error) { status.textContent = String(error); }
@@ -720,11 +788,7 @@ export function bindWorldEditorV2(context: EditorContext) {
     for (const item of current?.definition.objects ?? []) {
       if (item.layer) layers.ensure(item.layer);
     }
-    const map = current?.definition;
-    requireElement<HTMLInputElement>("worldEditorTerrainWidth").value = map
-      ? String(map.terrain.tiles[0].length * map.tileSize) : "";
-    requireElement<HTMLInputElement>("worldEditorTerrainDepth").value = map
-      ? String(map.terrain.tiles.length * map.tileSize) : "";
+    syncTerrainFields();
     draftState.textContent = "Aucune modification locale.";
     renderLayers();
     refreshControls();
@@ -747,6 +811,10 @@ export function bindWorldEditorV2(context: EditorContext) {
     get rotationSnap() { return Number(rotationStep.value); },
     isSelectable,
     get isPasting() { return pendingPaste; },
+    get isPastingWall() {
+      return pendingPaste && clipboard?.kind === "prefab" &&
+        clipboard.data.items.every((item) => isWallPrefab(item.prefab));
+    },
     async placePaste(position: MapPosition): Promise<void> { await pasteAt(position); },
     cancelPaste,
     onPlacement(kind: string, id: string | undefined): void {

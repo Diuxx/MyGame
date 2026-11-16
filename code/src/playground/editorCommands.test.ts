@@ -76,3 +76,16 @@ test("terrain resize validates centered growth and keeps existing data", () => {
   assert.throws(() => resizeTerrain(map, { width: 11, depth: 12 }, "origin"), /multiple positif/);
   assert.throws(() => resizeTerrain(map, { width: 1024, depth: 1024 }, "origin"), /4096/);
 });
+
+test("terrain cannot shrink across a wall even if the wall pivot remains inside", async () => {
+  const { parsePrefabCatalog } = await import("../world/maps/prefabDefinitions.ts");
+  const { readFileSync } = await import("node:fs");
+  const catalog = parsePrefabCatalog(JSON.parse(readFileSync(
+    new URL("../../public/assets/definitions/blockout-prefabs.json", import.meta.url), "utf8")));
+  const source: MapDefinition = structuredClone(map);
+  source.prefabs = [{ id: "perimeter-wall", prefab: "wall-straight",
+    position: [1,0,0], rotationY: 0, scale: 1 }];
+  assert.throws(() => resizeTerrain(source, { width: 6, depth: 8 }, "origin", catalog),
+    /dépasser un mur/);
+  assert.equal(source.terrain.tiles[0].length, 4);
+});

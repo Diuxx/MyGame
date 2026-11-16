@@ -13,6 +13,8 @@ import { MapModelRegistry } from "./modelRegistry";
 import { tileCenter } from "./validation";
 
 import { createZoneScene } from "./zoneScene";
+import { fitWallToTerrain } from "./wallPlacement";
+import { parseTerrainVisual, type TerrainVisual } from "./zoneContent";
 import { createPrefabRenderer } from "./prefabRenderer";
 import type { PrefabPlacement } from "./prefabDefinitions";
 import type { MapAssets, MapCollider, MapDefinition, MapObject, MapPosition } from "./types";
@@ -243,22 +245,27 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
     },
     addPrefab(placement: PrefabPlacement): void {
       if (!prefabs) throw new Error("La map ne dispose pas de catalogue de prefabs.");
-      prefabs.add(placement);
-      (definition.prefabs ??= []).push(placement);
+      const fitted = fitWallToTerrain(definition, assets.prefabs, placement);
+      prefabs.add(fitted);
+      (definition.prefabs ??= []).push(fitted);
       refreshCollisionData();
     },
     movePrefab(id: string, position: MapPosition): void {
       const placement = definition.prefabs?.find((item) => item.id === id);
       if (!placement) throw new Error("Placement prefab inconnu : " + id);
-      prefabs?.move(id, position);
-      placement.position = [...position];
+      const fitted = fitWallToTerrain(definition, assets.prefabs, { ...placement, position });
+      prefabs?.move(id, fitted.position);
+      placement.position = [...fitted.position];
       refreshCollisionData();
     },
     rotatePrefab(id: string, degrees: number): void {
       const placement = definition.prefabs?.find((item) => item.id === id);
       if (!placement || !Number.isFinite(degrees)) throw new Error("Rotation prefab invalide.");
+      const fitted = fitWallToTerrain(definition, assets.prefabs, { ...placement, rotationY: degrees });
       prefabs?.rotate(id, degrees);
+      prefabs?.move(id, fitted.position);
       placement.rotationY = degrees;
+      placement.position = [...fitted.position];
       refreshCollisionData();
     },
     scalePrefab(id: string, factor: number): void {
@@ -266,8 +273,11 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
       if (!placement || !Number.isFinite(factor) || factor < 0.25 || factor > 4) {
         throw new Error("Échelle du prefab invalide (0.25 à 4).");
       }
+      const fitted = fitWallToTerrain(definition, assets.prefabs, { ...placement, scale: factor });
       prefabs?.scale(id, factor, placement.scaleAxes);
+      prefabs?.move(id, fitted.position);
       placement.scale = factor;
+      placement.position = [...fitted.position];
       refreshCollisionData();
     },
     setPrefabScaleAxes(id: string, axes: MapPosition): void {
@@ -275,8 +285,11 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
       if (!placement || axes.some((n) => !Number.isFinite(n) || n < 0.1 || n > 10)) {
         throw new Error("Dimensions du bloc invalides (0.1 à 10).");
       }
+      const fitted = fitWallToTerrain(definition, assets.prefabs, { ...placement, scaleAxes: axes });
       prefabs?.scale(id, placement.scale, axes);
+      prefabs?.move(id, fitted.position);
       placement.scaleAxes = [...axes];
+      placement.position = [...fitted.position];
       refreshCollisionData();
     },
     setPrefabLayer(id: string, layer: string): void {
@@ -378,6 +391,20 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
       void view.model.load(object.visual).catch((error: unknown) => {
         console.error("Impossible de reconstruire le visuel provisoire de l'objet :", id, error);
       });
+    },
+    setTerrainVisual(visual: TerrainVisual | undefined): void {
+      const validated = parseTerrainVisual(visual);
+      if (validated?.style === "platform" && !definition.terrain.primitiveGround) {
+        throw new Error("Le style platform nécessite un sol primitif.");
+      }
+      const previous = definition.terrain.visual;
+      definition.terrain.visual = validated;
+      try { zone?.refreshGround(); }
+      catch (error) {
+        definition.terrain.visual = previous;
+        zone?.refreshGround();
+        throw error;
+      }
     },
     resizeTerrain(terrain: { origin: MapPosition; tiles: (string | null)[][] }): void {
       if (terrain.tiles.some((row) => row.some((tile) => tile !== null))) {
