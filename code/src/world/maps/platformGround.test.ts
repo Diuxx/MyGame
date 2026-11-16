@@ -81,3 +81,17 @@ test("terrain resize and style switches reuse and dispose the same slab safely",
   scene.dispose();
   engine.dispose();
 });
+
+test("map validation preserves the platform configuration and rejects invalid JSON", async () => {
+  const { validateMapDefinition } = await import("./validation.ts");
+  const raw = definition();
+  const assets = { version: 1 as const, tiles: {}, objects: {} };
+  const parsed = validateMapDefinition(raw, assets);
+  assert.deepEqual(parsed.terrain.visual, raw.terrain.visual);
+  assert.deepEqual(validateMapDefinition({
+    ...raw, terrain: { ...raw.terrain, visual: undefined },
+  }, assets).terrain.visual, undefined);
+  assert.throws(() => validateMapDefinition({
+    ...raw, terrain: { ...raw.terrain, visual: { style: "platform", thickness: -1 } },
+  }, assets), /thickness/);
+});
