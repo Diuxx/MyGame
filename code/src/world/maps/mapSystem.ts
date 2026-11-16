@@ -166,6 +166,15 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
             else enemies.rotateEnemy(id, degrees);
           },
           setObjectCollider: level.setObjectCollider,
+          addPrefab: level.addPrefab,
+          addObject: level.addObject,
+          removeObject: level.removeObject,
+          setPrefabScaleAxes: level.setPrefabScaleAxes,
+          setPrefabLayer: level.setPrefabLayer,
+          setObjectLayer: level.setObjectLayer,
+          setPrefabLayerVisibility: level.setPrefabLayerVisibility,
+          getPrefabRoot: level.getPrefabRoot,
+          resizeTerrain: level.resizeTerrain,
           scalePrefab: level.scalePrefab,
           removePrefab: level.removePrefab,
           duplicatePrefab(id: string): string {

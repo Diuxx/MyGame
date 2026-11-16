@@ -178,6 +178,9 @@ export function validateMapDefinition(
       position: position(item.position, objectId + ".position"),
       rotationY: finite(item.rotationY, objectId + ".rotationY"),
       ...(item.visual === undefined ? {} : { visual: parseVisualOverride(item.visual) }),
+      ...(item.layer === undefined ? {} : {
+        layer: identifier(item.layer, objectId + ".layer"),
+      }),
       ...(item.colliders === undefined ? {} : {
         colliders: list(item.colliders, objectId + ".colliders").map((raw, i) =>
           collider(raw, objectId + ".colliders[" + i + "]")),

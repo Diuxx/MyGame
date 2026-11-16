@@ -84,7 +84,11 @@ export function createPrefabRenderer(
     root.parent = parent;
     root.position.set(...placement.position);
     root.rotation.y = placement.rotationY * Math.PI / 180;
-    root.scaling.setAll(placement.scale);
+    root.scaling.set(
+      placement.scale * (placement.scaleAxes?.[0] ?? 1),
+      placement.scale * (placement.scaleAxes?.[1] ?? 1),
+      placement.scale * (placement.scaleAxes?.[2] ?? 1),
+    );
     const view: PrefabView = { root, parts: [], debug: [] };
     try {
       for (const [index, part] of definition.parts.entries()) {
@@ -152,8 +156,17 @@ export function createPrefabRenderer(
     rotate(id: string, degrees: number): void {
       lookup(id).root.rotation.y = degrees * Math.PI / 180;
     },
-    scale(id: string, factor: number): void {
-      lookup(id).root.scaling.setAll(factor);
+    scale(id: string, factor: number, axes: MapPosition = [1, 1, 1]): void {
+      lookup(id).root.scaling.set(factor * axes[0], factor * axes[1], factor * axes[2]);
+    },
+    getRoot(id: string): TransformNode { return lookup(id).root; },
+    setLayerVisible(layer: string, visible: boolean, placements: readonly PrefabPlacement[]): void {
+      for (const placement of placements) {
+        if ((placement.layer ?? (catalog[placement.prefab].category === "architecture" ?
+          "architecture" : "furniture")) !== layer) continue;
+        const view = views.get(placement.id);
+        view?.root.setEnabled(visible);
+      }
     },
     setEditing(enabled: boolean): void {
       editing = enabled;

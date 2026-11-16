@@ -38,6 +38,7 @@ export interface MapObject {
   rotationY: number;
   colliders?: MapCollider[];
   visual?: VisualOverride;
+  layer?: string;
 }
 
 export interface MapSpawn {
