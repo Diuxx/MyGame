@@ -421,6 +421,20 @@ export function bindWorldEditorV2(context: EditorContext) {
     }
   }
 
+  const heightStep = requireElement<HTMLSelectElement>("worldEditorHeightStep");
+  function refreshHeightTooltips(): void {
+    const amount = heightStep.selectedOptions[0]?.textContent ?? heightStep.value;
+    const label = heightStep.closest<HTMLLabelElement>(".world-editor-height-label");
+    if (label) label.title = "Palier Y : " + amount + " unité(s)";
+    heightStep.title = "Choisir le palier Y : " + amount + " unité(s)";
+    requireElement<HTMLButtonElement>("worldEditorDown").title =
+      "Descendre de " + amount + " unité(s) (PageDown)";
+    requireElement<HTMLButtonElement>("worldEditorUp").title =
+      "Monter de " + amount + " unité(s) (PageUp)";
+  }
+  heightStep.addEventListener("change", refreshHeightTooltips, { signal });
+  refreshHeightTooltips();
+
   async function moveHeight(direction: number): Promise<void> {
     const world = active();
     const step = Number(requireElement<HTMLSelectElement>("worldEditorHeightStep").value);

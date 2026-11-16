@@ -8,6 +8,7 @@ import { createEnemyScene } from "./enemies/enemyScene";
 import { startEnemyTools } from "./playground/enemyTools";
 import { bindCollisionTools } from "./playground/collisionTools";
 import { bindMapTools } from "./playground/mapTools";
+import { bindLightingTools } from "./playground/lightingTools";
 import { bindWorldEditor } from "./playground/worldEditor";
 import { bindEditorCameraNavigation } from "./playground/editorCameraNavigation";
 import { createMapSystem } from "./world/maps/mapSystem";
@@ -20,7 +21,7 @@ import { loadPlaygroundFloatingTextConfig } from "./ui/floatingTextConfig";
 import { bindFloatingTextTools } from "./playground/floatingTextTools";
 import { bindAttackTools } from "./playground/attackTools";
 import { bindTransitionTools } from "./playground/transitionTools";
-import { bindModuleWindows } from "./playground/moduleWindows";
+import { bindPlaygroundWorkspace } from "./playground/workspace";
 import { bindControlSettings } from "./playground/controlSettings";
 import { bindAnimationTools } from "./playground/animationTools";
 import { createTargetLockSystem } from "./character/targetLockSystem";
@@ -62,8 +63,7 @@ export async function startPlayground(
   heroState: HeroState,
 ): Promise<void> {
   requireElement<HTMLElement>("movementHint").hidden = false;
-  bindModuleWindows(signal);
-  const { ground, grid, shadows, ambience } = createPlaygroundEnvironment(scene, character.root);
+  const { ground, grid, shadows, lighting } = createPlaygroundEnvironment(scene, character.root);
   // Map-specific ground now owns the visible terrain; retain the legacy plane only
   // as an origin for debug tools and the optional grid.
   ground.isVisible = false;
@@ -88,7 +88,7 @@ export async function startPlayground(
   let controller: ReturnType<typeof createCharacterController> | undefined;
   const maps = createMapSystem(scene, {
     hero: character.root, shadows,
-    applyEnvironment: ambience.apply,
+    applyLighting: lighting.apply,
     isHeroAlive: () => vitals.isAlive,
     onHeroHit: (damage) => lifecycle.hit(damage, controller),
     onDamage: (damage) => {
@@ -118,6 +118,7 @@ export async function startPlayground(
     },
   });
   bindMapTools(maps, character.root, cameraControls, signal, zoneTransitions);
+  bindLightingTools(scene, maps, character.root, signal);
   bindFloatingTextTools(floatingText, character.root, signal);
   const editorCamera = bindEditorCameraNavigation(scene, cameraControls, character.root,
     () => maps.world?.definition, signal);
@@ -244,4 +245,5 @@ export async function startPlayground(
 
   requireElement<HTMLParagraphElement>("modelStatus").textContent =
     `hero.glb · ${character.animationGroups.length} animations · échelle ajustée ×${character.scaleApplied.toFixed(1)} · 1,8 m`;
+  bindPlaygroundWorkspace(scene, maps, worldEditor, signal);
 }

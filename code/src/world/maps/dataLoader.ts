@@ -35,6 +35,18 @@ export function isMapId(value: string): value is MapId {
 }
 
 let defaultCatalog: Promise<ReturnType<typeof parseAssetCatalog>> | undefined;
+let reusablePrefabs: Promise<ReturnType<typeof parsePrefabCatalog>> | undefined;
+
+/** All maps can place blockout prefabs, even when they contain no instances yet. */
+function loadReusablePrefabs() {
+  reusablePrefabs ??= fetchJson("/assets/definitions/blockout-prefabs.json")
+    .then(parsePrefabCatalog)
+    .catch((error: unknown) => {
+      reusablePrefabs = undefined;
+      throw error;
+    });
+  return reusablePrefabs;
+}
 
 export function parseAssetCatalog(raw: unknown) {
   const assets = validateMapAssets(raw);
@@ -56,18 +68,15 @@ export async function loadMapData(id: MapId): Promise<{
   map: MapDefinition;
   enemyCatalog: ReturnType<typeof loadEnemyDefinitions>;
 }> {
-  const [{ assets, enemyCatalog: defaults }, rawMap] = await Promise.all([
+  const [{ assets, enemyCatalog: defaults }, rawMap, prefabs] = await Promise.all([
     loadAssetCatalog(),
     fetchJson(MAPS[id]),
+    loadReusablePrefabs(),
   ]);
   const path = mapEnemyCatalogPath(rawMap);
   const overrides = path ? loadEnemyDefinitions(await fetchJson(path)) : [];
   const enemyCatalog = [...new Map([...defaults, ...overrides].map((enemy) => [enemy.id, enemy])).values()];
-  const usesPrefabs = !!rawMap && typeof rawMap === "object" && !Array.isArray(rawMap) &&
-    Object.hasOwn(rawMap, "prefabs");
-  const withPrefabs = usesPrefabs
-    ? { ...assets, prefabs: parsePrefabCatalog(await fetchJson("/assets/definitions/blockout-prefabs.json")) }
-    : assets;
+  const withPrefabs = { ...assets, prefabs };
   const map = validateMapDefinition(rawMap, withPrefabs, new Set(enemyCatalog.map((enemy) => enemy.id)));
   if (map.id !== id) throw new Error("Identifiant de map inattendu : " + map.id);
   return { assets: withPrefabs, map, enemyCatalog };

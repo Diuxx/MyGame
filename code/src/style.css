@@ -165,3 +165,388 @@ input[type=range] { accent-color:#a4c49e; display:block; width:100%; margin:0 0 
   opacity: 1;
   pointer-events: auto;
 }
+
+
+/* Workspace UI: retained Babylon canvas and original inputs, new presentation only. */
+.app.workspace-app {
+  --ws-left-width: 266px;
+  --ws-right-width: 306px;
+  position: relative;
+  display: grid;
+  grid-template-columns: 66px var(--ws-left-width) minmax(0, 1fr) var(--ws-right-width);
+  grid-template-rows: 60px 46px minmax(0, 1fr) 29px;
+  width: 100%;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  background: #17211f;
+  color: #e9f2ea;
+  font-size: 12px;
+}
+.workspace-app #playgroundPanel,
+.workspace-app #playgroundModules { display: none !important; }
+.workspace-app .stage {
+  grid-column: 3;
+  grid-row: 3;
+  min-height: 0;
+  height: 100%;
+  position: relative;
+  background: #3c4044;
+  overflow: hidden;
+}
+.workspace-app #renderCanvas { width: 100%; height: 100%; }
+.workspace-app .stage .brand { display: none; }
+.workspace-app[data-workspace-mode="edit"] #heroHud { display: none; }
+.workspace-app[data-workspace-mode="edit"] .stage-footnote { display: none; }
+.workspace-app button, .workspace-app select, .workspace-app input { font: inherit; }
+.workspace-app button:focus-visible, .workspace-app input:focus-visible,
+.workspace-app select:focus-visible { outline: 2px solid #c7e5bd; outline-offset: 2px; }
+.workspace-app .ws-muted { color: #92ad9e; }
+.ws-top {
+  grid-column: 1 / -1; grid-row: 1; z-index: 8;
+  display: flex; align-items: center; gap: 13px; padding: 0 16px;
+  background: #15211e; border-bottom: 1px solid #35483e;
+  min-width: 0;
+}
+.ws-logo {
+  width: 34px; height: 34px; flex: 0 0 auto;
+  display: grid; place-items: center;
+  border-radius: 9px; font-size: 25px; font-weight: 700;
+  background: #c9dfbd; color: #26402c;
+}
+.ws-identity { display: grid; gap: 2px; white-space: nowrap; letter-spacing: .075em; }
+.ws-identity strong { font-size: 13px; }
+.ws-identity small { font-size: 9px; color: #a0baa4; }
+.ws-breadcrumb { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
+.ws-breadcrumb strong { font-weight: 600; }
+.ws-top-space { flex: 1; min-width: 8px; }
+.ws-map-picker { display: flex; gap: 6px; align-items: center; white-space: nowrap; }
+.ws-map-picker > label { color: #a7bbad; font-size: 11px; }
+.ws-map-picker select {
+  max-width: 190px; min-width: 110px; padding: 7px 9px;
+  background: #22342b; color: #eaf2e9; border: 1px solid #43614c; border-radius: 7px;
+}
+.ws-map-picker button {
+  padding: 8px 10px; border: 1px solid #48664f; border-radius: 7px;
+  background: #283e32; color: #eaf3e8; white-space: nowrap;
+}
+#ws-top-fps { color: #bbd5b8; white-space: nowrap; }
+.ws-top .render-fps { color: #bbd5b8; }
+.ws-header-control {
+  border: 1px solid #456255; background: #20322b; color: #e1eee1;
+  border-radius: 8px; padding: 8px 11px; white-space: nowrap;
+}
+.ws-header-control:hover { background: #30483b; }
+.ws-mode-switch { display: flex; gap: 3px; border: 1px solid #466454; border-radius: 9px; padding: 3px; background: #263a30; white-space: nowrap; }
+.ws-mode-switch button { padding: 8px 11px; border: none; background: transparent; color: #adc7b1; border-radius: 6px; font-weight: 650; }
+.ws-mode-switch button.is-active { background: #c8dfbe; color: #1f3226; }
+.ws-explorer-toggle { display: none; }
+.ws-toolbar {
+  grid-column: 1 / -1; grid-row: 2; z-index: 7;
+  display: flex; align-items: center; gap: 11px; min-width: 0;
+  padding: 0 16px 0 74px; border-bottom: 1px solid #34473b;
+  background: #192720; overflow-x: auto; scrollbar-width: thin;
+}
+.ws-tool-buttons, .ws-history-tools, .ws-snap-tools { display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+.ws-tool-buttons button, .ws-action-button {
+  width: 32px; height: 31px; padding: 0; border-radius: 7px;
+  background: transparent; border: 1px solid transparent;
+  color: #e0ede2; font-size: 17px !important; line-height: 1;
+}
+.ws-tool-buttons button:hover, .ws-action-button:hover { border-color: #647966; background: #2e4134; }
+.ws-tool-buttons button.is-active { background: #c1dbb5; color: #213627; border-color: #c1dbb5; }
+.ws-toolbar-separator { width: 1px; height: 22px; background: #4b6150; flex: 0 0 1px; }
+.ws-snap-tools label { display: flex; align-items: center; gap: 6px; color: #c4d9ca; font-size: 11px; }
+.ws-snap-tools input { accent-color: #accba2; }
+.ws-snap-tools select { padding: 6px; border-radius: 6px; border: 1px solid #516653; background: #26382d; color: #e3ede1; }
+.ws-toolbar-end { flex: 1; }
+#ws-export-tools button {
+  padding: 7px 11px; white-space: nowrap; border: 1px solid #587c5e;
+  border-radius: 7px; background: #304536; color: #e6f1e5;
+}
+.ws-rail {
+  grid-column: 1; grid-row: 3; z-index: 4;
+  display: flex; flex-direction: column; gap: 5px; padding: 10px 6px;
+  background: #1a2821; border-right: 1px solid #35493e;
+}
+.ws-area-button {
+  border: 1px solid transparent; border-radius: 8px;
+  background: transparent; color: #9fb8a9; min-height: 55px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; font-size: 10px; padding: 4px 1px;
+}
+.ws-area-icon { font-size: 20px; line-height: 1; }
+.ws-area-button:hover { background: #2b3c32; color: #e4f0e6; }
+.ws-area-button.is-active { background: #304b3b; border-color: #56745a; color: #e6f3e7; }
+.ws-left, .ws-right {
+  min-width: 0; min-height: 0; display: flex; flex-direction: column;
+  background: #1d2b25; overflow: hidden;
+}
+.ws-left { grid-column: 2; grid-row: 3; border-right: 1px solid #394c3e; }
+.ws-right { grid-column: 4; grid-row: 3; border-left: 1px solid #394c3e; background: #1c2924; }
+.ws-side-head {
+  min-height: 52px; flex: 0 0 auto; padding: 0 13px; display: flex;
+  gap: 9px; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid #3b5042; letter-spacing: .055em;
+}
+.ws-side-head strong { font-size: 11px; }
+.ws-side-head button { border: 0; background: transparent; color: #acc3b0; font-size: 20px; }
+.ws-side-head .ws-muted { font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ws-left-tabs { display: flex; gap: 6px; padding: 11px 11px 5px; }
+.ws-left-tabs button { flex: 1; background: #263a2f; border: 1px solid #435949; border-radius: 7px; padding: 8px; color: #c3d6c5; }
+.ws-left-tabs button.is-active { background: #c8dfbe; color: #263c2a; border-color: #c8dfbe; font-weight: 650; }
+.ws-left-pane { flex: 1; min-height: 0; overflow-y: auto; padding: 10px 12px; scrollbar-width: thin; }
+.ws-left-pane[hidden] { display: none !important; }
+.ws-left-pane input[type=search] {
+  width: 100%; margin: 0 0 11px; padding: 10px; background: #17251e;
+  border: 1px solid #4b6251; color: #e2efe5; border-radius: 8px;
+}
+.ws-scene-group { padding: 0 0 7px; margin: 0; }
+.ws-scene-group summary { cursor: pointer; font-weight: 700; font-size: 11px; color: #b6cebb; padding: 10px 5px; }
+.ws-scene-entry {
+  display: flex; gap: 8px; align-items: center; width: 100%;
+  padding: 8px 10px 8px 16px; background: transparent; color: #dde9df;
+  border: 1px solid transparent; border-radius: 6px; text-align: left;
+  font-size: 12px; overflow-wrap: anywhere;
+}
+button.ws-scene-entry:hover { background: #2c4235; }
+.ws-scene-entry.is-selected { background: #345340; border-color: #668a6b; }
+.ws-scene-icon { min-width: 14px; color: #a2bca6; font-size: 14px; }
+.ws-left-footer { border-top: 1px solid #405344; padding: 12px; }
+.ws-left-footer button { padding: 10px; border: 1px solid #52715a; border-radius: 8px; background: #294434; color: #dcefdc; width: 100%; }
+#ws-catalog-pane #worldEditorCatalog { display: block; }
+#ws-catalog-pane .world-editor-catalog { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ws-module-tabs { display: flex; gap: 5px; padding: 12px; overflow-x: auto; flex: 0 0 auto; scrollbar-width: thin; }
+.ws-module-tabs[hidden] { display: none !important; }
+.ws-module-tabs button { padding: 8px 11px; border: 1px solid #485f4a; border-radius: 7px; white-space: nowrap; background: #283b2e; color: #d1e2d0; }
+.ws-module-tabs button.is-active { background: #bfd9b6; color: #243727; }
+.ws-module-host { min-height: 0; flex: 1; overflow-y: auto; scrollbar-width: thin; }
+.ws-module-host .module-window {
+  padding: 12px 14px 22px; border: 0; border-radius: 0; box-shadow: none;
+  background: transparent; backdrop-filter: none; max-height: none;
+}
+.ws-module-host .module-window[hidden] { display: none !important; }
+.ws-module-host .module-header { border-bottom: 1px solid #415544; padding-bottom: 11px; }
+.ws-module-host .module-header h2 { font-size: 14px; }
+.ws-module-host .module-window details { margin: 8px 0; border: 1px solid #415547; border-radius: 7px; padding: 9px; }
+.ws-module-host .module-window details summary { cursor: pointer; font-weight: 600; }
+.ws-module-host .module-window .enemy-fields { gap: 6px; }
+.ws-module-host .module-window input[type=number],
+.ws-module-host .module-window select { max-width: 100%; }
+.ws-module-host #worldEditorModule > .grid-toggle:first-of-type { display: none; }
+.ws-debug-panel { padding: 14px; overflow-y: auto; }
+.ws-debug-panel[hidden] { display: none !important; }
+.ws-debug-panel h3 { font-size: 14px; margin: 0 0 9px; }
+.ws-debug-panel p { color: #a7c0ad; line-height: 1.5; }
+.ws-debug-controls { display: grid; gap: 12px; margin: 15px 0; }
+.ws-debug-controls label { margin: 0; }
+.ws-debug-shortcuts { display: grid; gap: 8px; margin-top: 20px; }
+.ws-debug-shortcuts button { padding: 10px; border: 1px solid #4e6853; border-radius: 8px; background: #2a4031; color: #dce9db; }
+.ws-statusbar {
+  grid-column: 1 / -1; grid-row: 4; display: flex; align-items: center; gap: 12px;
+  padding: 0 16px; min-width: 0;
+  background: #14201a; color: #9fb7a5; border-top: 1px solid #374b3d; font-size: 10px;
+}
+.ws-status-grow { flex: 1; }
+.ws-status-separator { opacity: .5; }
+.ws-statusbar span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ws-debug-drawer {
+  position: absolute; z-index: 8; right: 16px; top: 16px;
+  width: min(310px, calc(100% - 32px)); padding: 14px;
+  background: #1b2c25ef; border: 1px solid #59755d; border-radius: 11px;
+  color: #e2f0e2; box-shadow: 0 7px 28px #0006;
+}
+.ws-debug-drawer[hidden] { display: none !important; }
+.ws-drawer-heading { display: flex; align-items: center; justify-content: space-between; }
+.ws-drawer-heading button { color: #d7ead7; background: transparent; border: 0; font-size: 23px; }
+#ws-debug-test-host { display: grid; gap: 9px; margin-top: 13px; }
+#ws-debug-test-host label { color: #e2f0e2; font-size: 12px; margin: 0; }
+.app.workspace-app[data-workspace-mode="test"] {
+  grid-template-columns: 1fr;
+  grid-template-rows: 60px minmax(0, 1fr);
+}
+.workspace-app[data-workspace-mode="test"] .stage { grid-column: 1; grid-row: 2; }
+.workspace-app[data-workspace-mode="test"] .ws-toolbar,
+.workspace-app[data-workspace-mode="test"] .ws-rail,
+.workspace-app[data-workspace-mode="test"] .ws-left,
+.workspace-app[data-workspace-mode="test"] .ws-right,
+.workspace-app[data-workspace-mode="test"] .ws-statusbar { display: none !important; }
+.workspace-app[data-workspace-mode="test"] .ws-map-picker { display: none; }
+.workspace-app.ws-inspector-collapsed { --ws-right-width: 0px; }
+.workspace-app.ws-inspector-collapsed .ws-right { display: none; }
+@media (max-width: 1250px) {
+  .app.workspace-app { --ws-left-width: 235px; --ws-right-width: 283px; }
+  .ws-breadcrumb { display: none; }
+  .ws-top { gap: 9px; padding: 0 10px; }
+  .ws-toolbar { padding-left: 12px; }
+}
+@media (max-width: 1020px) {
+  .app.workspace-app:not([data-workspace-mode="test"]) { --ws-left-width: 0px; grid-template-columns: 60px 0 minmax(0, 1fr) var(--ws-right-width); }
+  .ws-explorer-toggle { display: inline-block; }
+  .workspace-app .ws-left { display: none; position: absolute; z-index: 10; left: 60px; top: 106px; bottom: 29px; width: 270px; box-shadow: 10px 3px 24px #0006; }
+  .workspace-app.ws-explorer-open .ws-left { display: flex; }
+  .ws-area-button { min-height: 50px; }
+}
+@media (max-width: 760px) {
+  .app.workspace-app:not([data-workspace-mode="test"]) { --ws-right-width: 0px; }
+  .ws-top-fps, #ws-top-fps, .ws-map-picker, .ws-identity small { display: none; }
+  .workspace-app .ws-right {
+    display: none; position: absolute; z-index: 11; right: 0; top: 106px;
+    bottom: 29px; width: min(340px, calc(100vw - 55px)); box-shadow: -10px 4px 24px #0006;
+  }
+  .workspace-app.ws-mobile-inspector-open .ws-right { display: flex; }
+  .ws-top { gap: 6px; }
+  .ws-header-control { padding: 8px; }
+  .ws-mode-switch button { padding: 8px 9px; font-size: 11px; }
+  .ws-toolbar { gap: 5px; }
+  .ws-statusbar { font-size: 9px; gap: 6px; }
+  .ws-rail { padding: 6px 3px; }
+  .ws-area-label { font-size: 9px; }
+  .ws-explorer-toggle { display: inline-block; }
+}
+@media (max-width: 760px) {
+  #ws-inspector-toggle { font-size: 20px; }
+}
+
+/* Keep the contextual properties above terrain and other secondary settings. */
+.ws-context-inspector { display: grid; gap: 8px; padding: 12px 0; border-bottom: 1px solid #415544; }
+.ws-context-inspector #worldEditorSelection {
+  margin: 0 0 3px; padding: 11px 12px; border: 1px solid #4b6b52;
+  border-radius: 9px; background: #2b4234; color: #e5f3e4; font-weight: 650;
+}
+.ws-context-inspector > .enemy-fields { margin-top: 0; }
+.ws-context-inspector #worldEditorFields { padding: 0; }
+.ws-context-inspector #worldEditorFields:not([hidden]) { display: grid; gap: 9px; }
+#ws-module-host[hidden] { display: none !important; }
+.workspace-app .ws-inspector-open { display: none; }
+.workspace-app.ws-inspector-collapsed .ws-inspector-open { display: inline-block; }
+.workspace-app.ws-inspector-collapsed .ws-statusbar { grid-column: 1 / -1; }
+@media (max-width: 760px) {
+  .workspace-app .ws-inspector-open { display: inline-block; }
+  .workspace-app .ws-identity { display: none; }
+  .workspace-app .ws-explorer-toggle { display: inline-block; }
+}
+
+.workspace-app .ws-relocated-source { display: none !important; }
+.workspace-app[data-workspace-mode="test"] .ws-inspector-open,
+.workspace-app[data-workspace-mode="test"] .ws-explorer-toggle { display: none !important; }
+
+/* The map load result must remain visible even while the map module is closed. */
+.workspace-app #ws-map-feedback {
+  flex: 0 1 40%;
+  min-width: 0;
+  color: #d6e4c4;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.workspace-app .ws-left-footer {
+  display: grid;
+  gap: 7px;
+}
+.workspace-app .ws-left-footer button {
+  text-align: left;
+}
+.workspace-app #ws-open-whitebox {
+  background: #34553e;
+  border-color: #698769;
+  color: #e6f4df;
+}
+
+/* Three equally sized icon-only controls; the native select still provides
+   keyboard access and its full list of numeric increments when opened. */
+.workspace-app .ws-context-inspector .world-editor-height-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 8px;
+  margin: 0;
+}
+.workspace-app .ws-context-inspector .world-editor-height-label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  grid-column: auto;
+  min-width: 0;
+  min-height: 38px;
+  margin: 0;
+  border: 1px solid #4b5f53;
+  border-radius: 9px;
+  background: #26362e;
+  cursor: pointer;
+}
+.workspace-app .ws-context-inspector .world-editor-height-label:hover {
+  background: #354a3c;
+}
+.workspace-app .ws-context-inspector .world-editor-height-label:focus-within {
+  outline: 2px solid #c7e5bd;
+  outline-offset: 2px;
+}
+.workspace-app .ws-context-inspector .world-editor-height-icon {
+  pointer-events: none;
+  color: #dce9dd;
+  font-size: 19px;
+  line-height: 1;
+}
+.workspace-app .ws-context-inspector .world-editor-height-label select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.workspace-app .ws-context-inspector .world-editor-height-controls > button {
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+  margin: 0;
+  padding: 8px;
+  font-size: 19px;
+  line-height: 1;
+  text-align: center;
+}
+.ws-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  white-space: nowrap;
+  clip-path: inset(50%);
+  border: 0;
+}
+
+/* Lighting editor keeps map-wide and per-light controls readable in the workspace inspector. */
+.lighting-section {
+  margin: 0 0 14px;
+  padding: 12px;
+  min-width: 0;
+  border: 1px solid var(--border, #5b626b);
+  border-radius: 8px;
+}
+.lighting-section legend { padding: 0 6px; font-weight: 600; }
+.lighting-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+  gap: 8px;
+  margin: 8px 0 12px;
+}
+.lighting-grid > label { min-width: 0; }
+.lighting-grid input,
+.lighting-grid select,
+.lighting-section #lightingLightSelect {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin-top: 4px;
+}
+.lighting-grid > button { min-width: 0; }
+.lighting-section .grid-toggle { margin: 8px 0; }
+.lighting-section [hidden] { display: none !important; }
+.lighting-section #lightingLightSelect { min-height: 92px; }

@@ -5,6 +5,7 @@ import { createMapEnemySimulation } from "./mapEnemySimulation.ts";
 import { loadEnemyDefinitions, type EnemyDefinition } from "./enemyDefinitions.ts";
 import { buildMapObstacles, mapBounds, resolveMapMovement } from "../world/maps/mapCollision.ts";
 import { validateMapAssets, validateMapDefinition } from "../world/maps/validation.ts";
+import { parsePrefabCatalog } from "../world/maps/prefabDefinitions.ts";
 import type { MapEncounterConfig, MapEnemySpawn } from "./mapEnemyConfig.ts";
 
 const definition: EnemyDefinition = {
@@ -256,22 +257,22 @@ test("map strike reports mitigated and overkill-capped damage", () => {
   assert.deepEqual(losses, [30, 70]);
 });
 
-test("Playground map initializes one regenerating training target and three goblins", () => {
+test("Playground initializes two stationary immortal wooden training targets", () => {
   const loadJson = (path: string) => JSON.parse(readFileSync(new URL(path, import.meta.url), "utf8"));
   const source = loadJson("../../public/assets/definitions/assets.json") as { enemies: unknown };
   const catalog = loadEnemyDefinitions(source.enemies);
-  const assets = validateMapAssets(source);
+  const assets = {
+    ...validateMapAssets(source),
+    prefabs: parsePrefabCatalog(loadJson("../../public/assets/definitions/blockout-prefabs.json")),
+  };
   const map = validateMapDefinition(loadJson("../../public/assets/maps/playground.json"), assets,
     new Set(catalog.map(({ id }) => id)));
   const game = createMapEnemySimulation({
     enemySpawns: map.enemySpawns ?? [], waves: [], events: [],
   }, catalog);
-  assert.equal(game.list().length, 4);
-  const target = game.list().find(({ spec }) => spec.enemyId === "target-wood");
-  assert.ok(target);
-  assert.equal(target.entity.definition.category, "static");
-  assert.equal(target.entity.immortal, true);
-  const goblins = game.list().filter(({ spec }) => spec.enemyId === "goblin");
-  assert.equal(goblins.length, 3);
-  assert.ok(goblins.every(({ state }) => state === "idle"));
+  const targets = game.list();
+  assert.equal(targets.length, 2);
+  assert.deepEqual(targets.map(({ spec }) => spec.enemyId), ["target-wood", "target-wood"]);
+  assert.ok(targets.every(({ entity }) => entity.definition.category === "static" && entity.immortal));
+  assert.ok(targets.every(({ state }) => state === "idle"));
 });

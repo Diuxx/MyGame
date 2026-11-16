@@ -768,5 +768,15 @@ export function bindWorldEditor(
     status,
   });
 
-  return { get enabled() { return enabled.checked; } };
+  return {
+    get enabled() { return enabled.checked; },
+    getSelection(): readonly { kind: SelectionKind; id: string }[] {
+      return selectedItems.map(({ kind, id }) => ({ kind, id }));
+    },
+    selectObject(kind: "prefab" | "object" | "enemy" | "interaction", id: string,
+      additive = false): void {
+      if (!enabled.checked || v2 && !v2.isSelectable({ kind, id })) return;
+      select(kind, id, additive);
+    },
+  };
 }

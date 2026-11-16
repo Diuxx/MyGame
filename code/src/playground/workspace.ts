@@ -1,0 +1,520 @@
+
+import type { Scene } from "@babylonjs/core";
+import type { createMapSystem } from "../world/maps/mapSystem";
+import type { MapDefinition } from "../world/maps/types";
+import { requireElement } from "../ui/dom";
+import type { bindWorldEditor } from "./worldEditor";
+import { WORKSPACE_AREAS, allWorkspaceModuleIds, modulesForArea, setWorkspaceEditingState, type WorkspaceArea, type WorkspaceModuleId } from "./workspaceModules";
+
+type WorldEditor = ReturnType<typeof bindWorldEditor>;
+type MapSystem = ReturnType<typeof createMapSystem>;
+type SelectionKind = "prefab" | "object" | "enemy" | "interaction";
+
+const DEBUG_CONTROLS = [
+  "heroHitboxVisible", "enemyHitboxesVisible", "enemyCollidersVisible",
+  "attackHitboxVisible", "mapShowColliders", "mapShowAggro",
+  "mapShowZonePoints", "showGrid",
+] as const;
+
+function surface(tag: "header" | "nav" | "aside" | "section" | "footer" | "div", id: string,
+  className: string, markup: string): HTMLElement {
+  const node = document.createElement(tag);
+  node.id = id;
+  node.className = className;
+  node.innerHTML = markup; // Only fixed, authored markup; map/entity names use textContent.
+  return node;
+}
+
+function moveControl(id: string, destination: HTMLElement, title?: string): HTMLElement {
+  const element = requireElement<HTMLElement>(id);
+  destination.append(element);
+  if (title) {
+    element.title = title;
+    element.setAttribute("aria-label", title);
+  }
+  return element;
+}
+
+function groupDetails(name: string, entries: readonly { id: string; label: string; kind?: SelectionKind }[],
+  selected: readonly { kind: string; id: string }[], onSelect: (kind: SelectionKind, id: string, additive: boolean) => void,
+  expanded: Set<string>): HTMLElement {
+  const group = document.createElement("details");
+  group.className = "ws-scene-group";
+  group.open = expanded.has(name);
+  const summary = document.createElement("summary");
+  summary.textContent = name + " · " + entries.length;
+  group.append(summary);
+  for (const item of entries) {
+    const line = document.createElement(item.kind ? "button" : "div");
+    line.className = "ws-scene-entry";
+    const marker = document.createElement("span");
+    marker.className = "ws-scene-icon";
+    marker.textContent = item.kind === "enemy" ? "♟" : item.kind === "prefab" ? "▣" : "◇";
+    line.append(marker, document.createTextNode(item.label));
+    line.title = item.id;
+    if (item.kind && line instanceof HTMLButtonElement) {
+      line.type = "button";
+      line.classList.toggle("is-selected", selected.some((value) =>
+        value.id === item.id && value.kind === item.kind));
+      line.addEventListener("click", (event) => onSelect(item.kind!, item.id, event.shiftKey));
+    }
+    group.append(line);
+  }
+  group.addEventListener("toggle", () => {
+    if (group.open) expanded.add(name);
+    else expanded.delete(name);
+  });
+  return group;
+}
+
+/**
+ * Rearranges the original DOM nodes instead of duplicating them. Existing
+ * controller bindings, file inputs, animations and JSON tools stay connected.
+ */
+export function bindPlaygroundWorkspace(
+  scene: Scene, maps: MapSystem, editor: WorldEditor, signal: AbortSignal,
+): void {
+  const app = requireElement<HTMLElement>("app");
+  const stageCandidate = app.querySelector<HTMLElement>(".stage");
+  if (!stageCandidate) throw new Error("La scène du Playground est introuvable.");
+  const stage: HTMLElement = stageCandidate;
+
+  const top = surface("header", "ws-top", "ws-top",
+    '<div class="ws-logo" aria-hidden="true">◈</div>' +
+    '<div class="ws-identity"><strong>IDLE RPG</strong><small>PLAYGROUND</small></div>' +
+    '<button class="ws-header-control ws-explorer-toggle" id="ws-explorer-toggle" type="button" aria-label="Afficher l’explorateur" aria-expanded="false">☰</button>' +
+    '<div class="ws-breadcrumb"><span class="ws-muted">Projet / Monde /</span> <strong id="ws-active-name">Playground</strong></div>' +
+    '<div class="ws-top-space"></div>' +
+    '<div class="ws-map-picker"><label for="mapSelect">Map</label><div id="ws-map-select-host"></div><div id="ws-map-load-host"></div></div>' +
+    '<span id="ws-top-fps"></span>' +
+    '<button id="ws-debug-toggle" class="ws-header-control" type="button" aria-expanded="false" title="Affichages de debug">⌘ Debug</button>' +
+    '<button id="ws-inspector-open" class="ws-header-control ws-inspector-open" type="button" aria-expanded="false" title="Afficher l’inspecteur">☷ Inspecteur</button>' +
+    '<div class="ws-mode-switch" role="group" aria-label="Mode du Playground">' +
+    '<button id="ws-edit-mode" type="button" aria-pressed="true">✎ Édition</button>' +
+    '<button id="ws-test-mode" type="button" aria-pressed="false">▶ Tester le jeu</button></div>');
+  const toolbar = surface("section", "ws-toolbar", "ws-toolbar",
+    '<div class="ws-tool-buttons" role="toolbar" aria-label="Outils de transformation">' +
+    '<button type="button" data-workspace-tool="select" title="Sélection (clic)" aria-label="Sélection">↖</button>' +
+    '<button type="button" data-workspace-tool="move" title="Déplacer (G)" aria-label="Déplacer">✥</button>' +
+    '<button type="button" data-workspace-tool="rotate" title="Rotation (R)" aria-label="Rotation">↻</button>' +
+    '<button type="button" data-workspace-tool="scale" title="Échelle (S)" aria-label="Échelle">◇</button></div>' +
+    '<div class="ws-toolbar-separator"></div><div id="ws-snap-tools" class="ws-snap-tools"></div>' +
+    '<div class="ws-toolbar-separator"></div><div id="ws-history-tools" class="ws-history-tools"></div>' +
+    '<div class="ws-toolbar-end"></div><div id="ws-export-tools"></div>' +
+    '<div id="ws-preserved-controls" hidden></div>');
+  const rail = surface("nav", "ws-rail", "ws-rail", "");
+  rail.setAttribute("aria-label", "Espaces de travail");
+  const left = surface("aside", "ws-left", "ws-left",
+    '<div class="ws-side-head"><strong>EXPLORATEUR</strong><span id="ws-map-heading" class="ws-muted">Map active</span></div>' +
+    '<div class="ws-left-tabs" role="group" aria-label="Exploration de la scène">' +
+    '<button id="ws-scene-tab" class="is-active" type="button" aria-pressed="true">Scène</button>' +
+    '<button id="ws-catalog-tab" type="button" aria-pressed="false">Catalogue</button></div>' +
+    '<div id="ws-scene-pane" class="ws-left-pane"><input id="ws-scene-search" type="search" placeholder="Rechercher un élément…" aria-label="Rechercher un objet dans la scène" />' +
+    '<div id="ws-scene-tree"></div></div>' +
+    '<div id="ws-catalog-pane" class="ws-left-pane" hidden></div>' +
+    '<div class="ws-left-footer"><div id="ws-left-footer-map"></div>' +
+    '<button id="ws-open-whitebox" type="button">▣ Blocs réutilisables (whitebox)</button>' +
+    '<button id="ws-open-maps" type="button">▦ Gestion des maps</button></div>');
+  left.setAttribute("aria-label", "Explorateur de scène et catalogue");
+  const right = surface("aside", "ws-right", "ws-right",
+    '<div class="ws-side-head"><strong id="ws-inspector-title">INSPECTEUR</strong><button id="ws-inspector-toggle" type="button" title="Masquer l’inspecteur" aria-label="Masquer l’inspecteur">◧</button></div>' +
+    '<nav id="ws-module-tabs" class="ws-module-tabs" aria-label="Outils de la catégorie"></nav>' +
+    '<div id="ws-module-host" class="ws-module-host"></div>' +
+    '<section id="ws-debug-panel" class="ws-debug-panel" hidden><h3>Visualisation et diagnostic</h3>' +
+    '<p>Les affichages rapides réutilisent les contrôles d’origine.</p><div id="ws-debug-controls" class="ws-debug-controls"></div>' +
+    '<div class="ws-debug-shortcuts"><button id="ws-open-collisions" type="button">Paramètres des collisions</button>' +
+    '<button id="ws-open-attacks" type="button">Portée et attaques</button>' +
+    '<button id="ws-open-map-debug" type="button">État de la map</button></div></section>');
+  right.setAttribute("aria-label", "Inspecteur et paramètres du Playground");
+  const footer = surface("footer", "ws-statusbar", "ws-statusbar",
+    '<span id="ws-status-map">Aucune map</span><span class="ws-status-separator">·</span>' +
+    '<span id="ws-status-selection">Aucune sélection</span><span class="ws-status-grow"></span>' +
+    '<span id="ws-map-feedback" role="status" aria-live="polite"></span>' +
+    '<span id="ws-status-mode">Mode édition</span><span class="ws-status-separator">·</span>' +
+    '<span>F2 : changer de mode</span>');
+  const debugDrawer = surface("aside", "ws-debug-drawer", "ws-debug-drawer",
+    '<div class="ws-drawer-heading"><strong>Affichage rapide</strong>' +
+    '<button id="ws-debug-close" type="button" aria-label="Fermer le debug">×</button></div>' +
+    '<div id="ws-debug-test-host"></div>');
+  debugDrawer.hidden = true;
+  stage.append(debugDrawer);
+  app.append(top, toolbar, rail, left, right, footer);
+  app.classList.add("workspace-app");
+  app.dataset.workspaceMode = "edit";
+  // Both legacy launchers and floating windows remain as single DOM instances.
+  const legacySidebar = requireElement<HTMLElement>("playgroundPanel");
+  const legacyDock = requireElement<HTMLElement>("playgroundModules");
+  legacySidebar.hidden = true;
+  legacyDock.hidden = true;
+
+  const modules = new Map<WorkspaceModuleId, HTMLElement>();
+  const moduleHost = requireElement<HTMLElement>("ws-module-host");
+  for (const id of allWorkspaceModuleIds()) {
+    const panel = requireElement<HTMLElement>(id);
+    modules.set(id, panel);
+    moduleHost.append(panel);
+    panel.classList.add("ws-existing-module");
+    panel.hidden = true;
+    const closeModule = () => {
+      panel.hidden = true;
+      activeModule = undefined;
+      updateTabs();
+    };
+    panel.querySelector<HTMLButtonElement>(".module-close")?.addEventListener("click", closeModule, { signal });
+    panel.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !event.defaultPrevented &&
+        !(event.target instanceof HTMLSelectElement)) closeModule();
+    }, { signal });
+  }
+
+  const editInput = requireElement<HTMLInputElement>("worldEditorEnabled");
+  const oldEditLabel = editInput.closest("label");
+  if (oldEditLabel) legacySidebar.append(oldEditLabel);
+  moveControl("mapSelect", requireElement("ws-map-select-host"));
+  moveControl("mapLoad", requireElement("ws-map-load-host"), "Charger la map sélectionnée");
+  moveControl("renderFps", requireElement("ws-top-fps"));
+  moveControl("worldEditorExport", requireElement("ws-export-tools"), "Exporter la map en JSON");
+
+  const toolSelector = requireElement<HTMLSelectElement>("worldEditorTool");
+  const oldToolRow = toolSelector.closest(".enemy-fields");
+  requireElement("ws-preserved-controls").append(toolSelector.closest("label") ?? toolSelector);
+  oldToolRow?.classList.add("ws-relocated-source");
+  const snapHost = requireElement<HTMLElement>("ws-snap-tools");
+  const snapSource = requireElement("worldEditorSnap").closest(".enemy-fields");
+  for (const id of ["worldEditorSnap", "worldEditorSnapStep", "worldEditorRotationSnap"]) {
+    const input = requireElement<HTMLElement>(id);
+    const label = input.closest("label");
+    if (!label) throw new Error("Contrôle sans label : " + id);
+    snapHost.append(label);
+  }
+  snapSource?.classList.add("ws-relocated-source");
+  const historySource = requireElement("worldEditorUndo").closest(".enemy-fields");
+  const historyHost = requireElement<HTMLElement>("ws-history-tools");
+  for (const [id, name, symbol] of [
+    ["worldEditorUndo", "Annuler (Ctrl+Z)", "↶"],
+    ["worldEditorRedo", "Rétablir (Ctrl+Y)", "↷"],
+    ["worldEditorCopy", "Copier (Ctrl+C)", "⧉"],
+    ["worldEditorPaste", "Coller (Ctrl+V)", "▤"],
+    ["worldEditorCut", "Couper (Ctrl+X)", "✂"],
+    ["worldEditorDelete", "Supprimer (Suppr)", "⌫"],
+  ]) {
+    const button = moveControl(id, historyHost, name);
+    button.textContent = symbol;
+    button.classList.add("ws-action-button");
+  }
+  historySource?.classList.add("ws-relocated-source");
+
+  const catalog = requireElement("worldEditorCatalog");
+  const editorModule = requireElement("worldEditorModule");
+  const selection = requireElement("worldEditorSelection");
+  const properties = requireElement("worldEditorFields");
+  const heightControls = requireElement("worldEditorHeightStep").closest(".enemy-fields");
+  const contextInspector = document.createElement("section");
+  contextInspector.className = "ws-context-inspector";
+  contextInspector.append(selection, properties);
+  if (heightControls) contextInspector.append(heightControls);
+  editorModule.querySelector(".module-header")?.after(contextInspector);
+  requireElement("ws-catalog-pane").append(catalog);
+  // Make the reusable whitebox blocks discoverable immediately without
+  // changing their original buttons, listeners or catalogue data.
+  const prefabGroup = requireElement("worldEditorCatalogPrefabs").closest("details");
+  if (prefabGroup) {
+    catalog.prepend(prefabGroup);
+    prefabGroup.open = true;
+  }
+  const debugControls = requireElement("ws-debug-controls");
+  for (const id of DEBUG_CONTROLS) {
+    const input = requireElement<HTMLInputElement>(id);
+    const label = input.closest("label");
+    if (!label) throw new Error("Option de debug sans libellé : " + id);
+    debugControls.append(label);
+  }
+
+  let activeArea: WorkspaceArea = "world";
+  let activeModule: WorkspaceModuleId | undefined;
+  const expandedGroups = new Set(["Architecture", "Mobilier", "Décors", "Ennemis", "Terrain", "Interactions", "architecture", "furniture", "decoration", "entities"]);
+
+  const areaButtons = new Map<WorkspaceArea, HTMLButtonElement>();
+  for (const area of WORKSPACE_AREAS) {
+    const button = document.createElement("button");
+    button.className = "ws-area-button";
+    button.type = "button";
+    button.dataset.area = area.id;
+    button.innerHTML = '<span class="ws-area-icon" aria-hidden="true"></span><span class="ws-area-label"></span>';
+    button.querySelector<HTMLElement>(".ws-area-icon")!.textContent = area.symbol;
+    button.querySelector<HTMLElement>(".ws-area-label")!.textContent = area.label;
+    button.title = area.label;
+    button.addEventListener("click", () => changeArea(area.id), { signal });
+    areaButtons.set(area.id, button);
+    rail.append(button);
+  }
+
+  function updateTabs(): void {
+    const tabs = requireElement<HTMLElement>("ws-module-tabs");
+    tabs.replaceChildren();
+    const items = modulesForArea(activeArea);
+    for (const item of items) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = item.label;
+      button.classList.toggle("is-active", activeModule === item.id);
+      button.setAttribute("aria-pressed", String(activeModule === item.id));
+      button.addEventListener("click", () => showModule(item.id), { signal });
+      tabs.append(button);
+    }
+    tabs.hidden = items.length <= 1;
+  }
+
+  function showModule(id: WorkspaceModuleId): void {
+    moduleHost.hidden = false;
+    activeModule = id;
+    for (const [name, panel] of modules) panel.hidden = name !== id;
+    requireElement("ws-debug-panel").hidden = true;
+    const active = modules.get(id);
+    if (active) active.hidden = false;
+    updateTabs();
+  }
+
+  function changeArea(area: WorkspaceArea): void {
+    activeArea = area;
+    for (const [name, button] of areaButtons) {
+      const selected = name === area;
+      button.classList.toggle("is-active", selected);
+      button.setAttribute("aria-current", selected ? "page" : "false");
+    }
+    requireElement("ws-inspector-title").textContent =
+      WORKSPACE_AREAS.find((item) => item.id === area)?.label.toUpperCase() ?? "INSPECTEUR";
+    if (area === "debug") {
+      moduleHost.hidden = true;
+      activeModule = undefined;
+      for (const panel of modules.values()) panel.hidden = true;
+      requireElement("ws-debug-panel").hidden = false;
+      requireElement("ws-debug-controls").append(...DEBUG_CONTROLS.map((id) =>
+        requireElement<HTMLInputElement>(id).closest("label")!));
+      updateTabs();
+      return;
+    }
+    const first = modulesForArea(area)[0];
+    if (first) showModule(first.id);
+  }
+
+  function setLeftTab(tab: "scene" | "catalog"): void {
+    requireElement<HTMLElement>("ws-scene-pane").hidden = tab !== "scene";
+    requireElement<HTMLElement>("ws-catalog-pane").hidden = tab !== "catalog";
+    for (const [id, value] of [["ws-scene-tab", "scene"], ["ws-catalog-tab", "catalog"]]) {
+      const button = requireElement<HTMLButtonElement>(id);
+      button.classList.toggle("is-active", tab === value);
+      button.setAttribute("aria-pressed", String(tab === value));
+    }
+    if (tab === "scene") renderSceneTree();
+  }
+
+  function selectedEntries() { return editor.getSelection(); }
+
+  function sceneEntries(map: MapDefinition): {
+    name: string;
+    entries: { id: string; label: string; kind?: SelectionKind }[];
+  }[] {
+    const groups = new Map<string, { id: string; label: string; kind?: SelectionKind }[]>();
+    const add = (group: string, id: string, label: string, kind?: SelectionKind) => {
+      if (!groups.has(group)) groups.set(group, []);
+      groups.get(group)!.push({ id, label, kind });
+    };
+    add("Terrain", "terrain", map.name);
+    for (const item of map.prefabs ?? []) {
+      const group = item.layer ?? (maps.world?.assets.prefabs?.[item.prefab]?.category === "architecture"
+        ? "Architecture" : "Mobilier");
+      add(group, item.id, maps.world?.assets.prefabs?.[item.prefab]?.name ?? item.id, "prefab");
+    }
+    for (const item of map.objects) {
+      add(item.layer ?? "Décors", item.id, maps.world?.assets.objects[item.asset]?.name ?? item.id, "object");
+    }
+    for (const item of map.primitives ?? []) add("Décors", item.id, item.id);
+    for (const enemy of map.enemySpawns ?? []) add("Ennemis", enemy.id, enemy.id, "enemy");
+    for (const item of map.interactions ?? []) add("Interactions", item.id, item.label, "interaction");
+    for (const item of map.exits ?? []) add("Zones et passages", item.id, item.id);
+    for (const spawn of map.spawnPoints) add("Points d'apparition", spawn.id, spawn.id);
+    return [...groups].map(([name, entries]) => ({ name, entries }));
+  }
+
+  function renderSceneTree(): void {
+    const map = maps.world?.definition;
+    const tree = requireElement("ws-scene-tree");
+    const search = requireElement<HTMLInputElement>("ws-scene-search").value.trim().toLowerCase();
+    requireElement("ws-active-name").textContent = map?.name ?? "Playground";
+    requireElement("ws-map-heading").textContent = map?.id ?? "Aucune map";
+    requireElement("ws-status-map").textContent = map?.id ?? "Aucune map";
+    requireElement("ws-left-footer-map").textContent = map
+      ? map.name + " · " + map.id : "Aucune map active";
+    requireElement("ws-status-selection").textContent = selectedEntries().length
+      ? selectedEntries().length + " sélection(s)" : "Aucune sélection";
+    if (!map) {
+      tree.textContent = "Aucune map chargée.";
+      return;
+    }
+    const groups = sceneEntries(map);
+    const onSelect = (kind: SelectionKind, id: string, additive: boolean) => {
+      if (!editor.enabled) setEditing(true);
+      editor.selectObject(kind, id, additive);
+      changeArea("world");
+      showModule("worldEditorModule");
+      renderSceneTree();
+    };
+    tree.replaceChildren(...groups.map(({ name, entries }) => ({
+      name, entries: search
+        ? entries.filter((item) => (item.label + " " + item.id + " " + name).toLowerCase().includes(search))
+        : entries,
+    })).filter(({ entries }) => entries.length > 0).map(({ name, entries }) =>
+      groupDetails(name, entries, selectedEntries(), onSelect, expandedGroups)));
+  }
+
+  function setEditing(editing: boolean): void {
+    setWorkspaceEditingState(editInput, editing);
+    reflectMode();
+  }
+
+  function reflectMode(): void {
+    const editing = editInput.checked;
+    app.dataset.workspaceMode = editing ? "edit" : "test";
+    for (const [id, active] of [["ws-edit-mode", editing], ["ws-test-mode", !editing]] as const) {
+      const button = requireElement<HTMLButtonElement>(id);
+      button.setAttribute("aria-pressed", String(active));
+      button.classList.toggle("is-active", active);
+    }
+    requireElement("ws-status-mode").textContent = editing ? "Mode édition" : "Test du héros";
+    if (editing) {
+      closeDebugDrawer();
+      stage.classList.remove("ws-testing");
+      requireElement("ws-debug-controls").append(...DEBUG_CONTROLS.map((id) =>
+        requireElement<HTMLInputElement>(id).closest("label")!));
+    } else {
+      stage.classList.add("ws-testing");
+      requireElement("ws-debug-test-host").append(...DEBUG_CONTROLS.map((id) =>
+        requireElement<HTMLInputElement>(id).closest("label")!));
+    }
+    // CSS grid changes do not necessarily dispatch a window resize event.
+    window.requestAnimationFrame(() => scene.getEngine().resize());
+  }
+
+  function closeDebugDrawer(): void {
+    debugDrawer.hidden = true;
+    requireElement<HTMLButtonElement>("ws-debug-toggle").setAttribute("aria-expanded", "false");
+  }
+
+  requireElement("ws-edit-mode").addEventListener("click", () => setEditing(true), { signal });
+  requireElement("ws-test-mode").addEventListener("click", () => setEditing(false), { signal });
+  editInput.addEventListener("change", reflectMode, { signal });
+  requireElement("ws-debug-toggle").addEventListener("click", () => {
+    if (editInput.checked) {
+      changeArea("debug");
+      return;
+    }
+    debugDrawer.hidden = !debugDrawer.hidden;
+    requireElement<HTMLButtonElement>("ws-debug-toggle").setAttribute("aria-expanded",
+      String(!debugDrawer.hidden));
+  }, { signal });
+  requireElement("ws-debug-close").addEventListener("click", closeDebugDrawer, { signal });
+
+  requireElement("ws-scene-tab").addEventListener("click", () => setLeftTab("scene"), { signal });
+  requireElement("ws-catalog-tab").addEventListener("click", () => setLeftTab("catalog"), { signal });
+  requireElement("ws-scene-search").addEventListener("input", renderSceneTree, { signal });
+  requireElement("ws-open-maps").addEventListener("click", () => {
+    changeArea("world");
+    showModule("mapsModule");
+  }, { signal });
+  requireElement("ws-open-whitebox").addEventListener("click", () => {
+    changeArea("world");
+    showModule("worldEditorModule");
+    setLeftTab("catalog");
+    prefabGroup?.scrollIntoView({ block: "nearest" });
+  }, { signal });
+  for (const [id, area, module] of [
+    ["ws-open-collisions", "combat", "collisionsModule"],
+    ["ws-open-attacks", "combat", "attackHitboxModule"],
+    ["ws-open-map-debug", "world", "mapsModule"],
+  ] as const) {
+    requireElement(id).addEventListener("click", () => {
+      changeArea(area);
+      showModule(module);
+    }, { signal });
+  }
+  const inspectorToggle = requireElement<HTMLButtonElement>("ws-inspector-toggle");
+  const inspectorOpen = requireElement<HTMLButtonElement>("ws-inspector-open");
+  function toggleInspector(): void {
+    if (window.matchMedia("(max-width: 760px)").matches) {
+      app.classList.toggle("ws-mobile-inspector-open");
+      inspectorOpen.setAttribute("aria-expanded",
+        String(app.classList.contains("ws-mobile-inspector-open")));
+    } else {
+      app.classList.toggle("ws-inspector-collapsed");
+      inspectorOpen.setAttribute("aria-expanded",
+        String(!app.classList.contains("ws-inspector-collapsed")));
+    }
+  }
+  inspectorToggle.addEventListener("click", toggleInspector, { signal });
+  inspectorOpen.addEventListener("click", toggleInspector, { signal });
+  requireElement("ws-explorer-toggle").addEventListener("click", () => {
+    app.classList.toggle("ws-explorer-open");
+    requireElement<HTMLButtonElement>("ws-explorer-toggle").setAttribute("aria-expanded",
+      String(app.classList.contains("ws-explorer-open")));
+  }, { signal });
+
+  const toolButtons = Array.from(toolbar.querySelectorAll<HTMLButtonElement>("[data-workspace-tool]"));
+  function reflectTool(): void {
+    for (const button of toolButtons) {
+      const active = button.dataset.workspaceTool === toolSelector.value;
+      button.classList.toggle("is-active", active);
+      button.setAttribute("aria-pressed", String(active));
+    }
+  }
+  for (const button of toolButtons) button.addEventListener("click", () => {
+    toolSelector.value = button.dataset.workspaceTool ?? "select";
+    toolSelector.dispatchEvent(new Event("change", { bubbles: true }));
+  }, { signal });
+  toolSelector.addEventListener("change", reflectTool, { signal });
+
+  // Existing text and map statuses already track mutations from the editor
+  // and map system. Observe only those text nodes; never poll the 3D scene.
+  const mapStatus = requireElement<HTMLElement>("mapStatus");
+  const syncMapStatus = () => {
+    requireElement("ws-map-feedback").textContent = mapStatus.textContent ?? "";
+  };
+  const mapStatusUpdates = new MutationObserver(syncMapStatus);
+  mapStatusUpdates.observe(mapStatus, { childList: true, subtree: true, characterData: true });
+  syncMapStatus();
+  const modelUpdates = new MutationObserver(renderSceneTree);
+  for (const id of ["worldEditorStatus", "mapActiveId"]) {
+    modelUpdates.observe(requireElement(id), { childList: true, subtree: true, characterData: true });
+  }
+  const selectionUpdates = new MutationObserver(() => {
+    renderSceneTree();
+    if (editor.enabled && editor.getSelection().length > 0 &&
+      (activeArea !== "world" || activeModule !== "worldEditorModule")) {
+      changeArea("world");
+      showModule("worldEditorModule");
+    }
+  });
+  selectionUpdates.observe(requireElement("worldEditorSelection"),
+    { childList: true, subtree: true, characterData: true });
+  const viewportResize = new ResizeObserver(() => scene.getEngine().resize());
+  viewportResize.observe(stage);
+
+  window.addEventListener("keydown", (event) => {
+    if (event.key !== "F2" || event.repeat || event.altKey || event.ctrlKey || event.metaKey ||
+      event.target instanceof HTMLElement &&
+      !!event.target.closest("input, select, textarea, [contenteditable]")) return;
+    event.preventDefault();
+    setEditing(!editInput.checked);
+  }, { signal });
+
+  changeArea("world");
+  setLeftTab("scene");
+  reflectTool();
+  setEditing(true);
+  signal.addEventListener("abort", () => {
+    modelUpdates.disconnect();
+    mapStatusUpdates.disconnect();
+    selectionUpdates.disconnect();
+    viewportResize.disconnect();
+  }, { once: true });
+}

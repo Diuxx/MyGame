@@ -3,7 +3,7 @@ import {
   type AbstractMesh, type InstancedMesh, type Mesh, type Scene, type ShadowGenerator,
 } from "@babylonjs/core";
 import type { MapPosition } from "./types.ts";
-import type { PrefabCatalog, PrefabPartKind, PrefabPlacement } from "./prefabDefinitions.ts";
+import type { PrefabCatalog, PrefabPart, PrefabPlacement } from "./prefabDefinitions.ts";
 
 interface PrefabView {
   root: TransformNode;
@@ -20,9 +20,7 @@ export function createPrefabRenderer(
   scene: Scene, parent: TransformNode, catalog: PrefabCatalog,
   placements: readonly PrefabPlacement[], shadows?: ShadowGenerator,
 ) {
-  const material = new StandardMaterial("blockout-white", scene);
-  material.diffuseColor = Color3.FromHexString("#F3F3F3");
-  material.specularColor = Color3.Black();
+  const materials = new Map<string, StandardMaterial>();
 
   const debugMaterial = new StandardMaterial("blockout-collision", scene);
   debugMaterial.disableLighting = true;
@@ -31,28 +29,50 @@ export function createPrefabRenderer(
   debugMaterial.wireframe = true;
   debugMaterial.backFaceCulling = false;
 
-  const sourceMeshes = new Map<PrefabPartKind, Mesh>();
+  const sourceMeshes = new Map<string, Mesh>();
   const views = new Map<string, PrefabView>();
   let editing = false;
   let showColliders = false;
   let disposed = false;
 
-  function unitMesh(kind: PrefabPartKind): Mesh {
-    const existing = sourceMeshes.get(kind);
+  /**
+   * A master mesh is shared by geometry and surface appearance. Babylon instances
+   * inherit their source material, so colored modules need separate masters.
+   * Existing whitebox prefabs retain their original white material.
+   */
+  function unitMesh(part: PrefabPart): Mesh {
+    const color = (part.color ?? "#F3F3F3").toUpperCase();
+    const emissive = (part.emissive ?? "#000000").toUpperCase();
+    const surface = color + ":" + emissive;
+    const key = part.kind + ":" + surface;
+    const existing = sourceMeshes.get(key);
     if (existing) return existing;
-    const source = kind === "box"
-      ? MeshBuilder.CreateBox("prefab-unit-box", { size: 1 }, scene)
-      : kind === "cylinder"
-        ? MeshBuilder.CreateCylinder("prefab-unit-cylinder", {
+
+    let material = materials.get(surface);
+    if (!material) {
+      material = new StandardMaterial("blockout-material:" + surface, scene);
+      material.diffuseColor = Color3.FromHexString(color);
+      material.emissiveColor = Color3.FromHexString(emissive);
+      material.specularColor = Color3.Black();
+      material.maxSimultaneousLights = 6;
+      materials.set(surface, material);
+    }
+
+    const name = surface === "#F3F3F3:#000000"
+      ? "prefab-unit-" + part.kind
+      : "prefab-unit-" + part.kind + ":" + surface;
+    const source = part.kind === "box"
+      ? MeshBuilder.CreateBox(name, { size: 1 }, scene)
+      : part.kind === "cylinder"
+        ? MeshBuilder.CreateCylinder(name, {
           diameter: 1, height: 1, tessellation: 16,
         }, scene)
-        : MeshBuilder.CreateSphere("prefab-unit-sphere", { diameter: 1, segments: 12 }, scene);
+        : MeshBuilder.CreateSphere(name, { diameter: 1, segments: 12 }, scene);
     source.material = material;
-    // Master meshes must stay enabled for their Babylon instances; put them
-    // outside the playable world rather than disabling their geometry.
+    // Keep masters enabled for their instances, but outside the playable world.
     source.position.y = -1000;
     source.isPickable = false;
-    sourceMeshes.set(kind, source);
+    sourceMeshes.set(key, source);
     return source;
   }
 
@@ -92,7 +112,7 @@ export function createPrefabRenderer(
     const view: PrefabView = { root, parts: [], debug: [] };
     try {
       for (const [index, part] of definition.parts.entries()) {
-        const mesh = unitMesh(part.kind).createInstance("prefab:" + placement.id + ":" + index);
+        const mesh = unitMesh(part).createInstance("prefab:" + placement.id + ":" + index);
         mesh.parent = root;
         mesh.position.set(...part.position);
         mesh.scaling.set(...part.size);
@@ -136,7 +156,8 @@ export function createPrefabRenderer(
     for (const id of [...views.keys()]) remove(id);
     for (const source of sourceMeshes.values()) source.dispose(false, false);
     sourceMeshes.clear();
-    material.dispose();
+    for (const material of materials.values()) material.dispose();
+    materials.clear();
     debugMaterial.dispose();
   }
 

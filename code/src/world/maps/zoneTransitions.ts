@@ -16,6 +16,16 @@ interface MapTransitionOptions {
 
 const FADE_MS = 170;
 
+/** Manual map selection is an editor command, not a gameplay exit trigger. */
+export function canStartZoneTransition(state: {
+  busy: boolean;
+  disposed: boolean;
+  editing: boolean;
+  manual: boolean;
+}): boolean {
+  return !state.busy && !state.disposed && (state.manual || !state.editing);
+}
+
 /** Coordinates entry and exit without replacing the shared hero, camera, or HUD. */
 export function createMapTransitions(options: MapTransitionOptions) {
   const { maps, hero, camera, signal } = options;
@@ -32,8 +42,8 @@ export function createMapTransitions(options: MapTransitionOptions) {
     return new Promise((resolve) => window.setTimeout(resolve, FADE_MS));
   }
 
-  async function enter(id: MapId, spawnId?: string): Promise<boolean> {
-    if (busy || disposed || maps.isEditing) return false;
+  async function enter(id: MapId, spawnId?: string, manual = false): Promise<boolean> {
+    if (!canStartZoneTransition({ busy, disposed, editing: maps.isEditing, manual })) return false;
     busy = true;
     options.onBusyChange?.(true);
     try {
@@ -105,7 +115,7 @@ export function createMapTransitions(options: MapTransitionOptions) {
   return {
     update,
     interact,
-    loadManual: (id: MapId) => enter(id),
+    loadManual: (id: MapId) => enter(id, undefined, true),
     get isBusy(): boolean { return busy; },
   };
 }

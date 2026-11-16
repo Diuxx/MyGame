@@ -1,5 +1,6 @@
 /** JSON-facing data. All positions are in world units, with Y vertical. */
 import type { EnvironmentSettings } from "./environmentSettings";
+import type { LightingSettings } from "./lightingSettings";
 import type { VisualOverride, WorldInteraction } from "./editorSchema";
 import type { MapEnemySpawn, MapWave, MapEncounterEvent } from "../../enemies/mapEnemyConfig";
 import type { MapExit, MapPrimitive, PrimitiveGround, TerrainVisual } from "./zoneContent";
@@ -68,6 +69,7 @@ export interface MapDefinition {
   exits?: MapExit[];
   spawnPoints: MapSpawn[];
   environment?: EnvironmentSettings;
+  lighting?: LightingSettings;
   enemyCatalog?: string;
   enemySpawns?: MapEnemySpawn[];
   waves?: MapWave[];

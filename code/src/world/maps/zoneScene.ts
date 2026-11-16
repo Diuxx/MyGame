@@ -26,6 +26,7 @@ export function createZoneScene(
     existing = new StandardMaterial("zone-material:" + color, scene);
     existing.diffuseColor = Color3.FromHexString(color);
     existing.specularColor = Color3.Black();
+    existing.maxSimultaneousLights = 6;
     materials.set(color, existing);
     return existing;
   }
@@ -241,6 +242,7 @@ export function createZoneScene(
       if (!platformMaterial) {
         platformMaterial = new StandardMaterial("zone-platform-side:" + map.id, scene);
         platformMaterial.specularColor = Color3.Black();
+        platformMaterial.maxSimultaneousLights = 6;
       }
       platformMesh = MeshBuilder.CreateBox("zone-platform:" + map.id, { size: 1 }, scene);
       platformMesh.parent = root;
