@@ -136,3 +136,37 @@ test("axis-scaled prefab colliders follow the individual world dimensions", () =
   assert.deepEqual(parsed.scaleAxes, [2,1,0.5]);
   assert.throws(() => parsePrefabPlacements([{ ...wall, scaleAxes: [1,0,1] }], catalog), /nombre invalide/);
 });
+
+test("colored blockout modules preserve validated surfaces and share their masters", () => {
+  const dark = catalog["wall-dark"];
+  const fixture = catalog["lamp-wall-blockout"];
+  assert.equal(dark.parts[0].color, "#454858");
+  assert.equal(fixture.parts[2].emissive, "#D07A36");
+  const invalid = structuredClone(readJson("definitions/blockout-prefabs.json")) as {
+    prefabs: Record<string, { parts: { color?: string; emissive?: string }[] }>;
+  };
+  invalid.prefabs["wall-dark"].parts[0].color = "dark";
+  assert.throws(() => parsePrefabCatalog(invalid), /\.color.*couleur/);
+  invalid.prefabs["wall-dark"].parts[0].color = "#454858";
+  invalid.prefabs["lamp-wall-blockout"].parts[2].emissive = "orange";
+  assert.throws(() => parsePrefabCatalog(invalid), /\.emissive.*couleur/);
+
+  const engine = new NullEngine();
+  const scene = new Scene(engine);
+  const root = new TransformNode("prefab-colors-test", scene);
+  const placements: PrefabPlacement[] = [
+    { id: "dark-a", prefab: "wall-dark", position: [-4, 0, 0], rotationY: 0, scale: 1 },
+    { id: "dark-b", prefab: "wall-dark", position: [4, 0, 0], rotationY: 0, scale: 1 },
+    { id: "lamp", prefab: "lamp-wall-blockout", position: [0, 0, 0], rotationY: 0, scale: 1 },
+  ];
+  const renderer = createPrefabRenderer(scene, root, catalog, placements);
+  assert.equal(scene.meshes.filter((mesh) =>
+    mesh.name === "prefab-unit-box:#454858:#000000").length, 1);
+  assert.ok(scene.materials.some((material) => material.name === "blockout-material:#FFD49A:#D07A36"));
+  renderer.dispose();
+  root.dispose();
+  assert.equal(scene.meshes.length, 0);
+  assert.equal(scene.materials.length, 0);
+  scene.dispose();
+  engine.dispose();
+});
