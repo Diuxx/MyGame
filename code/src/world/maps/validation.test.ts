@@ -63,9 +63,11 @@ test("a level can override enemy stats using a public catalogue while retaining 
   const path = "/assets/definitions/enemies-hard.json";
   const overrides = [{ ...guard, stats: { ...guard.stats, maxHealth: 300 } }];
   const rawDojo = load("maps/dojo.json") as object;
+  const reusablePrefabs = load("definitions/blockout-prefabs.json");
   t.mock.method(globalThis, "fetch", async (input: string) => {
     const value = input === path ? overrides : input === "/assets/maps/dojo.json"
-      ? { ...rawDojo, enemyCatalog: path } : rawAssets;
+      ? { ...rawDojo, enemyCatalog: path }
+      : input === "/assets/definitions/blockout-prefabs.json" ? reusablePrefabs : rawAssets;
     return Response.json(value);
   });
   const loaded = await loadMapData("dojo");
