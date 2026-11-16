@@ -266,7 +266,11 @@ export function bindWorldEditor(
     ];
     moveSelected(target, selected, point);
     if (target.kind === "object" || target.kind === "enemy" || target.kind === "prefab") {
-      target.active.editor.rotate(target.kind, selected.id, numerical("worldEditorRotation"));
+      const raw = numerical("worldEditorRotation");
+      const increment = v2?.rotationSnap ?? 0;
+      const degrees = increment ? Math.round(raw / increment) * increment : raw;
+      target.active.editor.rotate(target.kind, selected.id, degrees);
+      setNumber("worldEditorRotation", degrees);
     }
     setMarker();
   }
@@ -508,7 +512,47 @@ export function bindWorldEditor(
 
   for (const id of ["worldEditorX", "worldEditorY", "worldEditorZ", "worldEditorRotation"]) {
     requireElement<HTMLInputElement>(id).addEventListener("change", () => {
-      try { applyPlacement(); status.textContent = "Placement mis à jour."; } catch (error) { report(error); }
+      try {
+        const selectedRef = selected ? { ...selected } : undefined;
+        const target = getSelected();
+        const oldPosition = target ? [...target.kind === "enemy" ? target.actor.spec.position
+          : target.kind === "practice" ? target.enemy.position
+          : target.kind === "object" ? target.object.position
+          : target.kind === "prefab" ? target.placement.position
+          : target.interaction.position] as MapPosition : undefined;
+        const oldRotation = target?.kind === "object" ? target.object.rotationY
+          : target?.kind === "prefab" ? target.placement.rotationY
+          : target?.kind === "enemy" ? target.actor.spec.rotationY : undefined;
+        applyPlacement();
+        if (selectedRef && target && oldPosition && selectedRef.kind !== "practice") {
+          const world = target.active;
+          const newPosition: MapPosition = [
+            numerical("worldEditorX"), numerical("worldEditorY"), numerical("worldEditorZ"),
+          ];
+          const newRotation = oldRotation === undefined ? undefined : numerical("worldEditorRotation");
+          if (newPosition.some((value, i) => value !== oldPosition[i]) ||
+              (newRotation !== undefined && newRotation !== oldRotation)) {
+            v2?.recordTransform({
+              label: "Modifier le placement",
+              run: () => {
+                world.editor.move(selectedRef.kind as "object" | "prefab" | "enemy" | "interaction", selectedRef.id, newPosition);
+                if (newRotation !== undefined && (selectedRef.kind === "object" ||
+                    selectedRef.kind === "prefab" || selectedRef.kind === "enemy")) {
+                  world.editor.rotate(selectedRef.kind, selectedRef.id, newRotation);
+                }
+              },
+              undo: () => {
+                world.editor.move(selectedRef.kind as "object" | "prefab" | "enemy" | "interaction", selectedRef.id, oldPosition);
+                if (oldRotation !== undefined && (selectedRef.kind === "object" ||
+                    selectedRef.kind === "prefab" || selectedRef.kind === "enemy")) {
+                  world.editor.rotate(selectedRef.kind, selectedRef.id, oldRotation);
+                }
+              },
+            });
+          }
+        }
+        status.textContent = "Placement mis à jour.";
+      } catch (error) { report(error); }
     }, { signal });
   }
   requireElement<HTMLInputElement>("worldEditorPrefabScale").addEventListener("change", () => {
