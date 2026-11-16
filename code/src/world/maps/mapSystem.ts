@@ -122,6 +122,16 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
                 await level.replaceTile(cell.row, cell.column, asset);
                 return;
               }
+              if (kind === "prefab") {
+                if (!assets.prefabs || !Object.hasOwn(assets.prefabs, asset)) {
+                  throw new Error("Prefab inconnu : " + asset);
+                }
+                const placements = map.prefabs ?? [];
+                if (placements.length >= 256) throw new Error("Maximum 256 prefabs placés.");
+                const id = placementId(asset, placements);
+                level.addPrefab({ id, prefab: asset, position: point, rotationY: 0, scale: 1 });
+                return id;
+              }
               if (kind === "object") {
                 if (!Object.hasOwn(assets.objects, asset)) throw new Error("Décor inconnu : " + asset);
                 if (map.objects.length >= MAX_MAP_OBJECTS) throw new Error("Nombre maximal de décors atteint.");
@@ -146,14 +156,32 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
           },
           move(kind: MapEditorKind, id: string, position: MapPosition): void {
             if (kind === "object") level.moveObject(id, position);
+            else if (kind === "prefab") level.movePrefab(id, position);
             else if (kind === "enemy") enemies.moveEnemy(id, position);
             else level.moveInteraction(id, position);
           },
           rotate(kind: "object" | "enemy", id: string, degrees: number): void {
             if (kind === "object") level.rotateObject(id, degrees);
+            else if (kind === "prefab") level.rotatePrefab(id, degrees);
             else enemies.rotateEnemy(id, degrees);
           },
           setObjectCollider: level.setObjectCollider,
+          scalePrefab: level.scalePrefab,
+          removePrefab: level.removePrefab,
+          duplicatePrefab(id: string): string {
+            const original = map.prefabs?.find((item) => item.id === id);
+            if (!original) throw new Error("Prefab à dupliquer introuvable : " + id);
+            if ((map.prefabs?.length ?? 0) >= 256) throw new Error("Maximum 256 prefabs placés.");
+            const next = {
+              ...original, id: placementId(original.prefab, map.prefabs ?? []),
+              position: [original.position[0] + 1.5, original.position[1], original.position[2]] as MapPosition,
+            };
+            if (!findTerrainCell(map, next.position[0], next.position[2])) {
+              throw new Error("Aucune place disponible pour dupliquer ce prefab.");
+            }
+            level.addPrefab(next);
+            return next.id;
+          },
           setEnemyParameters: enemies.setEnemyParameters,
           async setVisual(kind: "object" | "enemy", id: string,
                           visual: VisualOverride, localTextureUrl?: string): Promise<void> {
