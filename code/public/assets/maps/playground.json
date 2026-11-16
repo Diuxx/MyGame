@@ -1277,5 +1277,14 @@
         ]
       }
     }
-  ]
+  ],
+  "lighting": {
+    "world": {
+      "enabled": true
+    },
+    "map": {
+      "enabled": true,
+      "lights": []
+    }
+  }
 }
