@@ -65,7 +65,17 @@ export function bindWorldEditorV2(context: EditorContext) {
   const history = createEditorCommands();
   const gizmos = createEditorGizmos(scene);
   const layers = createEditorLayers();
-  const drafts = createEditorDrafts(localStorage);
+  const storage = (() => {
+    try { return window.localStorage; }
+    catch {
+      return {
+        getItem: () => null,
+        setItem: () => { throw new Error("Stockage local indisponible."); },
+        removeItem: () => { throw new Error("Stockage local indisponible."); },
+      };
+    }
+  })();
+  const drafts = createEditorDrafts(storage);
   let current = maps.world;
   let originalFingerprint = current ? drafts.fingerprint(current.definition) : "";
   let saveTimer: number | undefined;
@@ -123,6 +133,7 @@ export function bindWorldEditorV2(context: EditorContext) {
   }
 
   function noteChange(): void {
+    if (current !== maps.world) return;
     draftState.textContent = "Modifications non exportées — brouillon local automatique.";
     if (saveTimer !== undefined) window.clearTimeout(saveTimer);
     saveTimer = window.setTimeout(() => {
@@ -216,9 +227,13 @@ export function bindWorldEditorV2(context: EditorContext) {
     clearGhosts();
     const world = active();
     for (const [index, item] of clipboard.data.items.entries()) {
-      const size = clipboard.kind === "prefab"
-        ? prefabDimensions(world.assets.prefabs![ (item as PrefabPlacement).prefab ])
-        : [1, 1, 1] as MapPosition;
+      const prefab = clipboard.kind === "prefab"
+        ? world.assets.prefabs?.[(item as PrefabPlacement).prefab] : undefined;
+      if (clipboard.kind === "prefab" && !prefab) {
+        cancelPaste();
+        throw new Error("Prefab absent de cette map.");
+      }
+      const size = prefab ? prefabDimensions(prefab) : [1, 1, 1] as MapPosition;
       const ghost = MeshBuilder.CreateBox("editor-copy-preview:" + index, {
         width: Math.max(0.2, size[0]),
         height: Math.max(0.2, size[1]),
@@ -261,7 +276,10 @@ export function bindWorldEditorV2(context: EditorContext) {
             axis + item.position[i] - clipboard!.data.origin[i]) as unknown as MapPosition,
         };
       });
-    if (items.some(({ position }) => !findTerrainCell(world.definition, position[0], position[2]))) {
+    if (items.some((entry) =>
+      !findTerrainCell(world.definition, entry.position[0], entry.position[2]) ||
+      (clipboard?.kind === "prefab" && !world.assets.prefabs?.[(entry as PrefabPlacement).prefab]) ||
+      (clipboard?.kind === "object" && !world.assets.objects[(entry as MapObject).asset]))) {
       throw new Error("Collage hors du terrain : aucun objet créé.");
     }
     const kind = clipboard.kind;
@@ -296,7 +314,12 @@ export function bindWorldEditorV2(context: EditorContext) {
       const item = document.createElement("div");
       item.className = "enemy-fields";
       const name = document.createElement("strong");
-      name.textContent = layer.id;
+      const world = maps.world;
+      const count = (world?.definition.prefabs ?? []).filter((item) =>
+        defaultLayerForPrefab(item, world?.assets.prefabs) === layer.id).length +
+        (world?.definition.objects ?? []).filter((item) =>
+          defaultLayerForObject(item) === layer.id).length;
+      name.textContent = layer.id + " (" + count + ")";
       const visible = document.createElement("input");
       visible.type = "checkbox";
       visible.checked = layer.visible;
@@ -471,6 +494,11 @@ export function bindWorldEditorV2(context: EditorContext) {
     const rotationChanged = Math.abs(rotated - before.rotation * 180 / Math.PI) > 0.0001;
     const scaleChanged = scaled.some((v, i) => Math.abs(v - before.axes[i]) > 0.0001);
     if (!positionChanged && !rotationChanged && !scaleChanged) return;
+    if (!findTerrainCell(world.definition, currentPosition[0], currentPosition[2])) {
+      status.textContent = "Gizmo : déplacement hors du terrain annulé.";
+      gizmoNode.position.set(...gizmoBase.position);
+      return;
+    }
     // Restore the node before applying the map command so collision and JSON follow
     // the exact same canonical transformation path.
     gizmoNode.position.set(...before.position);
@@ -627,8 +655,14 @@ export function bindWorldEditorV2(context: EditorContext) {
       if (!source) throw new Error("Aucune map source disponible.");
       const draft = drafts.read(source);
       if (!draft) throw new Error("Aucun brouillon disponible.");
-      await maps.restoreMap(draft);
-      onMapChanged();
+      pendingRestoreSource = structuredClone(source);
+      try {
+        await maps.restoreMap(draft);
+      } catch (error) {
+        pendingRestoreSource = undefined;
+        throw error;
+      }
+      // The world editor detects the new active session on its next render update.
       draftState.textContent = "Brouillon restauré. Exporter le JSON pour le conserver.";
     })());
   }, { signal });
@@ -638,6 +672,7 @@ export function bindWorldEditorV2(context: EditorContext) {
   }, { signal });
 
   let originalMapSnapshot = current ? structuredClone(current.definition) : undefined;
+  let pendingRestoreSource: typeof originalMapSnapshot;
   function onMapChanged(): void {
     if (saveTimer !== undefined) window.clearTimeout(saveTimer);
     saveTimer = undefined;
@@ -645,7 +680,9 @@ export function bindWorldEditorV2(context: EditorContext) {
     gizmos.detach();
     history.clear();
     current = maps.world;
-    originalMapSnapshot = current ? structuredClone(current.definition) : undefined;
+    originalMapSnapshot = pendingRestoreSource ??
+      (current ? structuredClone(current.definition) : undefined);
+    pendingRestoreSource = undefined;
     originalFingerprint = originalMapSnapshot ? drafts.fingerprint(originalMapSnapshot) : "";
     layers.clearCustom();
     for (const id of current?.definition.editorLayers ?? []) layers.ensure(id);

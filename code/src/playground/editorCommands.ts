@@ -15,11 +15,20 @@ export function createEditorCommands(maxLength = 100) {
   const done: EditorCommand[] = [];
   const undone: EditorCommand[] = [];
   let busy = false;
+  let clearWhenIdle = false;
 
   async function guarded(task: () => Promise<void>): Promise<void> {
     if (busy) throw new Error("Une modification de l'éditeur est déjà en cours.");
     busy = true;
-    try { await task(); } finally { busy = false; }
+    try { await task(); }
+    finally {
+      busy = false;
+      if (clearWhenIdle) {
+        clearWhenIdle = false;
+        done.length = 0;
+        undone.length = 0;
+      }
+    }
   }
 
   function remember(command: EditorCommand): void {
@@ -61,7 +70,10 @@ export function createEditorCommands(maxLength = 100) {
       return true;
     },
     clear(): void {
-      if (busy) throw new Error("Une modification est en cours.");
+      if (busy) {
+        clearWhenIdle = true;
+        return;
+      }
       done.length = 0;
       undone.length = 0;
     },

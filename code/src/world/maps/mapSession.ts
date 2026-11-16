@@ -38,6 +38,7 @@ export function createMapSession<T extends MapLifecycle>(build: (id: string) => 
   }
 
   async function load(id: string, validate?: (candidate: T) => void): Promise<T | undefined> {
+    if (closed) throw new Error("Le système de maps est déjà fermé.");
     return replace(build(id), validate);
   }
 
