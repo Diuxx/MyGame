@@ -113,6 +113,7 @@ export function bindPlaygroundWorkspace(
     '<div id="ws-scene-tree"></div></div>' +
     '<div id="ws-catalog-pane" class="ws-left-pane" hidden></div>' +
     '<div class="ws-left-footer"><div id="ws-left-footer-map"></div>' +
+    '<button id="ws-open-whitebox" type="button">▣ Blocs réutilisables (whitebox)</button>' +
     '<button id="ws-open-maps" type="button">▦ Gestion des maps</button></div>');
   left.setAttribute("aria-label", "Explorateur de scène et catalogue");
   const right = surface("aside", "ws-right", "ws-right",
@@ -128,6 +129,7 @@ export function bindPlaygroundWorkspace(
   const footer = surface("footer", "ws-statusbar", "ws-statusbar",
     '<span id="ws-status-map">Aucune map</span><span class="ws-status-separator">·</span>' +
     '<span id="ws-status-selection">Aucune sélection</span><span class="ws-status-grow"></span>' +
+    '<span id="ws-map-feedback" role="status" aria-live="polite"></span>' +
     '<span id="ws-status-mode">Mode édition</span><span class="ws-status-separator">·</span>' +
     '<span>F2 : changer de mode</span>');
   const debugDrawer = surface("aside", "ws-debug-drawer", "ws-debug-drawer",
@@ -213,6 +215,13 @@ export function bindPlaygroundWorkspace(
   if (heightControls) contextInspector.append(heightControls);
   editorModule.querySelector(".module-header")?.after(contextInspector);
   requireElement("ws-catalog-pane").append(catalog);
+  // Make the reusable whitebox blocks discoverable immediately without
+  // changing their original buttons, listeners or catalogue data.
+  const prefabGroup = requireElement("worldEditorCatalogPrefabs").closest("details");
+  if (prefabGroup) {
+    catalog.prepend(prefabGroup);
+    prefabGroup.open = true;
+  }
   const debugControls = requireElement("ws-debug-controls");
   for (const id of DEBUG_CONTROLS) {
     const input = requireElement<HTMLInputElement>(id);
@@ -413,6 +422,12 @@ export function bindPlaygroundWorkspace(
     changeArea("world");
     showModule("mapsModule");
   }, { signal });
+  requireElement("ws-open-whitebox").addEventListener("click", () => {
+    changeArea("world");
+    showModule("worldEditorModule");
+    setLeftTab("catalog");
+    prefabGroup?.scrollIntoView({ block: "nearest" });
+  }, { signal });
   for (const [id, area, module] of [
     ["ws-open-collisions", "combat", "collisionsModule"],
     ["ws-open-attacks", "combat", "attackHitboxModule"],
@@ -460,6 +475,13 @@ export function bindPlaygroundWorkspace(
 
   // Existing text and map statuses already track mutations from the editor
   // and map system. Observe only those text nodes; never poll the 3D scene.
+  const mapStatus = requireElement<HTMLElement>("mapStatus");
+  const syncMapStatus = () => {
+    requireElement("ws-map-feedback").textContent = mapStatus.textContent ?? "";
+  };
+  const mapStatusUpdates = new MutationObserver(syncMapStatus);
+  mapStatusUpdates.observe(mapStatus, { childList: true, subtree: true, characterData: true });
+  syncMapStatus();
   const modelUpdates = new MutationObserver(renderSceneTree);
   for (const id of ["worldEditorStatus", "mapActiveId"]) {
     modelUpdates.observe(requireElement(id), { childList: true, subtree: true, characterData: true });
@@ -491,6 +513,7 @@ export function bindPlaygroundWorkspace(
   setEditing(true);
   signal.addEventListener("abort", () => {
     modelUpdates.disconnect();
+    mapStatusUpdates.disconnect();
     selectionUpdates.disconnect();
     viewportResize.disconnect();
   }, { once: true });
