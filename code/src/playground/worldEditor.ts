@@ -511,8 +511,21 @@ export function bindWorldEditor(
     }, { signal });
   }
   requireElement<HTMLInputElement>("worldEditorPrefabScale").addEventListener("change", () => {
-    try { applyParameters(); status.textContent = "Échelle du prefab mise à jour."; }
-    catch (error) { report(error); }
+    try {
+      const target = getSelected();
+      const previous = target?.kind === "prefab" ? target.placement.scale : undefined;
+      applyParameters();
+      if (target?.kind === "prefab" && previous !== undefined && previous !== target.placement.scale) {
+        const world = target.active;
+        const id = target.placement.id;
+        const next = target.placement.scale;
+        v2?.recordTransform({
+          label: "Échelle uniforme", run: () => world.editor.scalePrefab(id, next),
+          undo: () => world.editor.scalePrefab(id, previous),
+        });
+      }
+      status.textContent = "Échelle du prefab mise à jour.";
+    } catch (error) { report(error); }
   }, { signal });
   duplicatePrefab.addEventListener("click", () => {
     const target = getSelected();
@@ -520,6 +533,7 @@ export function bindWorldEditor(
     try {
       const id = target.active.editor.duplicatePrefab(selected.id);
       select("prefab", id);
+      v2?.onPlacement("prefab", id);
       status.textContent = "Bloc dupliqué : " + id;
     } catch (error) { report(error); }
   }, { signal });
@@ -527,7 +541,14 @@ export function bindWorldEditor(
     const target = getSelected();
     if (!target || target.kind !== "prefab" || !selected) return;
     try {
+      const snapshot = structuredClone(target.placement);
+      const world = target.active;
       target.active.editor.removePrefab(selected.id);
+      v2?.recordTransform({
+        label: "Supprimer prefab",
+        run: () => world.editor.removePrefab(snapshot.id),
+        undo: () => world.editor.addPrefab(structuredClone(snapshot)),
+      });
       clearSelection();
       status.textContent = "Bloc supprimé.";
     } catch (error) { report(error); }
@@ -536,7 +557,8 @@ export function bindWorldEditor(
     "worldEditorSpeed", "worldEditorAggro", "worldEditorAttackRange", "worldEditorLeash",
     "worldEditorCollisionRadius", "worldEditorHurtboxRadius"]) {
     requireElement<HTMLInputElement>(id).addEventListener("change", () => {
-      try { applyParameters(); status.textContent = "Paramètres de collision ou d'IA actualisés."; }
+      try { applyParameters(); v2?.onDirectChange();
+        status.textContent = "Paramètres de collision ou d'IA actualisés."; }
       catch (error) { report(error); }
     }, { signal });
   }
@@ -572,6 +594,7 @@ export function bindWorldEditor(
       await target.active.editor.setVisual(target.kind, selection.id, visual, preview);
       preview = undefined; // Its lifetime now belongs to the model's texture.
       if (isCurrent()) {
+        v2?.onDirectChange();
         status.textContent = "Aperçu appliqué. Pour le rendre permanent, copier les assets dans public/assets puis exporter le JSON.";
       }
     } catch (error) {
