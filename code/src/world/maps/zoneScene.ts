@@ -16,6 +16,7 @@ export function createZoneScene(
   const debug: AbstractMesh[] = [];
   let groundMesh: AbstractMesh | undefined;
   let platformMesh: AbstractMesh | undefined;
+  let platformMaterial: StandardMaterial | undefined;
   let groundWidth = 0;
   let groundDepth = 0;
 
@@ -236,12 +237,18 @@ export function createZoneScene(
     const thickness = map.terrain.visual.thickness ?? 1.2;
     const sideColor = map.terrain.visual.sideColor ?? "#D8D8D8";
     if (!platformMesh) {
-      platformMesh = track(MeshBuilder.CreateBox("zone-platform:" + map.id, {
-        size: 1,
-      }, scene), sideColor);
+      // A single mutable side material avoids accumulating one material per
+      // color-picker change in the Playground.
+      platformMaterial = new StandardMaterial("zone-platform-side:" + map.id, scene);
+      platformMaterial.specularColor = Color3.Black();
+      platformMesh = MeshBuilder.CreateBox("zone-platform:" + map.id, { size: 1 }, scene);
+      platformMesh.parent = root;
+      platformMesh.material = platformMaterial;
+      platformMesh.isPickable = false;
       platformMesh.receiveShadows = true;
+      meshes.push(platformMesh);
     }
-    platformMesh.material = material(sideColor);
+    platformMaterial!.diffuseColor = Color3.FromHexString(sideColor);
     platformMesh.scaling.set(width, thickness, depth);
     // The box's top is at terrain Y. The original ground mesh provides its
     // visible walking surface a few millimetres above it, avoiding z-fighting.
@@ -265,6 +272,7 @@ export function createZoneScene(
       for (const mesh of casters) shadows?.removeShadowCaster(mesh, false);
       for (const mesh of meshes) mesh.dispose();
       for (const value of materials.values()) value.dispose();
+      platformMaterial?.dispose();
       for (const texture of textures) texture.dispose();
     },
   };
