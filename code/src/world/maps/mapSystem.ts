@@ -175,6 +175,7 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
           setObjectLayerVisible: level.setObjectLayerVisible,
           setPrefabLayerVisibility: level.setPrefabLayerVisibility,
           getPrefabRoot: level.getPrefabRoot,
+          getObjectRoot: level.getObjectRoot,
           resizeTerrain: level.resizeTerrain,
           scalePrefab: level.scalePrefab,
           removePrefab: level.removePrefab,

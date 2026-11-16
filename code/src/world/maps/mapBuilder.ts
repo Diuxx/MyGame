@@ -304,6 +304,9 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
     getPrefabRoot(id: string): TransformNode | undefined {
       try { return prefabs?.getRoot(id); } catch { return undefined; }
     },
+    getObjectRoot(id: string): TransformNode | undefined {
+      return objectViews.get(id)?.parent;
+    },
     removePrefab(id: string): void {
       const index = definition.prefabs?.findIndex((item) => item.id === id) ?? -1;
       if (index < 0) throw new Error("Placement prefab inconnu : " + id);
