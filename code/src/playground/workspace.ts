@@ -246,6 +246,7 @@ export function bindPlaygroundWorkspace(
   }
 
   function showModule(id: WorkspaceModuleId): void {
+    moduleHost.hidden = false;
     activeModule = id;
     for (const [name, panel] of modules) panel.hidden = name !== id;
     requireElement("ws-debug-panel").hidden = true;
@@ -264,6 +265,7 @@ export function bindPlaygroundWorkspace(
     requireElement("ws-inspector-title").textContent =
       WORKSPACE_AREAS.find((item) => item.id === area)?.label.toUpperCase() ?? "INSPECTEUR";
     if (area === "debug") {
+      moduleHost.hidden = true;
       activeModule = undefined;
       for (const panel of modules.values()) panel.hidden = true;
       requireElement("ws-debug-panel").hidden = false;
@@ -322,6 +324,8 @@ export function bindPlaygroundWorkspace(
     requireElement("ws-active-name").textContent = map?.name ?? "Playground";
     requireElement("ws-map-heading").textContent = map?.id ?? "Aucune map";
     requireElement("ws-status-map").textContent = map?.id ?? "Aucune map";
+    requireElement("ws-left-footer-map").textContent = map
+      ? map.name + " · " + map.id : "Aucune map active";
     requireElement("ws-status-selection").textContent = selectedEntries().length
       ? selectedEntries().length + " sélection(s)" : "Aucune sélection";
     if (!map) {
