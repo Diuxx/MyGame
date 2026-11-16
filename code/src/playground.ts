@@ -62,7 +62,7 @@ export async function startPlayground(
   heroState: HeroState,
 ): Promise<void> {
   requireElement<HTMLElement>("movementHint").hidden = false;
-  const { ground, grid, shadows, ambience } = createPlaygroundEnvironment(scene, character.root);
+  const { ground, grid, shadows, lighting } = createPlaygroundEnvironment(scene, character.root);
   // Map-specific ground now owns the visible terrain; retain the legacy plane only
   // as an origin for debug tools and the optional grid.
   ground.isVisible = false;
@@ -87,7 +87,7 @@ export async function startPlayground(
   let controller: ReturnType<typeof createCharacterController> | undefined;
   const maps = createMapSystem(scene, {
     hero: character.root, shadows,
-    applyEnvironment: ambience.apply,
+    applyLighting: lighting.apply,
     isHeroAlive: () => vitals.isAlive,
     onHeroHit: (damage) => lifecycle.hit(damage, controller),
     onDamage: (damage) => {
