@@ -156,6 +156,7 @@ export function bindWorldEditorV2(context: EditorContext) {
     if (await history.undo()) {
       context.clearSelection();
       noteChange();
+      syncTerrainFields();
     }
     refreshControls();
   }
@@ -164,6 +165,7 @@ export function bindWorldEditorV2(context: EditorContext) {
     if (await history.redo()) {
       context.clearSelection();
       noteChange();
+      syncTerrainFields();
     }
     refreshControls();
   }
@@ -433,6 +435,19 @@ export function bindWorldEditorV2(context: EditorContext) {
     context.updateSelection();
   }
 
+  function syncTerrainFields(): void {
+    const terrain = maps.world?.definition.terrain;
+    requireElement<HTMLInputElement>("worldEditorTerrainWidth").value = terrain
+      ? String(terrain.tiles[0].length * maps.world!.definition.tileSize) : "";
+    requireElement<HTMLInputElement>("worldEditorTerrainDepth").value = terrain
+      ? String(terrain.tiles.length * maps.world!.definition.tileSize) : "";
+    requireElement<HTMLSelectElement>("worldEditorGroundStyle").value = terrain?.visual?.style ?? "flat";
+    requireElement<HTMLInputElement>("worldEditorPlatformThickness").value =
+      String(terrain?.visual?.thickness ?? 1.2);
+    requireElement<HTMLInputElement>("worldEditorPlatformSideColor").value =
+      terrain?.visual?.sideColor ?? "#d8d8d8";
+  }
+
   async function resizeMap(): Promise<void> {
     const world = active();
     const size = {
@@ -448,6 +463,7 @@ export function bindWorldEditorV2(context: EditorContext) {
       run: () => world.editor.resizeTerrain(next),
       undo: () => world.editor.resizeTerrain({ origin: previous.origin, tiles: previous.tiles }),
     });
+    syncTerrainFields();
     status.textContent = "Dimensions du terrain actualisées.";
   }
 
@@ -468,6 +484,7 @@ export function bindWorldEditorV2(context: EditorContext) {
       run: () => world.editor.setTerrainVisual(next),
       undo: () => world.editor.setTerrainVisual(previous),
     });
+    syncTerrainFields();
   }
 
   async function resizePrefab(): Promise<void> {
@@ -771,17 +788,7 @@ export function bindWorldEditorV2(context: EditorContext) {
     for (const item of current?.definition.objects ?? []) {
       if (item.layer) layers.ensure(item.layer);
     }
-    const map = current?.definition;
-    requireElement<HTMLInputElement>("worldEditorTerrainWidth").value = map
-      ? String(map.terrain.tiles[0].length * map.tileSize) : "";
-    requireElement<HTMLInputElement>("worldEditorTerrainDepth").value = map
-      ? String(map.terrain.tiles.length * map.tileSize) : "";
-    const visual = map?.terrain.visual;
-    requireElement<HTMLSelectElement>("worldEditorGroundStyle").value = visual?.style ?? "flat";
-    requireElement<HTMLInputElement>("worldEditorPlatformThickness").value =
-      String(visual?.thickness ?? 1.2);
-    requireElement<HTMLInputElement>("worldEditorPlatformSideColor").value =
-      visual?.sideColor ?? "#d8d8d8";
+    syncTerrainFields();
     draftState.textContent = "Aucune modification locale.";
     renderLayers();
     refreshControls();
