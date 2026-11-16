@@ -2,6 +2,7 @@ import { parseEnvironmentSettings } from "./environmentSettings.ts";
 import { parseVisualOverride, parseWorldInteractions } from "./editorSchema.ts";
 import { parseMapEncounters } from "../../enemies/mapEnemyConfig.ts";
 import { parseMapExits, parseMapPrimitives, parsePrimitiveGround } from "./zoneContent.ts";
+import { parsePrefabPlacements } from "./prefabDefinitions.ts";
 import type {
   MapAssets, MapCollider, MapDefinition, MapPosition, MapBounds,
 } from "./types.ts";
@@ -215,6 +216,7 @@ export function validateMapDefinition(
     tileSize, terrain: { origin, tiles, groundCollider: { enabled: ground.enabled, thickness },
       primitiveGround: parsePrimitiveGround(terrain.primitiveGround) },
     objects, spawnPoints, primitives: parseMapPrimitives(input.primitives),
+    prefabs: parsePrefabPlacements(input.prefabs, assets.prefabs),
     exits: parseMapExits(input.exits), environment: parseEnvironmentSettings(input.environment), enemyCatalog,
     ...encounters, interactions: parseWorldInteractions(input.interactions),
   };

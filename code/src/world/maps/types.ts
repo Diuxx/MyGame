@@ -3,6 +3,7 @@ import type { EnvironmentSettings } from "./environmentSettings";
 import type { VisualOverride, WorldInteraction } from "./editorSchema";
 import type { MapEnemySpawn, MapWave, MapEncounterEvent } from "../../enemies/mapEnemyConfig";
 import type { MapExit, MapPrimitive, PrimitiveGround } from "./zoneContent";
+import type { PrefabCatalog, PrefabPlacement } from "./prefabDefinitions";
 
 export type MapPosition = readonly [number, number, number];
 
@@ -27,6 +28,7 @@ export interface MapAssets {
   version: 1;
   tiles: Record<string, TileAsset>;
   objects: Record<string, ObjectAsset>;
+  prefabs?: PrefabCatalog;
 }
 
 export interface MapObject {
@@ -58,6 +60,7 @@ export interface MapDefinition {
   };
   objects: MapObject[];
   primitives?: MapPrimitive[];
+  prefabs?: PrefabPlacement[];
   exits?: MapExit[];
   spawnPoints: MapSpawn[];
   environment?: EnvironmentSettings;

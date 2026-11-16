@@ -15,11 +15,16 @@ export function createNavigationData(map: MapDefinition, assets: MapAssets): Nav
       .filter((item) => assets.objects[item.asset].blocksNavigation)
       .map((item) => ({
         id: item.id,
-        colliders: buildMapObstacles({ ...map, objects: [item], primitives: [] }, assets),
+        colliders: buildMapObstacles({ ...map, objects: [item], primitives: [], prefabs: [] }, assets),
       })).concat((map.primitives ?? []).filter((item) => item.blocksMovement)
         .map((item) => ({
           id: item.id,
-          colliders: buildMapObstacles({ ...map, objects: [], primitives: [item] }, assets),
+          colliders: buildMapObstacles({ ...map, objects: [], primitives: [item], prefabs: [] }, assets),
+        }))).concat((map.prefabs ?? [])
+        .filter((item) => (assets.prefabs?.[item.prefab].colliders.length ?? 0) > 0)
+        .map((item) => ({
+          id: item.id,
+          colliders: buildMapObstacles({ ...map, objects: [], primitives: [], prefabs: [item] }, assets),
         }))),
   };
 }

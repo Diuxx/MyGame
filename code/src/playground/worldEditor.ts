@@ -29,6 +29,7 @@ export function bindWorldEditor(
   scene: Scene, canvas: HTMLCanvasElement, maps: ReturnType<typeof createMapSystem>,
   practice: ReturnType<typeof createEnemyScene>,
   signal: AbortSignal,
+  onEditingChange: (enabled: boolean) => void = () => {},
 ) {
   const enabled = requireElement<HTMLInputElement>("worldEditorEnabled");
   const quickToggle = requireElement<HTMLInputElement>("worldEditorQuickToggle");
@@ -37,6 +38,9 @@ export function bindWorldEditor(
   const status = requireElement<HTMLElement>("worldEditorStatus");
   const objectSettings = requireElement<HTMLElement>("worldEditorObjectFields");
   const enemySettings = requireElement<HTMLElement>("worldEditorEnemyFields");
+  const prefabSettings = requireElement<HTMLElement>("worldEditorPrefabFields");
+  const duplicatePrefab = requireElement<HTMLButtonElement>("worldEditorDuplicatePrefab");
+  const deletePrefab = requireElement<HTMLButtonElement>("worldEditorDeletePrefab");
   const rotationField = requireElement<HTMLElement>("worldEditorRotationField");
   const visualSettings = requireElement<HTMLElement>("worldEditorVisualFields");
   const snapToGrid = requireElement<HTMLInputElement>("worldEditorSnap");
@@ -78,6 +82,9 @@ export function bindWorldEditor(
       { kind: "object", field: "worldEditorCatalogObjects", entries: Object.entries(source.assets.objects).map(([id, asset]) => ({ id, name: asset.name ?? id })) },
       { kind: "tile", field: "worldEditorCatalogTiles", entries: Object.entries(source.assets.tiles).map(([id, asset]) => ({ id, name: asset.name ?? id })) },
       { kind: "enemy", field: "worldEditorCatalogEnemies", entries: source.enemyCatalog },
+      { kind: "prefab", field: "worldEditorCatalogPrefabs",
+        entries: Object.entries(source.assets.prefabs ?? {}).map(([id, item]) =>
+          ({ id, name: item.name })) },
     ] as const;
     for (const { kind, field, entries } of groups) {
       const buttons = entries.map(({ id, name }) => {
@@ -102,6 +109,10 @@ export function bindWorldEditor(
     if (selected.kind === "object") {
       const object = active.definition.objects.find((entry) => entry.id === selected?.id);
       return object ? { kind: "object" as const, object, active } : undefined;
+    }
+    if (selected.kind === "prefab") {
+      const placement = active.definition.prefabs?.find((entry) => entry.id === selected?.id);
+      return placement ? { kind: "prefab" as const, placement, active } : undefined;
     }
     if (selected.kind === "interaction") {
       const interaction = active.definition.interactions?.find((entry) => entry.id === selected?.id);
@@ -128,6 +139,7 @@ export function bindWorldEditor(
   function position(): MapPosition | undefined {
     const target = getSelected();
     if (target?.kind === "object") return target.object.position;
+    if (target?.kind === "prefab") return target.placement.position;
     if (target?.kind === "enemy") return target.actor.entity.position;
     if (target?.kind === "practice") return target.enemy.position;
     return target?.interaction.position;
@@ -146,25 +158,36 @@ export function bindWorldEditor(
     const target = getSelected();
     if (!target) return clearSelection();
     const spec = target.kind === "object" ? target.object :
+      target.kind === "prefab" ? target.placement :
       target.kind === "enemy" ? target.actor.spec :
       target.kind === "practice" ? target.enemy : target.interaction;
     panel.hidden = false;
     selectionLabel.textContent = target.kind === "interaction" ? target.interaction.label :
       target.kind === "practice" ? target.enemy.definition.name :
       target.kind === "object" ? target.active.assets.objects[target.object.asset].name ?? id :
+      target.kind === "prefab" ? target.active.assets.prefabs?.[target.placement.prefab]?.name ?? id :
       target.actor.entity.definition.name;
     setNumber("worldEditorX", spec.position[0]);
     setNumber("worldEditorY", spec.position[1]);
     setNumber("worldEditorZ", spec.position[2]);
     objectSettings.hidden = kind !== "object";
     enemySettings.hidden = kind !== "enemy";
-    rotationField.hidden = visualSettings.hidden = target.kind === "interaction" || target.kind === "practice";
+    prefabSettings.hidden = kind !== "prefab";
+    rotationField.hidden = target.kind === "interaction" || target.kind === "practice";
+    visualSettings.hidden = target.kind === "interaction" || target.kind === "practice" ||
+      target.kind === "prefab";
     setMarker();
     if (target.kind === "interaction" || target.kind === "practice") return;
-    const placement = target.kind === "object" ? target.object : target.actor.spec;
+    const placement = target.kind === "object" ? target.object :
+      target.kind === "prefab" ? target.placement : target.actor.spec;
     setNumber("worldEditorRotation", placement.rotationY);
-    setNumber("worldEditorScale", placement.visual?.scale ?? 1);
-    requireElement<HTMLInputElement>("worldEditorTint").value = placement.visual?.tint ?? "#ffffff";
+    if (target.kind === "prefab") {
+      setNumber("worldEditorPrefabScale", target.placement.scale);
+      return;
+    }
+    const visual = target.kind === "object" ? target.object.visual : target.actor.spec.visual;
+    setNumber("worldEditorScale", visual?.scale ?? 1);
+    requireElement<HTMLInputElement>("worldEditorTint").value = visual?.tint ?? "#ffffff";
     if (target.kind === "object") {
       const shape = (target.object.colliders ?? target.active.assets.objects[target.object.asset].colliders)[0];
       setNumber("worldEditorColliderWidth", shape?.type === "box" ? shape.size[0] : (shape?.radius ?? 0.5) * 2);
@@ -197,7 +220,7 @@ export function bindWorldEditor(
       numerical("worldEditorX"), numerical("worldEditorY"), numerical("worldEditorZ"),
     ];
     moveSelected(target, selected, point);
-    if (target.kind === "object" || target.kind === "enemy") {
+    if (target.kind === "object" || target.kind === "enemy" || target.kind === "prefab") {
       target.active.editor.rotate(target.kind, selected.id, numerical("worldEditorRotation"));
     }
     setMarker();
@@ -211,6 +234,10 @@ export function bindWorldEditor(
   function applyParameters(): void {
     const target = getSelected();
     if (!target || target.kind === "interaction" || target.kind === "practice" || !selected) return;
+    if (target.kind === "prefab") {
+      target.active.editor.scalePrefab(selected.id, numerical("worldEditorPrefabScale"));
+      return;
+    }
     if (target.kind === "enemy") {
       target.active.editor.setEnemyParameters(selected.id, {
         movementSpeed: numerical("worldEditorSpeed"),
@@ -283,19 +310,21 @@ export function bindWorldEditor(
   enabled.addEventListener("change", () => {
     quickToggle.checked = enabled.checked;
     maps.setEditing(enabled.checked);
+    onEditingChange(enabled.checked);
     canvas.classList.toggle("map-editor-active", enabled.checked);
     clearSelection();
     if (!enabled.checked) cancelPendingPlacement();
     status.textContent = enabled.checked
-      ? "Maintenir le clic gauche sur un élément et le faire glisser. Le combat est suspendu."
-      : "Mode combat réactivé.";
+      ? "Flèches : déplacer la caméra. Clic gauche : déplacer un élément. Combat suspendu."
+      : "Mode combat réactivé. Caméra recentrée sur le héros.";
   }, { signal });
 
   catalog.addEventListener("click", (event) => {
     const button = (event.target as HTMLElement).closest<HTMLButtonElement>("button[data-kind]");
     const kind = button?.dataset.kind;
     const id = button?.dataset.id;
-    if (!button || !id || (kind !== "tile" && kind !== "object" && kind !== "enemy") || placing) return;
+    if (!button || !id || (kind !== "tile" && kind !== "object" && kind !== "enemy" &&
+      kind !== "prefab") || placing) return;
     if (!enabled.checked) {
       enabled.checked = true;
       enabled.dispatchEvent(new Event("change"));
@@ -342,7 +371,8 @@ export function bindWorldEditor(
       (mesh) => mesh.isEnabled() && mesh.isVisible && mesh.visibility > 0 && !!mesh.metadata?.editorKind);
     const kind = hit?.pickedMesh?.metadata?.editorKind;
     const id = hit?.pickedMesh?.metadata?.editorId;
-    if ((kind !== "object" && kind !== "enemy" && kind !== "interaction" && kind !== "practice") || typeof id !== "string") {
+    if ((kind !== "object" && kind !== "enemy" && kind !== "interaction" &&
+      kind !== "practice" && kind !== "prefab") || typeof id !== "string") {
       clearSelection();
       return;
     }
@@ -390,6 +420,28 @@ export function bindWorldEditor(
       try { applyPlacement(); status.textContent = "Placement mis à jour."; } catch (error) { report(error); }
     }, { signal });
   }
+  requireElement<HTMLInputElement>("worldEditorPrefabScale").addEventListener("change", () => {
+    try { applyParameters(); status.textContent = "Échelle du prefab mise à jour."; }
+    catch (error) { report(error); }
+  }, { signal });
+  duplicatePrefab.addEventListener("click", () => {
+    const target = getSelected();
+    if (!target || target.kind !== "prefab" || !selected) return;
+    try {
+      const id = target.active.editor.duplicatePrefab(selected.id);
+      select("prefab", id);
+      status.textContent = "Bloc dupliqué : " + id;
+    } catch (error) { report(error); }
+  }, { signal });
+  deletePrefab.addEventListener("click", () => {
+    const target = getSelected();
+    if (!target || target.kind !== "prefab" || !selected) return;
+    try {
+      target.active.editor.removePrefab(selected.id);
+      clearSelection();
+      status.textContent = "Bloc supprimé.";
+    } catch (error) { report(error); }
+  }, { signal });
   for (const id of ["worldEditorColliderWidth", "worldEditorColliderHeight", "worldEditorColliderDepth",
     "worldEditorSpeed", "worldEditorAggro", "worldEditorAttackRange", "worldEditorLeash",
     "worldEditorCollisionRadius", "worldEditorHurtboxRadius"]) {
@@ -401,7 +453,8 @@ export function bindWorldEditor(
 
   applyVisual.addEventListener("click", async () => {
     const target = getSelected();
-    if (!target || target.kind === "interaction" || target.kind === "practice" || !selected) return;
+    if (!target || target.kind === "interaction" || target.kind === "practice" ||
+      target.kind === "prefab" || !selected) return;
     // Capture the destination before awaiting a file import; selection is mutable.
     const selection = { ...selected };
     const isCurrent = () => !signal.aborted && maps.world === target.active &&

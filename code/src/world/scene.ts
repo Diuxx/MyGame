@@ -16,6 +16,7 @@ const HERO_FOCUS_HEIGHT = 0;
 export interface CameraControls {
   readonly alpha: number;
   readonly visibleHeight: number;
+  readonly focus: { x: number; z: number };
   follow(x: number, z: number): void;
   setRotation(degrees: number): void;
   setTilt(degreesFromVertical: number): void;
@@ -74,6 +75,9 @@ export function createCamera(scene: Scene, canvas: HTMLCanvasElement, signal: Ab
     },
     get visibleHeight() {
       return visibleHeight;
+    },
+    get focus() {
+      return { x: camera.target.x, z: camera.target.z };
     },
     follow: (x, z) => {
       camera.target.set(x, HERO_FOCUS_HEIGHT, z);

@@ -12,6 +12,8 @@ import { MissingMapVisuals } from "./missingVisuals";
 import { MapModelRegistry } from "./modelRegistry";
 import { tileCenter } from "./validation";
 import { createZoneScene } from "./zoneScene";
+import { createPrefabRenderer } from "./prefabRenderer";
+import type { PrefabPlacement } from "./prefabDefinitions";
 import type { MapAssets, MapCollider, MapDefinition, MapObject, MapPosition } from "./types";
 
 function placeNode(scene: Scene, parent: TransformNode, id: string,
@@ -50,6 +52,7 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
   const debugMeshes: AbstractMesh[] = [];
   let interactions: ReturnType<typeof createWorldInteractionScene> | undefined;
   let zone: ReturnType<typeof createZoneScene> | undefined;
+  let prefabs: ReturnType<typeof createPrefabRenderer> | undefined;
   const objectViews = new Map<string, {
     parent: TransformNode;
     model: ReturnType<typeof createEditableModel>;
@@ -173,6 +176,12 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
 
   try {
     zone = createZoneScene(scene, root, definition, shadows);
+    if ((definition.prefabs?.length ?? 0) > 0) {
+      if (!assets.prefabs) throw new Error("Catalogue des prefabs manquant.");
+      prefabs = createPrefabRenderer(scene, root, assets.prefabs, definition.prefabs ?? [], shadows);
+    } else if (assets.prefabs) {
+      prefabs = createPrefabRenderer(scene, root, assets.prefabs, [], shadows);
+    }
     for (const [row, columns] of definition.terrain.tiles.entries()) {
       for (const [column, tileId] of columns.entries()) {
         if (tileId !== null) await renderTile(row, column, tileId);
@@ -187,6 +196,7 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
   } catch (error) {
     interactions?.dispose();
     zone?.dispose();
+    prefabs?.dispose();
     for (const view of objectViews.values()) view.model.dispose();
     for (const release of tiles.values()) release();
     root.dispose(false, false);
@@ -216,15 +226,53 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
     setColliderDebug(visible: boolean): void {
       debugVisible = visible;
       for (const mesh of debugMeshes) mesh.setEnabled(visible);
+      prefabs?.setColliderDebug(visible);
     },
     setEditorEnabled(enabled: boolean): void {
       editorEnabled = enabled;
+      prefabs?.setEditing(enabled);
       for (const view of objectViews.values()) {
         for (const pick of view.picks) {
           pick.setEnabled(enabled);
           pick.isPickable = enabled;
         }
       }
+    },
+    addPrefab(placement: PrefabPlacement): void {
+      if (!prefabs) throw new Error("La map ne dispose pas de catalogue de prefabs.");
+      prefabs.add(placement);
+      (definition.prefabs ??= []).push(placement);
+      refreshCollisionData();
+    },
+    movePrefab(id: string, position: MapPosition): void {
+      const placement = definition.prefabs?.find((item) => item.id === id);
+      if (!placement) throw new Error("Placement prefab inconnu : " + id);
+      prefabs?.move(id, position);
+      placement.position = [...position];
+      refreshCollisionData();
+    },
+    rotatePrefab(id: string, degrees: number): void {
+      const placement = definition.prefabs?.find((item) => item.id === id);
+      if (!placement || !Number.isFinite(degrees)) throw new Error("Rotation prefab invalide.");
+      prefabs?.rotate(id, degrees);
+      placement.rotationY = degrees;
+      refreshCollisionData();
+    },
+    scalePrefab(id: string, factor: number): void {
+      const placement = definition.prefabs?.find((item) => item.id === id);
+      if (!placement || !Number.isFinite(factor) || factor < 0.25 || factor > 4) {
+        throw new Error("Échelle du prefab invalide (0.25 à 4).");
+      }
+      prefabs?.scale(id, factor);
+      placement.scale = factor;
+      refreshCollisionData();
+    },
+    removePrefab(id: string): void {
+      const index = definition.prefabs?.findIndex((item) => item.id === id) ?? -1;
+      if (index < 0) throw new Error("Placement prefab inconnu : " + id);
+      prefabs?.remove(id);
+      definition.prefabs?.splice(index, 1);
+      refreshCollisionData();
     },
     async addObject(object: MapObject): Promise<void> {
       await renderObject(object);
@@ -288,6 +336,7 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
       disposed = true;
       interactions?.dispose();
       zone?.dispose();
+      prefabs?.dispose();
       for (const view of objectViews.values()) view.model.dispose();
       for (const release of tiles.values()) release();
       root.dispose(false, false);

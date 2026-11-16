@@ -30,6 +30,7 @@ export function bindMapTools(
     dojo: "Cour du dojo", forest: "Clairière",
     "prototype-forest": "Prototype — Forêt",
     "prototype-arena": "Prototype — Arène",
+    "prototype-inn": "Prototype — Auberge blanche",
     "nature-showcase": "Nature — Forêt stylisée",
   };
   for (const id of AVAILABLE_MAPS) selection.add(new Option(labels[id] ?? id, id));
