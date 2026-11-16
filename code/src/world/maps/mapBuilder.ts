@@ -286,6 +286,13 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
       }
       placement.layer = layer;
     },
+    setObjectLayerVisible(layer: string, visible: boolean): void {
+      for (const item of definition.objects) {
+        if ((item.layer ?? "decoration") !== layer) continue;
+        const view = objectViews.get(item.id);
+        view?.parent.setEnabled(visible);
+      }
+    },
     setObjectLayer(id: string, layer: string): void {
       const object = definition.objects.find((item) => item.id === id);
       if (!object || !/^[a-z0-9][a-z0-9_-]{0,79}$/i.test(layer)) throw new Error("Layer invalide.");
