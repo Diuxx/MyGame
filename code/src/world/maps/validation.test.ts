@@ -16,6 +16,8 @@ test("example maps and composite collider assets validate", () => {
   assert.equal(dojo.terrain.tiles[0].length, 8);
   assert.equal(assets.objects.building_l.colliders.length, 2);
   assert.equal(validateMapDefinition(load("maps/forest.json"), assets).id, "forest");
+  assert.equal(dojo.lighting?.world.enabled, true);
+  assert.equal(validateMapDefinition(load("maps/playground.json"), assets).lighting?.map.lights.length, 0);
 });
 
 test("nature showcase accepts textured glTF assets without changing existing maps", () => {
