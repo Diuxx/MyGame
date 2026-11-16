@@ -98,7 +98,9 @@ export function bindLightingTools(
 
   function setMarkerVisibility(): void {
     const visible = maps.isEditing && markerToggle.checked;
-    for (const mesh of markers) mesh.setEnabled(visible);
+    for (const mesh of markers) {
+      if (mesh.isEnabled() !== visible) mesh.setEnabled(visible);
+    }
   }
 
   function sync(): void {
