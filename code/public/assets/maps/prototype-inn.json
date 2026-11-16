@@ -305,6 +305,11 @@
     },
     "primitiveGround": {
       "color": "#E8E8E8"
+    },
+    "visual": {
+      "style": "platform",
+      "thickness": 1.2,
+      "sideColor": "#D8D8D8"
     }
   },
   "objects": [],

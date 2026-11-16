@@ -5,6 +5,24 @@ export interface PrimitiveGround {
   pattern?: "training" | "nature";
 }
 
+export interface TerrainVisual {
+  style: "flat" | "platform";
+  thickness?: number;
+  sideColor?: string;
+}
+
+export function parseTerrainVisual(raw: unknown): TerrainVisual | undefined {
+  if (raw === undefined) return undefined;
+  const input = asObject(raw, "terrain.visual");
+  if (input.style === "flat") return { style: "flat" };
+  if (input.style !== "platform") throw new Error("terrain.visual.style : flat ou platform attendu.");
+  return {
+    style: "platform",
+    thickness: finite(input.thickness ?? 1.2, "terrain.visual.thickness", 0.1, 8),
+    sideColor: color(input.sideColor ?? "#D8D8D8", "terrain.visual.sideColor"),
+  };
+}
+
 export interface MapPrimitive {
   id: string;
   kind: "box" | "cylinder" | "sphere";

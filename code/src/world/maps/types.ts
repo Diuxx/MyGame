@@ -2,7 +2,7 @@
 import type { EnvironmentSettings } from "./environmentSettings";
 import type { VisualOverride, WorldInteraction } from "./editorSchema";
 import type { MapEnemySpawn, MapWave, MapEncounterEvent } from "../../enemies/mapEnemyConfig";
-import type { MapExit, MapPrimitive, PrimitiveGround } from "./zoneContent";
+import type { MapExit, MapPrimitive, PrimitiveGround, TerrainVisual } from "./zoneContent";
 import type { PrefabCatalog, PrefabPlacement } from "./prefabDefinitions";
 
 export type MapPosition = readonly [number, number, number];
@@ -58,6 +58,7 @@ export interface MapDefinition {
     tiles: (string | null)[][];
     groundCollider: { enabled: boolean; thickness: number };
     primitiveGround?: PrimitiveGround;
+    visual?: TerrainVisual;
   };
   objects: MapObject[];
   primitives?: MapPrimitive[];

@@ -13,6 +13,7 @@ import { MapModelRegistry } from "./modelRegistry";
 import { tileCenter } from "./validation";
 
 import { createZoneScene } from "./zoneScene";
+import { parseTerrainVisual, type TerrainVisual } from "./zoneContent";
 import { createPrefabRenderer } from "./prefabRenderer";
 import type { PrefabPlacement } from "./prefabDefinitions";
 import type { MapAssets, MapCollider, MapDefinition, MapObject, MapPosition } from "./types";
@@ -378,6 +379,20 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
       void view.model.load(object.visual).catch((error: unknown) => {
         console.error("Impossible de reconstruire le visuel provisoire de l'objet :", id, error);
       });
+    },
+    setTerrainVisual(visual: TerrainVisual | undefined): void {
+      const validated = parseTerrainVisual(visual);
+      if (validated?.style === "platform" && !definition.terrain.primitiveGround) {
+        throw new Error("Le style platform nécessite un sol primitif.");
+      }
+      const previous = definition.terrain.visual;
+      definition.terrain.visual = validated;
+      try { zone?.refreshGround(); }
+      catch (error) {
+        definition.terrain.visual = previous;
+        zone?.refreshGround();
+        throw error;
+      }
     },
     resizeTerrain(terrain: { origin: MapPosition; tiles: (string | null)[][] }): void {
       if (terrain.tiles.some((row) => row.some((tile) => tile !== null))) {
