@@ -92,7 +92,7 @@ export function defaultLighting(environment: EnvironmentSettings): LightingSetti
       ambient: {
         enabled: true,
         color: environment.ambient.color,
-        groundColor: "#333333",
+        groundColor: "#000000",
         intensity: environment.ambient.intensity,
       },
       sun: {
