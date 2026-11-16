@@ -174,6 +174,11 @@ export function validateMapDefinition(
     });
   });
 
+  const primitiveGround = parsePrimitiveGround(terrain.primitiveGround);
+  const visual = parseTerrainVisual(terrain.visual);
+  if (visual?.style === "platform" && !primitiveGround) {
+    throw new Error("terrain.visual.platform nécessite terrain.primitiveGround.");
+  }
   const ground = record(terrain.groundCollider, "groundCollider");
   if (typeof ground.enabled !== "boolean") throw new Error("groundCollider.enabled invalide.");
   const thickness = finite(ground.thickness, "groundCollider.thickness", 0.000001, 100);
@@ -234,8 +239,7 @@ export function validateMapDefinition(
   return {
     version: 1, id, name: input.name,
     tileSize, terrain: { origin, tiles, groundCollider: { enabled: ground.enabled, thickness },
-      primitiveGround: parsePrimitiveGround(terrain.primitiveGround),
-      visual: parseTerrainVisual(terrain.visual) },
+      primitiveGround, visual },
     objects, spawnPoints, primitives: parseMapPrimitives(input.primitives),
     prefabs: parsePrefabPlacements(input.prefabs, assets.prefabs),
     editorLayers: input.editorLayers === undefined ? undefined :

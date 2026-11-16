@@ -14,7 +14,12 @@ export interface TerrainVisual {
 export function parseTerrainVisual(raw: unknown): TerrainVisual | undefined {
   if (raw === undefined) return undefined;
   const input = asObject(raw, "terrain.visual");
-  if (input.style === "flat") return { style: "flat" };
+  if (input.style === "flat") {
+    // Validate supplied parameters even when the flat renderer ignores them.
+    if (input.thickness !== undefined) finite(input.thickness, "terrain.visual.thickness", 0.1, 8);
+    if (input.sideColor !== undefined) color(input.sideColor, "terrain.visual.sideColor");
+    return { style: "flat" };
+  }
   if (input.style !== "platform") throw new Error("terrain.visual.style : flat ou platform attendu.");
   return {
     style: "platform",
