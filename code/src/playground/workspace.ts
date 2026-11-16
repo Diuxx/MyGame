@@ -153,10 +153,15 @@ export function bindPlaygroundWorkspace(
     moduleHost.append(panel);
     panel.classList.add("ws-existing-module");
     panel.hidden = true;
-    panel.querySelector<HTMLButtonElement>(".module-close")?.addEventListener("click", () => {
+    const closeModule = () => {
       panel.hidden = true;
       activeModule = undefined;
       updateTabs();
+    };
+    panel.querySelector<HTMLButtonElement>(".module-close")?.addEventListener("click", closeModule, { signal });
+    panel.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !event.defaultPrevented &&
+        !(event.target instanceof HTMLSelectElement)) closeModule();
     }, { signal });
   }
 
@@ -169,14 +174,19 @@ export function bindPlaygroundWorkspace(
   moveControl("worldEditorExport", requireElement("ws-export-tools"), "Exporter la map en JSON");
 
   const toolSelector = requireElement<HTMLSelectElement>("worldEditorTool");
+  const oldToolRow = toolSelector.closest(".enemy-fields");
   requireElement("ws-preserved-controls").append(toolSelector.closest("label") ?? toolSelector);
+  oldToolRow?.classList.add("ws-relocated-source");
   const snapHost = requireElement<HTMLElement>("ws-snap-tools");
+  const snapSource = requireElement("worldEditorSnap").closest(".enemy-fields");
   for (const id of ["worldEditorSnap", "worldEditorSnapStep", "worldEditorRotationSnap"]) {
     const input = requireElement<HTMLElement>(id);
     const label = input.closest("label");
     if (!label) throw new Error("Contrôle sans label : " + id);
     snapHost.append(label);
   }
+  snapSource?.classList.add("ws-relocated-source");
+  const historySource = requireElement("worldEditorUndo").closest(".enemy-fields");
   const historyHost = requireElement<HTMLElement>("ws-history-tools");
   for (const [id, name, symbol] of [
     ["worldEditorUndo", "Annuler (Ctrl+Z)", "↶"],
@@ -190,6 +200,7 @@ export function bindPlaygroundWorkspace(
     button.textContent = symbol;
     button.classList.add("ws-action-button");
   }
+  historySource?.classList.add("ws-relocated-source");
 
   const catalog = requireElement("worldEditorCatalog");
   const editorModule = requireElement("worldEditorModule");
@@ -450,9 +461,19 @@ export function bindPlaygroundWorkspace(
   // Existing text and map statuses already track mutations from the editor
   // and map system. Observe only those text nodes; never poll the 3D scene.
   const modelUpdates = new MutationObserver(renderSceneTree);
-  for (const id of ["worldEditorSelection", "worldEditorStatus", "mapActiveId"]) {
+  for (const id of ["worldEditorStatus", "mapActiveId"]) {
     modelUpdates.observe(requireElement(id), { childList: true, subtree: true, characterData: true });
   }
+  const selectionUpdates = new MutationObserver(() => {
+    renderSceneTree();
+    if (editor.enabled && editor.getSelection().length > 0 &&
+      (activeArea !== "world" || activeModule !== "worldEditorModule")) {
+      changeArea("world");
+      showModule("worldEditorModule");
+    }
+  });
+  selectionUpdates.observe(requireElement("worldEditorSelection"),
+    { childList: true, subtree: true, characterData: true });
   const viewportResize = new ResizeObserver(() => scene.getEngine().resize());
   viewportResize.observe(stage);
 
@@ -470,6 +491,7 @@ export function bindPlaygroundWorkspace(
   setEditing(true);
   signal.addEventListener("abort", () => {
     modelUpdates.disconnect();
+    selectionUpdates.disconnect();
     viewportResize.disconnect();
   }, { once: true });
 }
