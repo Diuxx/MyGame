@@ -1,0 +1,1248 @@
+{
+  "version": 1,
+  "prefabs": {
+    "wall-straight": {
+      "name": "Mur droit",
+      "category": "architecture",
+      "parts": [
+        {
+          "kind": "box",
+          "position": [
+            0,
+            1.5,
+            0
+          ],
+          "size": [
+            4,
+            3,
+            0.4
+          ],
+          "rotationY": 0
+        }
+      ],
+      "colliders": [
+        {
+          "type": "box",
+          "position": [
+            0,
+            1.5,
+            0
+          ],
+          "size": [
+            4,
+            3,
+            0.4
+          ]
+        }
+      ]
+    },
+    "wall-corner": {
+      "name": "Angle de mur",
+      "category": "architecture",
+      "parts": [
+        {
+          "kind": "box",
+          "position": [
+            0,
+            1.5,
+            -0.85
+          ],
+          "size": [
+            4,
+            3,
+            0.4
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            -1.8,
+            1.5,
+            1
+          ],
+          "size": [
+            0.4,
+            3,
+            3.3
+          ],
+          "rotationY": 0
+        }
+      ],
+      "colliders": [
+        {
+          "type": "box",
+          "position": [
+            0,
+            1.5,
+            -0.85
+          ],
+          "size": [
+            4,
+            3,
+            0.4
+          ]
+        },
+        {
+          "type": "box",
+          "position": [
+            -1.8,
+            1.5,
+            1
+          ],
+          "size": [
+            0.4,
+            3,
+            3.3
+          ]
+        }
+      ]
+    },
+    "wall-half": {
+      "name": "Mur bas",
+      "category": "architecture",
+      "parts": [
+        {
+          "kind": "box",
+          "position": [
+            0,
+            0.65,
+            0
+          ],
+          "size": [
+            4,
+            1.3,
+            0.4
+          ],
+          "rotationY": 0
+        }
+      ],
+      "colliders": [
+        {
+          "type": "box",
+          "position": [
+            0,
+            0.65,
+            0
+          ],
+          "size": [
+            4,
+            1.3,
+            0.4
+          ]
+        }
+      ]
+    },
+    "wall-window": {
+      "name": "Mur fenêtre (ouverture)",
+      "category": "architecture",
+      "parts": [
+        {
+          "kind": "box",
+          "position": [
+            -1.55,
+            1.5,
+            0
+          ],
+          "size": [
+            0.9,
+            3,
+            0.4
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            1.55,
+            1.5,
+            0
+          ],
+          "size": [
+            0.9,
+            3,
+            0.4
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            0,
+            0.45,
+            0
+          ],
+          "size": [
+            2.3,
+            0.9,
+            0.4
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            0,
+            2.7,
+            0
+          ],
+          "size": [
+            2.3,
+            0.6,
+            0.4
+          ],
+          "rotationY": 0
+        }
+      ],
+      "colliders": [
+        {
+          "type": "box",
+          "position": [
+            -1.55,
+            1.5,
+            0
+          ],
+          "size": [
+            0.9,
+            3,
+            0.4
+          ]
+        },
+        {
+          "type": "box",
+          "position": [
+            1.55,
+            1.5,
+            0
+          ],
+          "size": [
+            0.9,
+            3,
+            0.4
+          ]
+        },
+        {
+          "type": "box",
+          "position": [
+            0,
+            0.45,
+            0
+          ],
+          "size": [
+            2.3,
+            0.9,
+            0.4
+          ]
+        }
+      ]
+    },
+    "pillar-square": {
+      "name": "Pilier carré",
+      "category": "architecture",
+      "parts": [
+        {
+          "kind": "box",
+          "position": [
+            0,
+            1.55,
+            0
+          ],
+          "size": [
+            0.68,
+            3.1,
+            0.68
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            0,
+            3.16,
+            0
+          ],
+          "size": [
+            0.95,
+            0.25,
+            0.95
+          ],
+          "rotationY": 0
+        }
+      ],
+      "colliders": [
+        {
+          "type": "box",
+          "position": [
+            0,
+            1.55,
+            0
+          ],
+          "size": [
+            0.68,
+            3.1,
+            0.68
+          ]
+        }
+      ]
+    },
+    "pillar-round": {
+      "name": "Colonne ronde",
+      "category": "architecture",
+      "parts": [
+        {
+          "kind": "cylinder",
+          "position": [
+            0,
+            1.4,
+            0
+          ],
+          "size": [
+            0.65,
+            2.8,
+            0.65
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "cylinder",
+          "position": [
+            0,
+            2.88,
+            0
+          ],
+          "size": [
+            0.9,
+            0.25,
+            0.9
+          ],
+          "rotationY": 0
+        }
+      ],
+      "colliders": [
+        {
+          "type": "cylinder",
+          "position": [
+            0,
+            1.4,
+            0
+          ],
+          "radius": 0.36,
+          "height": 2.8
+        }
+      ]
+    },
+    "door-frame": {
+      "name": "Porte ouverte",
+      "category": "architecture",
+      "parts": [
+        {
+          "kind": "box",
+          "position": [
+            -1.45,
+            1.5,
+            0
+          ],
+          "size": [
+            0.45,
+            3,
+            0.5
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            1.45,
+            1.5,
+            0
+          ],
+          "size": [
+            0.45,
+            3,
+            0.5
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            0,
+            3.05,
+            0
+          ],
+          "size": [
+            3.35,
+            0.4,
+            0.5
+          ],
+          "rotationY": 0
+        }
+      ],
+      "colliders": [
+        {
+          "type": "box",
+          "position": [
+            -1.45,
+            1.5,
+            0
+          ],
+          "size": [
+            0.45,
+            3,
+            0.5
+          ]
+        },
+        {
+          "type": "box",
+          "position": [
+            1.45,
+            1.5,
+            0
+          ],
+          "size": [
+            0.45,
+            3,
+            0.5
+          ]
+        }
+      ]
+    },
+    "floor-platform": {
+      "name": "Plateforme haute",
+      "category": "architecture",
+      "parts": [
+        {
+          "kind": "box",
+          "position": [
+            0,
+            2.65,
+            0
+          ],
+          "size": [
+            4,
+            0.28,
+            4
+          ],
+          "rotationY": 0
+        }
+      ],
+      "colliders": []
+    },
+    "railing": {
+      "name": "Garde-corps",
+      "category": "architecture",
+      "parts": [
+        {
+          "kind": "box",
+          "position": [
+            0,
+            3.23,
+            0
+          ],
+          "size": [
+            4,
+            0.18,
+            0.2
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            -1.75,
+            2.95,
+            0
+          ],
+          "size": [
+            0.16,
+            0.65,
+            0.16
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            -0.6,
+            2.95,
+            0
+          ],
+          "size": [
+            0.16,
+            0.65,
+            0.16
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            0.6,
+            2.95,
+            0
+          ],
+          "size": [
+            0.16,
+            0.65,
+            0.16
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            1.75,
+            2.95,
+            0
+          ],
+          "size": [
+            0.16,
+            0.65,
+            0.16
+          ],
+          "rotationY": 0
+        }
+      ],
+      "colliders": []
+    },
+    "staircase": {
+      "name": "Escalier bloqué (décor)",
+      "category": "architecture",
+      "parts": [
+        {
+          "kind": "box",
+          "position": [
+            0,
+            0.2,
+            -2.1
+          ],
+          "size": [
+            2.8,
+            0.4,
+            0.7
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            0,
+            0.4,
+            -1.4000000000000001
+          ],
+          "size": [
+            2.8,
+            0.8,
+            0.7
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            0,
+            0.6000000000000001,
+            -0.7000000000000002
+          ],
+          "size": [
+            2.8,
+            1.2000000000000002,
+            0.7
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            0,
+            0.8,
+            -4.440892098500626e-16
+          ],
+          "size": [
+            2.8,
+            1.6,
+            0.7
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            0,
+            1,
+            0.6999999999999997
+          ],
+          "size": [
+            2.8,
+            2,
+            0.7
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            0,
+            1.2000000000000002,
+            1.4
+          ],
+          "size": [
+            2.8,
+            2.4000000000000004,
+            0.7
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            0,
+            1.4000000000000001,
+            2.099999999999999
+          ],
+          "size": [
+            2.8,
+            2.8000000000000003,
+            0.7
+          ],
+          "rotationY": 0
+        }
+      ],
+      "colliders": [
+        {
+          "type": "box",
+          "position": [
+            0,
+            1.5,
+            0
+          ],
+          "size": [
+            3,
+            3,
+            5.1
+          ]
+        }
+      ]
+    },
+    "balcony-section": {
+      "name": "Section de mezzanine",
+      "category": "architecture",
+      "parts": [
+        {
+          "kind": "box",
+          "position": [
+            0,
+            2.6,
+            0
+          ],
+          "size": [
+            4,
+            0.3,
+            4
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            -1.6,
+            1.25,
+            1.6
+          ],
+          "size": [
+            0.38,
+            2.5,
+            0.38
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            1.6,
+            1.25,
+            1.6
+          ],
+          "size": [
+            0.38,
+            2.5,
+            0.38
+          ],
+          "rotationY": 0
+        }
+      ],
+      "colliders": [
+        {
+          "type": "box",
+          "position": [
+            -1.6,
+            1.25,
+            1.6
+          ],
+          "size": [
+            0.38,
+            2.5,
+            0.38
+          ]
+        },
+        {
+          "type": "box",
+          "position": [
+            1.6,
+            1.25,
+            1.6
+          ],
+          "size": [
+            0.38,
+            2.5,
+            0.38
+          ]
+        }
+      ]
+    },
+    "table-round": {
+      "name": "Table ronde",
+      "category": "furniture",
+      "parts": [
+        {
+          "kind": "cylinder",
+          "position": [
+            0,
+            0.48,
+            0
+          ],
+          "size": [
+            0.43,
+            0.95,
+            0.43
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "cylinder",
+          "position": [
+            0,
+            0.98,
+            0
+          ],
+          "size": [
+            2.25,
+            0.14,
+            2.25
+          ],
+          "rotationY": 0
+        }
+      ],
+      "colliders": [
+        {
+          "type": "cylinder",
+          "position": [
+            0,
+            0.62,
+            0
+          ],
+          "radius": 1.1,
+          "height": 1.24
+        }
+      ]
+    },
+    "table-rect": {
+      "name": "Table rectangulaire",
+      "category": "furniture",
+      "parts": [
+        {
+          "kind": "box",
+          "position": [
+            0,
+            0.99,
+            0
+          ],
+          "size": [
+            2.7,
+            0.16,
+            1.25
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            -1,
+            0.47,
+            -0.43
+          ],
+          "size": [
+            0.19,
+            0.93,
+            0.19
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            -1,
+            0.47,
+            0.43
+          ],
+          "size": [
+            0.19,
+            0.93,
+            0.19
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            1,
+            0.47,
+            -0.43
+          ],
+          "size": [
+            0.19,
+            0.93,
+            0.19
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            1,
+            0.47,
+            0.43
+          ],
+          "size": [
+            0.19,
+            0.93,
+            0.19
+          ],
+          "rotationY": 0
+        }
+      ],
+      "colliders": [
+        {
+          "type": "box",
+          "position": [
+            0,
+            0.6,
+            0
+          ],
+          "size": [
+            2.7,
+            1.2,
+            1.25
+          ]
+        }
+      ]
+    },
+    "bench": {
+      "name": "Banc",
+      "category": "furniture",
+      "parts": [
+        {
+          "kind": "box",
+          "position": [
+            0,
+            0.57,
+            0
+          ],
+          "size": [
+            1.7,
+            0.18,
+            0.48
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            -0.65,
+            0.28,
+            0
+          ],
+          "size": [
+            0.19,
+            0.57,
+            0.4
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            0.65,
+            0.28,
+            0
+          ],
+          "size": [
+            0.19,
+            0.57,
+            0.4
+          ],
+          "rotationY": 0
+        }
+      ],
+      "colliders": [
+        {
+          "type": "box",
+          "position": [
+            0,
+            0.34,
+            0
+          ],
+          "size": [
+            1.7,
+            0.68,
+            0.55
+          ]
+        }
+      ]
+    },
+    "stool": {
+      "name": "Tabouret",
+      "category": "furniture",
+      "parts": [
+        {
+          "kind": "cylinder",
+          "position": [
+            0,
+            0.52,
+            0
+          ],
+          "size": [
+            0.62,
+            0.16,
+            0.62
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "cylinder",
+          "position": [
+            0,
+            0.23,
+            0
+          ],
+          "size": [
+            0.24,
+            0.46,
+            0.24
+          ],
+          "rotationY": 0
+        }
+      ],
+      "colliders": [
+        {
+          "type": "cylinder",
+          "position": [
+            0,
+            0.34,
+            0
+          ],
+          "radius": 0.34,
+          "height": 0.68
+        }
+      ]
+    },
+    "bar-counter": {
+      "name": "Comptoir",
+      "category": "furniture",
+      "parts": [
+        {
+          "kind": "box",
+          "position": [
+            0,
+            0.68,
+            0
+          ],
+          "size": [
+            4.8,
+            1.35,
+            0.95
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            0,
+            1.42,
+            0
+          ],
+          "size": [
+            5.1,
+            0.18,
+            1.25
+          ],
+          "rotationY": 0
+        }
+      ],
+      "colliders": [
+        {
+          "type": "box",
+          "position": [
+            0,
+            0.75,
+            0
+          ],
+          "size": [
+            5.1,
+            1.5,
+            1.25
+          ]
+        }
+      ]
+    },
+    "crate": {
+      "name": "Caisse",
+      "category": "furniture",
+      "parts": [
+        {
+          "kind": "box",
+          "position": [
+            0,
+            0.5,
+            0
+          ],
+          "size": [
+            1,
+            1,
+            1
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            0,
+            0.97,
+            0
+          ],
+          "size": [
+            1.07,
+            0.07,
+            1.07
+          ],
+          "rotationY": 0
+        }
+      ],
+      "colliders": [
+        {
+          "type": "box",
+          "position": [
+            0,
+            0.5,
+            0
+          ],
+          "size": [
+            1,
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    "barrel": {
+      "name": "Tonneau",
+      "category": "furniture",
+      "parts": [
+        {
+          "kind": "cylinder",
+          "position": [
+            0,
+            0.6,
+            0
+          ],
+          "size": [
+            0.95,
+            1.2,
+            0.95
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "cylinder",
+          "position": [
+            0,
+            0.12,
+            0
+          ],
+          "size": [
+            1.04,
+            0.12,
+            1.04
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "cylinder",
+          "position": [
+            0,
+            1.08,
+            0
+          ],
+          "size": [
+            1.04,
+            0.12,
+            1.04
+          ],
+          "rotationY": 0
+        }
+      ],
+      "colliders": [
+        {
+          "type": "cylinder",
+          "position": [
+            0,
+            0.6,
+            0
+          ],
+          "radius": 0.49,
+          "height": 1.2
+        }
+      ]
+    },
+    "bed-simple": {
+      "name": "Lit simple",
+      "category": "furniture",
+      "parts": [
+        {
+          "kind": "box",
+          "position": [
+            0,
+            0.35,
+            0
+          ],
+          "size": [
+            1.4,
+            0.35,
+            2.5
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            0,
+            0.8,
+            -1.05
+          ],
+          "size": [
+            1.4,
+            0.95,
+            0.28
+          ],
+          "rotationY": 0
+        }
+      ],
+      "colliders": [
+        {
+          "type": "box",
+          "position": [
+            0,
+            0.38,
+            0
+          ],
+          "size": [
+            1.4,
+            0.76,
+            2.5
+          ]
+        }
+      ]
+    },
+    "shelf": {
+      "name": "Étagère",
+      "category": "furniture",
+      "parts": [
+        {
+          "kind": "box",
+          "position": [
+            -1.1,
+            1.25,
+            0
+          ],
+          "size": [
+            0.2,
+            2.5,
+            0.75
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            1.1,
+            1.25,
+            0
+          ],
+          "size": [
+            0.2,
+            2.5,
+            0.75
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            0,
+            0.4,
+            0
+          ],
+          "size": [
+            2.4,
+            0.14,
+            0.75
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            0,
+            1.2,
+            0
+          ],
+          "size": [
+            2.4,
+            0.14,
+            0.75
+          ],
+          "rotationY": 0
+        },
+        {
+          "kind": "box",
+          "position": [
+            0,
+            2.1,
+            0
+          ],
+          "size": [
+            2.4,
+            0.14,
+            0.75
+          ],
+          "rotationY": 0
+        }
+      ],
+      "colliders": [
+        {
+          "type": "box",
+          "position": [
+            0,
+            1.25,
+            0
+          ],
+          "size": [
+            2.4,
+            2.5,
+            0.75
+          ]
+        }
+      ]
+    }
+  }
+}

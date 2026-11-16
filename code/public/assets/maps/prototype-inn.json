@@ -1,0 +1,1287 @@
+{
+  "version": 1,
+  "id": "prototype-inn",
+  "name": "Auberge blanche — Blockout",
+  "tileSize": 2,
+  "terrain": {
+    "origin": [
+      -16,
+      0,
+      -16
+    ],
+    "tiles": [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    "groundCollider": {
+      "enabled": true,
+      "thickness": 0.22
+    },
+    "primitiveGround": {
+      "color": "#E8E8E8"
+    }
+  },
+  "objects": [],
+  "primitives": [],
+  "prefabs": [
+    {
+      "id": "wall-straight-001",
+      "prefab": "wall-straight",
+      "position": [
+        -12,
+        0,
+        -15
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "wall-straight-002",
+      "prefab": "wall-straight",
+      "position": [
+        -8,
+        0,
+        -15
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "wall-window-003",
+      "prefab": "wall-window",
+      "position": [
+        -4,
+        0,
+        -15
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "wall-straight-004",
+      "prefab": "wall-straight",
+      "position": [
+        0,
+        0,
+        -15
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "wall-straight-005",
+      "prefab": "wall-straight",
+      "position": [
+        4,
+        0,
+        -15
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "wall-window-006",
+      "prefab": "wall-window",
+      "position": [
+        8,
+        0,
+        -15
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "wall-straight-007",
+      "prefab": "wall-straight",
+      "position": [
+        12,
+        0,
+        -15
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "wall-straight-008",
+      "prefab": "wall-straight",
+      "position": [
+        -15,
+        0,
+        -12
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "wall-straight-009",
+      "prefab": "wall-straight",
+      "position": [
+        -15,
+        0,
+        -8
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "wall-window-010",
+      "prefab": "wall-window",
+      "position": [
+        -15,
+        0,
+        -4
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "wall-straight-011",
+      "prefab": "wall-straight",
+      "position": [
+        -15,
+        0,
+        0
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "wall-straight-012",
+      "prefab": "wall-straight",
+      "position": [
+        -15,
+        0,
+        4
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "wall-straight-013",
+      "prefab": "wall-straight",
+      "position": [
+        -15,
+        0,
+        8
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "wall-straight-014",
+      "prefab": "wall-straight",
+      "position": [
+        15,
+        0,
+        -12
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "wall-straight-015",
+      "prefab": "wall-straight",
+      "position": [
+        15,
+        0,
+        -8
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "wall-window-016",
+      "prefab": "wall-window",
+      "position": [
+        15,
+        0,
+        -4
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "wall-straight-017",
+      "prefab": "wall-straight",
+      "position": [
+        15,
+        0,
+        0
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "wall-straight-018",
+      "prefab": "wall-straight",
+      "position": [
+        15,
+        0,
+        4
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "wall-straight-019",
+      "prefab": "wall-straight",
+      "position": [
+        15,
+        0,
+        8
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "wall-half-020",
+      "prefab": "wall-half",
+      "position": [
+        -12,
+        0,
+        15
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "wall-half-021",
+      "prefab": "wall-half",
+      "position": [
+        -8,
+        0,
+        15
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "wall-half-022",
+      "prefab": "wall-half",
+      "position": [
+        -4,
+        0,
+        15
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "wall-half-023",
+      "prefab": "wall-half",
+      "position": [
+        4,
+        0,
+        15
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "wall-half-024",
+      "prefab": "wall-half",
+      "position": [
+        8,
+        0,
+        15
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "wall-half-025",
+      "prefab": "wall-half",
+      "position": [
+        12,
+        0,
+        15
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "door-frame-026",
+      "prefab": "door-frame",
+      "position": [
+        0,
+        0,
+        15
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "pillar-square-027",
+      "prefab": "pillar-square",
+      "position": [
+        -14,
+        0,
+        -14
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "pillar-square-028",
+      "prefab": "pillar-square",
+      "position": [
+        14,
+        0,
+        -14
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "pillar-square-029",
+      "prefab": "pillar-square",
+      "position": [
+        -14,
+        0,
+        14
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "pillar-square-030",
+      "prefab": "pillar-square",
+      "position": [
+        14,
+        0,
+        14
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "pillar-square-031",
+      "prefab": "pillar-square",
+      "position": [
+        -14,
+        0,
+        0
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "pillar-square-032",
+      "prefab": "pillar-square",
+      "position": [
+        14,
+        0,
+        0
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "balcony-section-033",
+      "prefab": "balcony-section",
+      "position": [
+        -11,
+        0,
+        -11
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "railing-034",
+      "prefab": "railing",
+      "position": [
+        -9,
+        0,
+        -11
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "balcony-section-035",
+      "prefab": "balcony-section",
+      "position": [
+        -11,
+        0,
+        -7
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "railing-036",
+      "prefab": "railing",
+      "position": [
+        -9,
+        0,
+        -7
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "balcony-section-037",
+      "prefab": "balcony-section",
+      "position": [
+        -11,
+        0,
+        -3
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "railing-038",
+      "prefab": "railing",
+      "position": [
+        -9,
+        0,
+        -3
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "staircase-039",
+      "prefab": "staircase",
+      "position": [
+        -11,
+        0,
+        5
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "staircase-040",
+      "prefab": "staircase",
+      "position": [
+        -4,
+        0,
+        -11
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "staircase-041",
+      "prefab": "staircase",
+      "position": [
+        11,
+        0,
+        10
+      ],
+      "rotationY": 180,
+      "scale": 1
+    },
+    {
+      "id": "pillar-round-042",
+      "prefab": "pillar-round",
+      "position": [
+        -7,
+        0,
+        0
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "pillar-round-043",
+      "prefab": "pillar-round",
+      "position": [
+        8,
+        0,
+        -1
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "pillar-round-044",
+      "prefab": "pillar-round",
+      "position": [
+        0,
+        0,
+        -7
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "pillar-round-045",
+      "prefab": "pillar-round",
+      "position": [
+        0,
+        0,
+        7
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "table-round-046",
+      "prefab": "table-round",
+      "position": [
+        -4,
+        0,
+        1
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "bench-047",
+      "prefab": "bench",
+      "position": [
+        -5.6,
+        0,
+        1
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "bench-048",
+      "prefab": "bench",
+      "position": [
+        -2.4,
+        0,
+        1
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "stool-049",
+      "prefab": "stool",
+      "position": [
+        -4,
+        0,
+        -0.5
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "table-round-050",
+      "prefab": "table-round",
+      "position": [
+        2,
+        0,
+        0
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "bench-051",
+      "prefab": "bench",
+      "position": [
+        0.3999999999999999,
+        0,
+        0
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "bench-052",
+      "prefab": "bench",
+      "position": [
+        3.6,
+        0,
+        0
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "stool-053",
+      "prefab": "stool",
+      "position": [
+        2,
+        0,
+        -1.5
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "table-round-054",
+      "prefab": "table-round",
+      "position": [
+        5,
+        0,
+        7
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "bench-055",
+      "prefab": "bench",
+      "position": [
+        3.4,
+        0,
+        7
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "bench-056",
+      "prefab": "bench",
+      "position": [
+        6.6,
+        0,
+        7
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "stool-057",
+      "prefab": "stool",
+      "position": [
+        5,
+        0,
+        5.5
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "table-round-058",
+      "prefab": "table-round",
+      "position": [
+        -5,
+        0,
+        8
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "bench-059",
+      "prefab": "bench",
+      "position": [
+        -6.6,
+        0,
+        8
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "bench-060",
+      "prefab": "bench",
+      "position": [
+        -3.4,
+        0,
+        8
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "stool-061",
+      "prefab": "stool",
+      "position": [
+        -5,
+        0,
+        6.5
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "table-round-062",
+      "prefab": "table-round",
+      "position": [
+        0,
+        0,
+        -9
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "bench-063",
+      "prefab": "bench",
+      "position": [
+        -1.6,
+        0,
+        -9
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "bench-064",
+      "prefab": "bench",
+      "position": [
+        1.6,
+        0,
+        -9
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "stool-065",
+      "prefab": "stool",
+      "position": [
+        0,
+        0,
+        -10.5
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "bar-counter-066",
+      "prefab": "bar-counter",
+      "position": [
+        11,
+        0,
+        -7
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "bar-counter-067",
+      "prefab": "bar-counter",
+      "position": [
+        11,
+        0,
+        -2
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "stool-068",
+      "prefab": "stool",
+      "position": [
+        8.2,
+        0,
+        -9
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "stool-069",
+      "prefab": "stool",
+      "position": [
+        8.2,
+        0,
+        -7
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "stool-070",
+      "prefab": "stool",
+      "position": [
+        8.2,
+        0,
+        -5
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "stool-071",
+      "prefab": "stool",
+      "position": [
+        8.2,
+        0,
+        -3
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "barrel-072",
+      "prefab": "barrel",
+      "position": [
+        11,
+        0,
+        -12
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "barrel-073",
+      "prefab": "barrel",
+      "position": [
+        12.4,
+        0,
+        -11
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "barrel-074",
+      "prefab": "barrel",
+      "position": [
+        12,
+        0,
+        -10
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "shelf-075",
+      "prefab": "shelf",
+      "position": [
+        12,
+        0,
+        -1
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "crate-076",
+      "prefab": "crate",
+      "position": [
+        -12,
+        0,
+        10
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "crate-077",
+      "prefab": "crate",
+      "position": [
+        -10.5,
+        0,
+        10.5
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "crate-078",
+      "prefab": "crate",
+      "position": [
+        -13,
+        0,
+        9
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "crate-079",
+      "prefab": "crate",
+      "position": [
+        -9.5,
+        0,
+        -12
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "crate-080",
+      "prefab": "crate",
+      "position": [
+        9,
+        0,
+        12
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "bed-simple-081",
+      "prefab": "bed-simple",
+      "position": [
+        -11,
+        2.78,
+        -11
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "bed-simple-082",
+      "prefab": "bed-simple",
+      "position": [
+        -11,
+        2.78,
+        -7
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "bed-simple-083",
+      "prefab": "bed-simple",
+      "position": [
+        -11,
+        2.78,
+        -3
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "table-rect-084",
+      "prefab": "table-rect",
+      "position": [
+        -9.5,
+        0,
+        9
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "bench-085",
+      "prefab": "bench",
+      "position": [
+        -9.5,
+        0,
+        10.5
+      ],
+      "rotationY": 0,
+      "scale": 1
+    }
+  ],
+  "spawnPoints": [
+    {
+      "id": "entrance",
+      "type": "player",
+      "position": [
+        0,
+        0,
+        13
+      ],
+      "rotationY": 180
+    }
+  ],
+  "environment": {
+    "background": "#4B4E52",
+    "ambient": {
+      "color": "#FFFFFF",
+      "intensity": 0.88
+    },
+    "sun": {
+      "color": "#FFFFFF",
+      "intensity": 0.95,
+      "direction": [
+        -0.75,
+        -1.7,
+        0.65
+      ],
+      "shadows": {
+        "enabled": true,
+        "darkness": 0.23,
+        "resolution": 1024
+      }
+    },
+    "fog": {
+      "enabled": false,
+      "color": "#4B4E52",
+      "density": 0.005
+    }
+  }
+}
