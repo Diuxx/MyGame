@@ -426,3 +426,7 @@ button.ws-scene-entry:hover { background: #2c4235; }
   .workspace-app .ws-identity { display: none; }
   .workspace-app .ws-explorer-toggle { display: inline-block; }
 }
+
+.workspace-app .ws-relocated-source { display: none !important; }
+.workspace-app[data-workspace-mode="test"] .ws-inspector-open,
+.workspace-app[data-workspace-mode="test"] .ws-explorer-toggle { display: none !important; }
