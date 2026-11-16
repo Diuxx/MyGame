@@ -65,7 +65,8 @@ export function bindWorldEditor(
   let selectedItems: Selection[] = [];
   let extraMarkers: ReturnType<typeof MeshBuilder.CreateTorus>[] = [];
   let v2: ReturnType<typeof bindWorldEditorV2> | undefined;
-  let drag: { pointerId: number; offsetX: number; offsetZ: number } | undefined;
+  let drag: { pointerId: number; offsetX: number; offsetZ: number;
+    before: { ref: EditorSelectionRef; position: MapPosition }[] } | undefined;
   let currentMap = maps.world;
   let pendingPlacement: Placement | undefined;
   let placing = false;
@@ -450,7 +451,13 @@ export function bindWorldEditor(
     const location = point && pickPosition(event, point[1]);
     if (!point || !location) return;
     canvas.setPointerCapture(event.pointerId);
-    drag = { pointerId: event.pointerId, offsetX: point[0] - location.x, offsetZ: point[2] - location.z };
+    drag = {
+      pointerId: event.pointerId, offsetX: point[0] - location.x, offsetZ: point[2] - location.z,
+      before: selectedItems.flatMap((item) => {
+        const current = positionFor(item);
+        return current ? [{ ref: { kind: item.kind, id: item.id }, position: [...current] as MapPosition }] : [];
+      }),
+    };
     canvas.classList.add("map-editor-dragging");
   }, { signal });
 
@@ -469,7 +476,18 @@ export function bindWorldEditor(
     if (!location) return;
     const next: MapPosition = [snap(location.x + drag.offsetX), point[1], snap(location.z + drag.offsetZ)];
     if (next[0] === point[0] && next[2] === point[2]) return;
-    moveSelected(target, selected, next);
+    const primary = drag.before.find(({ ref }) => ref.kind === selected.kind && ref.id === selected.id);
+    const dx = primary ? next[0] - primary.position[0] : next[0] - point[0];
+    const dz = primary ? next[2] - primary.position[2] : next[2] - point[2];
+    const destinations = drag.before.map(({ ref, position }) => ({
+      ref, point: [snap(position[0] + dx), position[1], snap(position[2] + dz)] as MapPosition,
+    }));
+    if (destinations.some((item) => !findTerrainCell(target.active.definition,
+      item.point[0], item.point[2]))) return;
+    for (const item of destinations) {
+      if (item.ref.kind === "practice") practice.move(item.ref.id, item.point);
+      else target.active.editor.move(item.ref.kind, item.ref.id, item.point);
+    }
     setNumber("worldEditorX", next[0]);
     setNumber("worldEditorZ", next[2]);
     setMarker();
@@ -480,7 +498,10 @@ export function bindWorldEditor(
 
   for (const eventName of ["pointerup", "pointercancel", "lostpointercapture"] as const) {
     canvas.addEventListener(eventName, (event) => {
-      if (drag?.pointerId === event.pointerId) stopDrag();
+      if (drag?.pointerId === event.pointerId) {
+          v2?.recordMove(drag.before);
+          stopDrag();
+        }
     }, { signal });
   }
 
