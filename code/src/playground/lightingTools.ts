@@ -1,5 +1,5 @@
 import {
-  Color3, MeshBuilder, StandardMaterial, type AbstractMesh, type Scene, type TransformNode,
+  Color3, MeshBuilder, Plane, StandardMaterial, type AbstractMesh, type Scene, type TransformNode,
 } from "@babylonjs/core";
 import { requireElement } from "../ui/dom";
 import { DEFAULT_ENVIRONMENT } from "../world/maps/environmentSettings";
@@ -40,6 +40,7 @@ function generateId(lights: readonly MapLight[]): string {
 export function bindLightingTools(
   scene: Scene, maps: MapSystem, hero: TransformNode, signal: AbortSignal,
 ): void {
+  const canvas = requireElement<HTMLCanvasElement>("renderCanvas");
   const status = requireElement<HTMLElement>("lightingStatus");
   const markerToggle = input("lightingShowMarkers");
   const list = select("lightingLightSelect");
@@ -48,6 +49,8 @@ export function bindLightingTools(
   const markerMaterials: StandardMaterial[] = [];
   let currentMap = maps.world;
   let selectedId: string | undefined;
+  let dragging: { pointerId: number; id: string; y: number; offsetX: number; offsetZ: number;
+    position: [number, number, number] } | undefined;
 
   function currentLighting(): LightingSettings {
     const map = maps.world?.definition;
@@ -80,7 +83,8 @@ export function bindLightingTools(
         { diameter: light.id === selectedId ? 0.55 : 0.35, segments: 8 }, scene);
       mesh.position.set(...light.position);
       mesh.material = material;
-      mesh.isPickable = false;
+      mesh.isPickable = true;
+      mesh.metadata = { mapLightId: light.id };
       markers.push(mesh);
       if (light.type === "point" || light.type === "spot") {
         const ring = MeshBuilder.CreateTorus("light-editor-range:" + light.id, {
@@ -281,8 +285,86 @@ export function bindLightingTools(
     });
   }, { signal });
 
+  function projected(event: PointerEvent, y: number): { x: number; z: number } | undefined {
+    const bounds = canvas.getBoundingClientRect();
+    const ray = scene.createPickingRay(event.clientX - bounds.left, event.clientY - bounds.top,
+      null, scene.activeCamera);
+    const distance = ray.intersectsPlane(new Plane(0, 1, 0, -y));
+    if (distance === null || distance < 0) return undefined;
+    return { x: ray.origin.x + ray.direction.x * distance,
+      z: ray.origin.z + ray.direction.z * distance };
+  }
+
+  function stopDragging(): void {
+    if (!dragging) return;
+    const { pointerId } = dragging;
+    dragging = undefined;
+    if (canvas.hasPointerCapture(pointerId)) canvas.releasePointerCapture(pointerId);
+  }
+
+  canvas.addEventListener("pointerdown", (event) => {
+    if (!maps.isEditing || !markerToggle.checked || event.button !== 0 || dragging) return;
+    const bounds = canvas.getBoundingClientRect();
+    const hit = scene.pick(event.clientX - bounds.left, event.clientY - bounds.top,
+      (mesh) => mesh.isEnabled() && typeof mesh.metadata?.mapLightId === "string");
+    const id = hit?.pickedMesh?.metadata?.mapLightId;
+    if (typeof id !== "string") return;
+    const light = currentLighting().map.lights.find((entry) => entry.id === id);
+    if (!light) return;
+    const point = projected(event, light.position[1]);
+    if (!point) return;
+    event.preventDefault();
+    event.stopImmediatePropagation(); // Keep the ordinary map placement/selection handlers out of this drag.
+    selectedId = id;
+    sync();
+    dragging = {
+      pointerId: event.pointerId, id, y: light.position[1],
+      offsetX: light.position[0] - point.x, offsetZ: light.position[2] - point.z,
+      position: [...light.position],
+    };
+    canvas.setPointerCapture(event.pointerId);
+  }, { capture: true, signal });
+
+  canvas.addEventListener("pointermove", (event) => {
+    if (!dragging || dragging.pointerId !== event.pointerId) return;
+    event.stopImmediatePropagation();
+    const point = projected(event, dragging.y);
+    if (!point) return;
+    const step = input("worldEditorSnap").checked
+      ? Number(select("worldEditorSnapStep").value) : 0;
+    const snap = (coordinate: number) => step > 0 ? Math.round(coordinate / step) * step : coordinate;
+    dragging.position = [snap(point.x + dragging.offsetX), dragging.y,
+      snap(point.z + dragging.offsetZ)];
+    for (const marker of markers) {
+      if (marker.name === "light-editor-marker:" + dragging.id) {
+        marker.position.set(...dragging.position);
+      } else if (marker.name === "light-editor-range:" + dragging.id) {
+        marker.position.x = dragging.position[0];
+        marker.position.z = dragging.position[2];
+      }
+    }
+    fill("lightingLightX", Number(dragging.position[0].toFixed(3)));
+    fill("lightingLightZ", Number(dragging.position[2].toFixed(3)));
+  }, { capture: true, signal });
+
+  for (const name of ["pointerup", "pointercancel", "lostpointercapture"] as const) {
+    canvas.addEventListener(name, (event) => {
+      if (!dragging || dragging.pointerId !== event.pointerId) return;
+      event.stopImmediatePropagation();
+      const { id, position } = dragging;
+      stopDragging();
+      if (name === "pointerup" && maps.isEditing) {
+        save((lighting) => {
+          const light = lighting.map.lights.find((entry) => entry.id === id);
+          if (light) light.position = position;
+        });
+      } else sync();
+    }, { capture: true, signal });
+  }
+
   const observer = scene.onBeforeRenderObservable.add(() => {
     if (currentMap !== maps.world) {
+      stopDragging();
       currentMap = maps.world;
       selectedId = undefined;
       status.textContent = "Éclairage chargé depuis la map active.";
@@ -291,6 +373,7 @@ export function bindLightingTools(
     setMarkerVisibility();
   });
   signal.addEventListener("abort", () => {
+    stopDragging();
     scene.onBeforeRenderObservable.remove(observer);
     disposeMarkers();
   }, { once: true });
