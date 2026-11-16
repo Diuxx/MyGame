@@ -480,6 +480,97 @@
           <p class="animation-note">Les fichiers locaux sont seulement prévisualisés. Copier leurs octets dans public/assets/models/editor ou public/assets/textures/editor puis intégrer le JSON exporté au dépôt.</p>
           <p id="worldEditorStatus" class="animation-note" role="status"></p>
         </section>
+        <section id="lightingModule" class="module-window enemy-tools" aria-labelledby="lightingHeading" hidden>
+          <header class="module-header">
+            <h2 id="lightingHeading">Éclairage de la map</h2>
+            <button class="module-close" type="button" aria-label="Fermer l’éclairage">×</button>
+          </header>
+          <p class="animation-note">Les modifications s'appliquent immédiatement à la map active et sont incluses dans « Exporter map JSON ».</p>
+          <fieldset class="lighting-section">
+            <legend>WorldLighting</legend>
+            <label class="grid-toggle"><input id="lightingWorldEnabled" type="checkbox" /> Activer l'éclairage global</label>
+            <label class="grid-toggle"><input id="lightingSunEnabled" type="checkbox" /> Soleil</label>
+            <div class="lighting-grid">
+              <label>Couleur du soleil<input id="lightingSunColor" type="color" /></label>
+              <label>Intensité<input id="lightingSunIntensity" type="number" min="0" max="4" step="0.1" /></label>
+              <label>Direction X<input id="lightingSunX" type="number" min="-10000" max="10000" step="0.1" /></label>
+              <label>Direction Y<input id="lightingSunY" type="number" min="-10000" max="10000" step="0.1" /></label>
+              <label>Direction Z<input id="lightingSunZ" type="number" min="-10000" max="10000" step="0.1" /></label>
+            </div>
+            <label class="grid-toggle"><input id="lightingSunShadows" type="checkbox" /> Ombres du soleil</label>
+            <div class="lighting-grid">
+              <label>Résolution
+                <select id="lightingSunResolution">
+                  <option value="512">512</option><option value="1024">1024</option><option value="2048">2048</option>
+                </select>
+              </label>
+              <label>Obscurité<input id="lightingSunDarkness" type="number" min="0" max="1" step="0.05" /></label>
+            </div>
+            <label class="grid-toggle"><input id="lightingAmbientEnabled" type="checkbox" /> Lumière ambiante</label>
+            <div class="lighting-grid">
+              <label>Couleur ambiante<input id="lightingAmbientColor" type="color" /></label>
+              <label>Couleur du sol<input id="lightingAmbientGroundColor" type="color" /></label>
+              <label>Intensité ambiante<input id="lightingAmbientIntensity" type="number" min="0" max="3" step="0.1" /></label>
+            </div>
+          </fieldset>
+          <fieldset class="lighting-section">
+            <legend>MapLighting</legend>
+            <label class="grid-toggle"><input id="lightingMapEnabled" type="checkbox" /> Activer les lumières locales</label>
+            <div class="lighting-grid">
+              <label>Nouveau type
+                <select id="lightingCreateType">
+                  <option value="point">Point</option><option value="spot">Spot</option>
+                  <option value="directional">Directionnelle</option>
+                  <option value="hemispheric">Hémisphérique</option>
+                </select>
+              </label>
+              <button id="lightingAdd" type="button" class="secondary">Ajouter une lumière</button>
+            </div>
+            <label>Lumières de la map
+              <select id="lightingLightSelect" size="4" aria-label="Sélectionner une lumière locale"></select>
+            </label>
+            <div class="enemy-fields">
+              <button id="lightingDuplicate" type="button" class="secondary">Dupliquer</button>
+              <button id="lightingRemove" type="button" class="secondary">Supprimer</button>
+            </div>
+            <label class="grid-toggle"><input id="lightingShowMarkers" type="checkbox" checked /> Afficher les marqueurs en édition</label>
+            <div id="lightingLightFields" hidden>
+              <label class="grid-toggle"><input id="lightingLightEnabled" type="checkbox" /> Lumière activée</label>
+              <div class="lighting-grid">
+                <label>Type
+                  <select id="lightingLightType">
+                    <option value="point">Point</option><option value="spot">Spot</option>
+                    <option value="directional">Directionnelle</option>
+                    <option value="hemispheric">Hémisphérique</option>
+                  </select>
+                </label>
+                <label>Couleur<input id="lightingLightColor" type="color" /></label>
+                <label>Intensité<input id="lightingLightIntensity" type="number" min="0" max="20" step="0.1" /></label>
+                <label id="lightingRangeField">Portée<input id="lightingLightRange" type="number" min="0.1" max="200" step="0.5" /></label>
+                <label>Position X<input id="lightingLightX" type="number" step="0.25" /></label>
+                <label>Position Y<input id="lightingLightY" type="number" step="0.25" /></label>
+                <label>Position Z<input id="lightingLightZ" type="number" step="0.25" /></label>
+                <label class="lighting-direction-field">Direction X<input id="lightingLightDirX" type="number" step="0.1" /></label>
+                <label class="lighting-direction-field">Direction Y<input id="lightingLightDirY" type="number" step="0.1" /></label>
+                <label class="lighting-direction-field">Direction Z<input id="lightingLightDirZ" type="number" step="0.1" /></label>
+                <label id="lightingAngleField">Angle du spot (°)<input id="lightingLightAngle" type="number" min="5" max="170" step="5" /></label>
+                <label id="lightingExponentField">Exponent<input id="lightingLightExponent" type="number" min="0" max="32" step="0.5" /></label>
+                <label id="lightingGroundField">Couleur du sol<input id="lightingLightGround" type="color" /></label>
+              </div>
+              <label class="grid-toggle"><input id="lightingLightShadows" type="checkbox" /> Ombres locales (coûteuses sur mobile)</label>
+              <div id="lightingShadowFields" class="lighting-grid">
+                <label>Résolution
+                  <select id="lightingLightResolution">
+                    <option value="512">512</option><option value="1024">1024</option><option value="2048">2048</option>
+                  </select>
+                </label>
+                <label>Obscurité<input id="lightingLightDarkness" type="number" min="0" max="1" step="0.05" /></label>
+              </div>
+              <button id="lightingMoveToHero" type="button" class="secondary wide">Placer à la position du héros</button>
+            </div>
+          </fieldset>
+          <p id="lightingStatus" class="animation-note" role="status"></p>
+        </section>
         <section id="cameraModule" class="module-window" aria-labelledby="cameraHeading" hidden>
           <header class="module-header">
             <h2 id="cameraHeading">Caméra</h2>
