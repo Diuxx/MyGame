@@ -476,7 +476,8 @@ export function bindWorldEditor(
     if (!location) return;
     const next: MapPosition = [snap(location.x + drag.offsetX), point[1], snap(location.z + drag.offsetZ)];
     if (next[0] === point[0] && next[2] === point[2]) return;
-    const primary = drag.before.find(({ ref }) => ref.kind === selected.kind && ref.id === selected.id);
+    const activeSelection = selected;
+    const primary = drag.before.find(({ ref }) => ref.kind === activeSelection.kind && ref.id === activeSelection.id);
     const dx = primary ? next[0] - primary.position[0] : next[0] - point[0];
     const dz = primary ? next[2] - primary.position[2] : next[2] - point[2];
     const destinations = drag.before.map(({ ref, position }) => ({
