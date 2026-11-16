@@ -1,5 +1,5 @@
 import {
-  Color3, MeshBuilder, StandardMaterial, type AbstractMesh, type Scene, type TransformNode,
+  Color3, MeshBuilder, Plane, StandardMaterial, type AbstractMesh, type Scene, type TransformNode,
 } from "@babylonjs/core";
 import type { createMapSystem } from "../world/maps/mapSystem.ts";
 import type { MapObject, MapPosition } from "../world/maps/types.ts";
@@ -330,12 +330,27 @@ export function bindWorldEditorV2(context: EditorContext) {
       locked.title = "Verrouillage";
       visible.addEventListener("change", () => {
         layers.update(layer.id, { visible: visible.checked });
+        if (maps.world) {
+          maps.world.definition.editorLayerStates ??= {};
+          maps.world.definition.editorLayerStates[layer.id] = {
+            visible: visible.checked, locked: layers.all().find((item) => item.id === layer.id)!.locked,
+          };
+          noteChange();
+        }
         maps.world?.editor.setPrefabLayerVisibility(layer.id, visible.checked);
         maps.world?.editor.setObjectLayerVisible(layer.id, visible.checked);
         if (!visible.checked) context.clearSelection();
       }, { signal });
       locked.addEventListener("change", () => {
         layers.update(layer.id, { locked: locked.checked });
+        if (maps.world) {
+          maps.world.definition.editorLayerStates ??= {};
+          maps.world.definition.editorLayerStates[layer.id] = {
+            visible: layers.all().find((item) => item.id === layer.id)!.visible,
+            locked: locked.checked,
+          };
+          noteChange();
+        }
         if (locked.checked) context.clearSelection();
       }, { signal });
       const vLabel = document.createElement("label");
@@ -583,16 +598,19 @@ export function bindWorldEditorV2(context: EditorContext) {
   // Paste positioning is delegated to the existing editor ray/plane picking.
   canvas.addEventListener("pointermove", (event) => {
     if (!pendingPaste || !context.enabled()) return;
-    const rect = canvas.getBoundingClientRect();
-    const pick = scene.pick(event.clientX - rect.left, event.clientY - rect.top, (mesh) =>
-      mesh.name.startsWith("zone-ground:"));
-    if (!pick?.pickedPoint) return;
     const world = maps.world;
     if (!world) return;
+    const bounds = canvas.getBoundingClientRect();
+    const ray = scene.createPickingRay(event.clientX - bounds.left, event.clientY - bounds.top,
+      null, scene.activeCamera);
+    const y = world.definition.terrain.origin[1];
+    const distance = ray.intersectsPlane(new Plane(0, 1, 0, -y));
+    if (distance === null || distance < 0) return;
+    const x = ray.origin.x + ray.direction.x * distance;
+    const z = ray.origin.z + ray.direction.z * distance;
     const point: MapPosition = [
-      grid.checked ? gridSnap(pick.pickedPoint.x, Number(gridStep.value)) : pick.pickedPoint.x,
-      world.definition.terrain.origin[1],
-      grid.checked ? gridSnap(pick.pickedPoint.z, Number(gridStep.value)) : pick.pickedPoint.z,
+      grid.checked ? gridSnap(x, Number(gridStep.value)) : x, y,
+      grid.checked ? gridSnap(z, Number(gridStep.value)) : z,
     ];
     moveGhosts(point);
   }, { signal });
@@ -686,6 +704,11 @@ export function bindWorldEditorV2(context: EditorContext) {
     originalFingerprint = originalMapSnapshot ? drafts.fingerprint(originalMapSnapshot) : "";
     layers.clearCustom();
     for (const id of current?.definition.editorLayers ?? []) layers.ensure(id);
+    for (const [id, state] of Object.entries(current?.definition.editorLayerStates ?? {})) {
+      layers.update(id, state);
+      current?.editor.setPrefabLayerVisibility(id, state.visible);
+      current?.editor.setObjectLayerVisible(id, state.visible);
+    }
     for (const item of current?.definition.prefabs ?? []) {
       if (item.layer) layers.ensure(item.layer);
     }

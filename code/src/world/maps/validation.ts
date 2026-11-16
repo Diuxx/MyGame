@@ -128,6 +128,23 @@ export function mapEnemyCatalogPath(value: unknown): string | undefined {
   return path;
 }
 
+
+function parseEditorLayerStates(raw: unknown): MapDefinition["editorLayerStates"] {
+  if (raw === undefined) return undefined;
+  const input = record(raw, "editorLayerStates");
+  if (Object.keys(input).length > 64) throw new Error("Trop de layers.");
+  const result: NonNullable<MapDefinition["editorLayerStates"]> = {};
+  for (const [key, value] of Object.entries(input)) {
+    const id = identifier(key, "editorLayerStates.id");
+    const state = record(value, "editorLayerStates." + id);
+    if (typeof state.visible !== "boolean" || typeof state.locked !== "boolean") {
+      throw new Error("Visibilité et verrouillage doivent être des booléens.");
+    }
+    result[id] = { visible: state.visible, locked: state.locked };
+  }
+  return result;
+}
+
 export function validateMapDefinition(
   value: unknown, assets: MapAssets, knownEnemyIds?: ReadonlySet<string>,
 ): MapDefinition {
@@ -222,6 +239,7 @@ export function validateMapDefinition(
     prefabs: parsePrefabPlacements(input.prefabs, assets.prefabs),
     editorLayers: input.editorLayers === undefined ? undefined :
       list(input.editorLayers, "editorLayers").map((value) => identifier(value, "editorLayers.id")),
+    editorLayerStates: parseEditorLayerStates(input.editorLayerStates),
     exits: parseMapExits(input.exits), environment: parseEnvironmentSettings(input.environment), enemyCatalog,
     ...encounters, interactions: parseWorldInteractions(input.interactions),
   };

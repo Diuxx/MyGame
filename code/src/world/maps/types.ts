@@ -63,6 +63,7 @@ export interface MapDefinition {
   primitives?: MapPrimitive[];
   prefabs?: PrefabPlacement[];
   editorLayers?: string[];
+  editorLayerStates?: Record<string, { visible: boolean; locked: boolean }>;
   exits?: MapExit[];
   spawnPoints: MapSpawn[];
   environment?: EnvironmentSettings;
