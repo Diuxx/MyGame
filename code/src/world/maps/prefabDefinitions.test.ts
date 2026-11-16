@@ -104,3 +104,18 @@ test("unit source meshes are shared and fully disposed across repeated scene loa
   scene.dispose();
   engine.dispose();
 });
+
+test("window walls block passage while the door frame preserves the entrance", () => {
+  const wall: PrefabPlacement = {
+    id: "window", prefab: "wall-window", position: [0,0,0], rotationY: 0, scale: 1,
+  };
+  const doorway: PrefabPlacement = {
+    id: "door", prefab: "door-frame", position: [10,0,0], rotationY: 0, scale: 1,
+  };
+  const map = { ...inn, objects: [], primitives: [], prefabs: [wall, doorway] };
+  const obstacles = buildMapObstacles(map, assets);
+  const wallStep = resolveMapMovement([0,0,-4], { x: 0, z: 8 }, .4, obstacles);
+  assert.ok(wallStep.z < 4);
+  const doorStep = resolveMapMovement([10,0,-4], { x: 0, z: 8 }, .4, obstacles);
+  assert.ok(Math.abs(doorStep.z - 8) < 0.01);
+});
