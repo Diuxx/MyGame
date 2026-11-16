@@ -26,7 +26,7 @@ export function bindMapTools(
   let pending = false;
 
   const labels: Record<string, string> = {
-    playground: "Playground — Entraînement",
+    playground: "Playground — Arène blockout",
     dojo: "Cour du dojo", forest: "Clairière",
     "prototype-forest": "Prototype — Forêt",
     "prototype-arena": "Prototype — Arène",

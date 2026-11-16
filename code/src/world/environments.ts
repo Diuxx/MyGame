@@ -10,7 +10,7 @@ import {
   TransformNode,
   Vector3,
 } from "@babylonjs/core";
-import { createEnvironmentController } from "./environmentController";
+import { createLightingController } from "./lightingController";
 
 const GRID_HALF_SIZE = 30;
 export const PLAYGROUND_MOVEMENT_LIMIT = GRID_HALF_SIZE - 1;
@@ -52,12 +52,12 @@ function createFloor(scene: Scene, hero: TransformNode, color: string, size: num
   for (const mesh of hero.getChildMeshes()) {
     shadows.addShadowCaster(mesh, false);
   }
-  const ambience = createEnvironmentController(scene, sun, sky, shadows);
-  return { ground, shadows, ambience };
+  const lighting = createLightingController(scene, sun, sky, shadows);
+  return { ground, shadows, lighting };
 }
 
 export function createPlaygroundEnvironment(scene: Scene, hero: TransformNode) {
-  const { ground, shadows, ambience } = createFloor(scene, hero, "#BFA78A", 400);
+  const { ground, shadows, lighting } = createFloor(scene, hero, "#BFA78A", 400);
 
   const lines: Vector3[][] = [];
   for (let offset = -GRID_HALF_SIZE; offset <= GRID_HALF_SIZE; offset += 1) {
@@ -72,7 +72,7 @@ export function createPlaygroundEnvironment(scene: Scene, hero: TransformNode) {
   grid.position.y = 0.002;
   grid.isPickable = false;
   grid.setEnabled(false);
-  return { ground, grid, shadows, ambience };
+  return { ground, grid, shadows, lighting };
 }
 
 export function createGameplayEnvironment(scene: Scene, hero: TransformNode) {

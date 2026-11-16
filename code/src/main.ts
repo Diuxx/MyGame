@@ -58,7 +58,7 @@ async function start(): Promise<void> {
       await startPlayground(scene, camera, character, animationPlayer, signal, heroState);
     } else {
       const floatingText = createFloatingTextSystem(scene, canvas, loadFloatingTextConfig());
-      const { shadows, ambience } = createGameplayEnvironment(scene, character.root);
+      const { shadows, lighting } = createGameplayEnvironment(scene, character.root);
       const lifecycle = createHeroLifecycle(character.root, camera, animationPlayer, heroState.stats.maxHealth);
       const { vitals } = lifecycle;
       const hud = createHeroHud(signal, heroState.baseStats);
@@ -67,7 +67,7 @@ async function start(): Promise<void> {
       let targetLock: ReturnType<typeof createTargetLockSystem> | undefined;
       const maps = createMapSystem(scene, {
         hero: character.root, shadows,
-        applyEnvironment: ambience.apply,
+        applyLighting: lighting.apply,
         isHeroAlive: () => vitals.isAlive,
         onHeroHit: (damage) => lifecycle.hit(damage, controller),
         onDamage: (damage) => {

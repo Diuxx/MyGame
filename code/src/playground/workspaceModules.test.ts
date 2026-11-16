@@ -4,11 +4,11 @@ import { WORKSPACE_AREAS, allWorkspaceModuleIds, modulesForArea, setWorkspaceEdi
 
 test("every existing Playground module belongs to exactly one workspace", () => {
   const ids = allWorkspaceModuleIds();
-  assert.equal(ids.length, 12);
+  assert.equal(ids.length, 13);
   assert.equal(new Set(ids).size, ids.length);
   assert.deepEqual([...ids].sort(), [
     "actionsModule", "attackHitboxModule", "cameraModule", "collisionsModule",
-    "controlsModule", "enemiesModule", "floatingTextModule", "mapsModule",
+    "controlsModule", "enemiesModule", "floatingTextModule", "lightingModule", "mapsModule",
     "modelModule", "movementModule", "targetLockModule", "worldEditorModule",
   ].sort());
 });

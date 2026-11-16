@@ -1217,6 +1217,265 @@
           ]
         }
       ]
+    },
+    "wall-dark": {
+      "name": "Mur sombre — section 4 m",
+      "category": "architecture",
+      "parts": [
+        {
+          "kind": "box",
+          "position": [
+            0,
+            1.5,
+            0
+          ],
+          "size": [
+            4,
+            3,
+            0.46
+          ],
+          "rotationY": 0,
+          "color": "#454858"
+        },
+        {
+          "kind": "box",
+          "position": [
+            0,
+            3.04,
+            0
+          ],
+          "size": [
+            4.08,
+            0.16,
+            0.68
+          ],
+          "rotationY": 0,
+          "color": "#5D6070"
+        }
+      ],
+      "colliders": [
+        {
+          "type": "box",
+          "position": [
+            0,
+            1.5,
+            0
+          ],
+          "size": [
+            4,
+            3,
+            0.46
+          ]
+        }
+      ]
+    },
+    "wall-dark-low": {
+      "name": "Mur sombre bas — visibilité caméra",
+      "category": "architecture",
+      "parts": [
+        {
+          "kind": "box",
+          "position": [
+            0,
+            0.72,
+            0
+          ],
+          "size": [
+            4,
+            1.44,
+            0.46
+          ],
+          "rotationY": 0,
+          "color": "#454858"
+        },
+        {
+          "kind": "box",
+          "position": [
+            0,
+            1.48,
+            0
+          ],
+          "size": [
+            4.08,
+            0.15,
+            0.68
+          ],
+          "rotationY": 0,
+          "color": "#5D6070"
+        }
+      ],
+      "colliders": [
+        {
+          "type": "box",
+          "position": [
+            0,
+            0.72,
+            0
+          ],
+          "size": [
+            4,
+            1.44,
+            0.46
+          ]
+        }
+      ]
+    },
+    "pillar-dark": {
+      "name": "Pilier d'angle sombre",
+      "category": "architecture",
+      "parts": [
+        {
+          "kind": "box",
+          "position": [
+            0,
+            1.63,
+            0
+          ],
+          "size": [
+            0.85,
+            3.26,
+            0.85
+          ],
+          "rotationY": 0,
+          "color": "#373A49"
+        },
+        {
+          "kind": "box",
+          "position": [
+            0,
+            3.34,
+            0
+          ],
+          "size": [
+            1.1,
+            0.22,
+            1.1
+          ],
+          "rotationY": 0,
+          "color": "#5E6275"
+        }
+      ],
+      "colliders": [
+        {
+          "type": "box",
+          "position": [
+            0,
+            1.63,
+            0
+          ],
+          "size": [
+            0.85,
+            3.26,
+            0.85
+          ]
+        }
+      ]
+    },
+    "lamp-wall-blockout": {
+      "name": "Applique murale — blockout lumineux",
+      "category": "architecture",
+      "parts": [
+        {
+          "kind": "box",
+          "position": [
+            0,
+            2.3,
+            0
+          ],
+          "size": [
+            0.68,
+            0.36,
+            0.34
+          ],
+          "rotationY": 0,
+          "color": "#353744"
+        },
+        {
+          "kind": "cylinder",
+          "position": [
+            0,
+            2.55,
+            0.25
+          ],
+          "size": [
+            0.16,
+            0.42,
+            0.16
+          ],
+          "rotationY": 0,
+          "color": "#A7784C"
+        },
+        {
+          "kind": "sphere",
+          "position": [
+            0,
+            2.85,
+            0.45
+          ],
+          "size": [
+            0.43,
+            0.43,
+            0.43
+          ],
+          "rotationY": 0,
+          "color": "#FFD49A",
+          "emissive": "#D07A36"
+        }
+      ],
+      "colliders": []
+    },
+    "lamp-center-blockout": {
+      "name": "Orbe suspendu — lumière centrale",
+      "category": "architecture",
+      "parts": [
+        {
+          "kind": "cylinder",
+          "position": [
+            0,
+            4.75,
+            0
+          ],
+          "size": [
+            0.18,
+            0.9,
+            0.18
+          ],
+          "rotationY": 0,
+          "color": "#777685"
+        },
+        {
+          "kind": "box",
+          "position": [
+            0,
+            5.15,
+            0
+          ],
+          "size": [
+            0.75,
+            0.13,
+            0.75
+          ],
+          "rotationY": 0,
+          "color": "#424553"
+        },
+        {
+          "kind": "sphere",
+          "position": [
+            0,
+            4.22,
+            0
+          ],
+          "size": [
+            0.58,
+            0.58,
+            0.58
+          ],
+          "rotationY": 0,
+          "color": "#FFE7AE",
+          "emissive": "#C88C4E"
+        }
+      ],
+      "colliders": []
     }
   }
 }

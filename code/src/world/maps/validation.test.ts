@@ -2,13 +2,17 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { loadMapData, parseAssetCatalog } from "./dataLoader.ts";
+import { parsePrefabCatalog } from "./prefabDefinitions.ts";
 import { findTerrainCell, terrainBounds, tileCenter, validateMapAssets, validateMapDefinition } from "./validation.ts";
 import { createNavigationData } from "./navigationData.ts";
 
 const load = (path: string): unknown => JSON.parse(readFileSync(
   new URL("../../../public/assets/" + path, import.meta.url), "utf8"));
 
-const assets = validateMapAssets(load("definitions/assets.json"));
+const assets = {
+  ...validateMapAssets(load("definitions/assets.json")),
+  prefabs: parsePrefabCatalog(load("definitions/blockout-prefabs.json")),
+};
 const dojo = validateMapDefinition(load("maps/dojo.json"), assets);
 
 test("example maps and composite collider assets validate", () => {
@@ -16,6 +20,8 @@ test("example maps and composite collider assets validate", () => {
   assert.equal(dojo.terrain.tiles[0].length, 8);
   assert.equal(assets.objects.building_l.colliders.length, 2);
   assert.equal(validateMapDefinition(load("maps/forest.json"), assets).id, "forest");
+  assert.equal(dojo.lighting?.world.enabled, true);
+  assert.equal(validateMapDefinition(load("maps/playground.json"), assets).lighting?.map.lights.length, 5);
 });
 
 test("nature showcase accepts textured glTF assets without changing existing maps", () => {
@@ -136,23 +142,41 @@ test("primitive prototype zones retain their non-GLB ground, geometry and exits"
   }
 });
 
-test("Playground starts from a large textured training map with exactly four placed targets", () => {
+test("Playground is an enclosed modular blockout with five editable lights and two targets", () => {
   const source = load("maps/playground.json") as Record<string, unknown>;
   const catalog = parseAssetCatalog(load("definitions/assets.json")).enemyCatalog;
   const map = validateMapDefinition(source, assets, new Set(catalog.map((enemy) => enemy.id)));
   assert.equal(map.id, "playground");
-  assert.equal(map.terrain.tiles.length, 30);
-  assert.equal(map.terrain.tiles[0].length, 30);
-  assert.equal(map.terrain.primitiveGround?.pattern, "training");
+  assert.deepEqual(map.terrain.origin, [-18, 0, -18]);
+  assert.equal(map.terrain.tiles.length, 18);
+  assert.equal(map.terrain.tiles[0].length, 18);
+  assert.equal(map.terrain.primitiveGround?.pattern, undefined);
+  assert.equal(map.terrain.visual?.style, "platform");
   assert.ok(map.terrain.tiles.every((row) => row.every((tile) => tile === null)));
-  assert.equal(map.enemySpawns?.length, 4);
-  const target = map.enemySpawns?.find((enemy) => enemy.enemyId === "target-wood");
-  assert.deepEqual(target?.position, [0, 0, 0]);
-  const goblins = map.enemySpawns?.filter((enemy) => enemy.enemyId === "goblin");
-  assert.equal(goblins?.length, 3);
-  assert.equal(goblins?.filter((enemy) => enemy.position[2] === 11).length, 2);
-  const spawn = map.spawnPoints.find((point) => point.type === "player");
-  assert.ok(spawn && Math.hypot(spawn.position[0], spawn.position[2]) >= 10);
+  assert.equal(map.objects.length, 0);
+  assert.equal(map.prefabs?.length, 45);
+  const walls = map.prefabs?.filter((part) =>
+    part.prefab === "wall-dark" || part.prefab === "wall-dark-low") ?? [];
+  assert.equal(walls.length, 36);
+  assert.equal(walls.filter((part) => part.prefab === "wall-dark-low").length, 18);
+  for (const side of ["north", "south", "east", "west"]) {
+    assert.equal(walls.filter((wall) => wall.id.startsWith(side + "-wall-")).length, 9);
+    assert.ok(map.prefabs?.some((part) => part.id === "sconce-" + side));
+  }
+  assert.ok(map.prefabs?.some((part) => part.id === "center-light-fixture"));
+  assert.equal(map.enemySpawns?.length, 2);
+  assert.ok(map.enemySpawns?.every(({ enemyId }) => enemyId === "target-wood"));
+  assert.deepEqual(map.enemySpawns?.map(({ position }) => position), [[-5, 0, 3], [5, 0, 3]]);
+  assert.deepEqual(map.spawnPoints.find(({ type }) => type === "player")?.position, [0, 0, -10]);
+
+  assert.equal(map.lighting?.world.sun.enabled, false);
+  assert.equal(map.lighting?.world.ambient.enabled, true);
+  assert.equal(map.lighting?.map.enabled, true);
+  assert.equal(map.lighting?.map.lights.length, 5);
+  assert.ok(map.lighting?.map.lights.every(({ type, shadows }) =>
+    type === "point" && !shadows.enabled));
+  assert.deepEqual(map.lighting?.map.lights[0].position, [0, 4.2, 0]);
+
   const invalid = structuredClone(source) as Record<string, any>;
   invalid.terrain.primitiveGround.pattern = "unknown";
   assert.throws(() => validateMapDefinition(invalid, assets), /motif inconnu/);

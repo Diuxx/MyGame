@@ -7,6 +7,7 @@ export const WORKSPACE_AREAS = [
     id: "world", label: "Monde", symbol: "▦",
     modules: [
       { id: "worldEditorModule", label: "Éditeur" },
+      { id: "lightingModule", label: "Éclairage" },
       { id: "mapsModule", label: "Maps et zones" },
       { id: "cameraModule", label: "Caméra" },
     ],

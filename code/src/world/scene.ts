@@ -58,7 +58,11 @@ export function createCamera(scene: Scene, canvas: HTMLCanvasElement, signal: Ab
   }
 
   updateOrthographicBounds();
-  window.addEventListener("resize", updateOrthographicBounds, { signal });
+  // The Playground changes the canvas size when switching between edit and test modes,
+  // even when the browser window itself has not resized.
+  const canvasResizeObserver = new ResizeObserver(updateOrthographicBounds);
+  canvasResizeObserver.observe(canvas);
+  signal.addEventListener("abort", () => canvasResizeObserver.disconnect(), { once: true });
   canvas.addEventListener("wheel", (event) => {
     if (event.ctrlKey || event.metaKey) return;
     const mode = event.deltaMode;

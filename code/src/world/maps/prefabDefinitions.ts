@@ -8,6 +8,8 @@ export interface PrefabPart {
   position: MapPosition;
   size: MapPosition;
   rotationY: number;
+  color?: string;
+  emissive?: string;
 }
 
 export interface PrefabDefinition {
@@ -70,6 +72,13 @@ function vector(raw: unknown, path: string, minimum = -Infinity): MapPosition {
   ];
 }
 
+function partColor(raw: unknown, path: string): string {
+  if (typeof raw !== "string" || !/^#[0-9a-f]{6}$/i.test(raw)) {
+    throw new Error(path + " : couleur #RRGGBB attendue.");
+  }
+  return raw;
+}
+
 function parsePart(raw: unknown, path: string): PrefabPart {
   const shape = record(raw, path);
   if (shape.kind !== "box" && shape.kind !== "cylinder" && shape.kind !== "sphere") {
@@ -80,6 +89,8 @@ function parsePart(raw: unknown, path: string): PrefabPart {
     position: vector(shape.position, path + ".position"),
     size: vector(shape.size, path + ".size", 0.01),
     rotationY: number(shape.rotationY ?? 0, path + ".rotationY"),
+    ...(shape.color === undefined ? {} : { color: partColor(shape.color, path + ".color") }),
+    ...(shape.emissive === undefined ? {} : { emissive: partColor(shape.emissive, path + ".emissive") }),
   };
 }
 

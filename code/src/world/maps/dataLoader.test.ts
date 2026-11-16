@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { loadMapData } from "./dataLoader.ts";
 
-test("an empty Playground map offers all whitebox blocks for new placement", async () => {
+test("the populated Playground still exposes the reusable whitebox catalogue", async () => {
   const originalFetch = globalThis.fetch;
   const fetched: string[] = [];
   globalThis.fetch = async (input: RequestInfo | URL): Promise<Response> => {
@@ -22,9 +22,11 @@ test("an empty Playground map offers all whitebox blocks for new placement", asy
   try {
     const playground = await loadMapData("playground");
     assert.equal(playground.map.id, "playground");
-    assert.equal(playground.map.prefabs?.length ?? 0, 0);
+    assert.equal(playground.map.prefabs?.length, 45);
     assert.ok(playground.assets.prefabs?.["wall-straight"], "whitebox wall should be reusable on an empty map");
     assert.ok(playground.assets.prefabs?.["wall-corner"], "corner wall should also be available");
+    assert.ok(playground.assets.prefabs?.["wall-dark"], "dark modular wall should be reusable");
+    assert.ok(playground.assets.prefabs?.["lamp-wall-blockout"], "light fixture should be reusable");
     const inn = await loadMapData("prototype-inn");
     assert.ok(inn.map.prefabs && inn.map.prefabs.length > 0);
     assert.equal(inn.assets.prefabs, playground.assets.prefabs, "definitions should be shared");

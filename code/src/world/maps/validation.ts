@@ -1,4 +1,5 @@
 import { parseEnvironmentSettings } from "./environmentSettings.ts";
+import { parseLightingSettings } from "./lightingSettings.ts";
 import { parseVisualOverride, parseWorldInteractions } from "./editorSchema.ts";
 import { parseMapEncounters } from "../../enemies/mapEnemyConfig.ts";
 import { parseMapExits, parseMapPrimitives, parsePrimitiveGround, parseTerrainVisual } from "./zoneContent.ts";
@@ -236,6 +237,7 @@ export function validateMapDefinition(
       .map((item) => item.enemyId).filter((id): id is string => typeof id === "string"))
     : new Set<string>();
   const encounters = parseMapEncounters(input, knownEnemyIds ?? discovered);
+  const environment = parseEnvironmentSettings(input.environment);
   return {
     version: 1, id, name: input.name,
     tileSize, terrain: { origin, tiles, groundCollider: { enabled: ground.enabled, thickness },
@@ -245,7 +247,8 @@ export function validateMapDefinition(
     editorLayers: input.editorLayers === undefined ? undefined :
       list(input.editorLayers, "editorLayers").map((value) => identifier(value, "editorLayers.id")),
     editorLayerStates: parseEditorLayerStates(input.editorLayerStates),
-    exits: parseMapExits(input.exits), environment: parseEnvironmentSettings(input.environment), enemyCatalog,
+    exits: parseMapExits(input.exits), environment,
+    lighting: parseLightingSettings(input.lighting, environment), enemyCatalog,
     ...encounters, interactions: parseWorldInteractions(input.interactions),
   };
 }
