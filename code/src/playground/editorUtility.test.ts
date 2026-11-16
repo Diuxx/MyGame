@@ -53,3 +53,11 @@ test("grid and angle increments are deterministic and reject invalid sizes", () 
   assert.equal(angleSnap(47, 15), 45);
   assert.throws(() => gridSnap(1, 0), /invalide/);
 });
+
+test("editor layer settings remain independent of spatial height", () => {
+  const layers = createEditorLayers();
+  layers.update("architecture", { visible: false, locked: true });
+  const values = layers.all().find((item) => item.id === "architecture");
+  assert.deepEqual(values, { id: "architecture", visible: false, locked: true });
+  assert.equal(source.spawnPoints[0].position[1], 0);
+});
