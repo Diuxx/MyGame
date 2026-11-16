@@ -56,6 +56,34 @@ properties of a light get validated defaults. The parser rejects duplicate IDs,
 invalid vectors/colors, infinite or out-of-range numeric values, unsupported
 shadow resolutions, too many lights and shadows on hemispheric lights.
 
+## Default Playground blockout arena
+
+`public/assets/maps/playground.json` is a **36 × 36 unit** enclosed lighting
+test arena built from reusable geometry, not a textured or imported GLB level.
+The ground is a four-panel gray blockout platform, with a simple circular
+center marker. Each of the four boundaries uses nine reusable wall sections,
+with tall far-facing walls and shorter near-camera walls for visibility.
+Four corner pillars frame the room.
+
+The catalogue `public/assets/definitions/blockout-prefabs.json` includes
+five reusable modules: `wall-dark`, `wall-dark-low`, `pillar-dark`,
+`lamp-wall-blockout` and `lamp-center-blockout`. Their optional per-part
+`color` and `emissive` values are validated and rendered through shared
+instanced meshes and materials; prefabs without these fields remain white.
+Sconces are decorative blockout meshes with **no extra colliders**.
+
+The map's `lighting` contains five shadow-free point lights: one above the
+center, one near each wall-mounted fixture. Global sunlight is off and a
+subtle hemispheric fill remains, so warm light pools are clearly visible
+without losing the outlines of distant walls. The two stationary wooden
+targets can be used to test combat and lighting together.
+
+The map is deliberately saved as editable data: walls, sconces and the
+central fixture are `prefabs`; targets are `enemySpawns`, and all five
+lights are `lighting.map.lights`. No generated gameplay behavior is bound
+to a particular wall, lamp or target. To change the layout, edit the
+placements or use the World Editor, then export the map.
+
 ## Editing in the Playground
 
 1. Launch `cd code && npm run dev-playground`.
