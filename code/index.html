@@ -398,14 +398,16 @@
           <p id="worldEditorSelection" class="animation-note"></p>
            <p class="animation-note">Shift+Clic : sélection multiple · Ctrl+C/V/X · Suppr · Ctrl+Z/Y · PageUp/PageDown.</p>
            <div class="enemy-fields world-editor-height-controls" role="group" aria-label="Déplacement vertical de la sélection">
-             <label class="world-editor-height-label" for="worldEditorHeightStep">Palier Y
-               <select id="worldEditorHeightStep">
+             <label class="world-editor-height-label" for="worldEditorHeightStep" title="Palier Y : 0,5 unité">
+               <span class="ws-visually-hidden">Palier Y</span>
+               <span aria-hidden="true" class="world-editor-height-icon">↕</span>
+               <select id="worldEditorHeightStep" title="Choisir le palier Y : 0,5 unité">
                  <option value="0.25">0,25</option><option value="0.5" selected>0,5</option>
                  <option value="1">1</option><option value="2">2</option>
                </select>
              </label>
-             <button id="worldEditorDown" type="button" class="secondary" title="Descendre d'un palier (PageDown)">↓ Descendre</button>
-             <button id="worldEditorUp" type="button" class="secondary" title="Monter d'un palier (PageUp)">↑ Monter</button>
+             <button id="worldEditorDown" type="button" class="secondary" aria-label="Descendre d'un palier" title="Descendre de 0,5 unité (PageDown)">↓</button>
+             <button id="worldEditorUp" type="button" class="secondary" aria-label="Monter d'un palier" title="Monter de 0,5 unité (PageUp)">↑</button>
            </div>
            <div class="enemy-fields">
              <label>Outil

@@ -453,34 +453,70 @@ button.ws-scene-entry:hover { background: #2c4235; }
   color: #e6f4df;
 }
 
-/* Vertical placement controls in the contextual inspector: one full-width step
-   selector above a balanced pair of direction buttons. Shared .enemy-fields
-   remains unchanged for the other Playground modules. */
+/* Three equally sized icon-only controls; the native select still provides
+   keyboard access and its full list of numeric increments when opened. */
 .workspace-app .ws-context-inspector .world-editor-height-controls {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: stretch;
   gap: 8px;
   margin: 0;
 }
 .workspace-app .ws-context-inspector .world-editor-height-label {
-  display: grid;
-  grid-column: 1 / -1;
-  gap: 6px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  grid-column: auto;
   min-width: 0;
+  min-height: 38px;
   margin: 0;
+  border: 1px solid #4b5f53;
+  border-radius: 9px;
+  background: #26362e;
+  cursor: pointer;
+}
+.workspace-app .ws-context-inspector .world-editor-height-label:hover {
+  background: #354a3c;
+}
+.workspace-app .ws-context-inspector .world-editor-height-label:focus-within {
+  outline: 2px solid #c7e5bd;
+  outline-offset: 2px;
+}
+.workspace-app .ws-context-inspector .world-editor-height-icon {
+  pointer-events: none;
+  color: #dce9dd;
+  font-size: 19px;
+  line-height: 1;
 }
 .workspace-app .ws-context-inspector .world-editor-height-label select {
+  position: absolute;
+  inset: 0;
   width: 100%;
-  min-width: 0;
+  height: 100%;
   margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
 }
 .workspace-app .ws-context-inspector .world-editor-height-controls > button {
   width: 100%;
   min-width: 0;
-  min-height: 36px;
+  min-height: 38px;
   margin: 0;
-  padding: 9px 6px;
-  white-space: nowrap;
+  padding: 8px;
+  font-size: 19px;
+  line-height: 1;
   text-align: center;
+}
+.ws-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  white-space: nowrap;
+  clip-path: inset(50%);
+  border: 0;
 }
