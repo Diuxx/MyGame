@@ -237,10 +237,11 @@ export function createZoneScene(
     const thickness = map.terrain.visual.thickness ?? 1.2;
     const sideColor = map.terrain.visual.sideColor ?? "#D8D8D8";
     if (!platformMesh) {
-      // A single mutable side material avoids accumulating one material per
-      // color-picker change in the Playground.
-      platformMaterial = new StandardMaterial("zone-platform-side:" + map.id, scene);
-      platformMaterial.specularColor = Color3.Black();
+      // Keep the same material when switching flat/platform repeatedly.
+      if (!platformMaterial) {
+        platformMaterial = new StandardMaterial("zone-platform-side:" + map.id, scene);
+        platformMaterial.specularColor = Color3.Black();
+      }
       platformMesh = MeshBuilder.CreateBox("zone-platform:" + map.id, { size: 1 }, scene);
       platformMesh.parent = root;
       platformMesh.material = platformMaterial;
