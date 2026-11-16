@@ -62,3 +62,24 @@ test("invalid target spawn leaves active map and disposes candidate", async () =
   assert.deepEqual(events, ["activate forest", "dispose arena"]);
   await session.dispose();
 });
+
+test("candidate replacement keeps the previous level active on failure", async () => {
+  const events: string[] = [];
+  const session = createMapSession(async (id) => ({
+    id, activate() { events.push("active:" + id); }, dispose() { events.push("disposed:" + id); },
+  }));
+  await session.load("old");
+  const replacement = Promise.resolve({
+    id: "invalid", activate() { events.push("active:invalid"); },
+    dispose() { events.push("disposed:invalid"); },
+  });
+  await assert.rejects(session.replace(replacement, () => { throw new Error("bad map"); }), /bad map/);
+  assert.equal(session.active?.id, "old");
+  assert.ok(events.includes("disposed:invalid"));
+  await session.replace(Promise.resolve({
+    id: "new", activate() { events.push("active:new"); },
+    dispose() { events.push("disposed:new"); },
+  }));
+  assert.equal(session.active?.id, "new");
+  assert.ok(events.includes("disposed:old"));
+});

@@ -119,3 +119,20 @@ test("window walls block passage while the door frame preserves the entrance", (
   const doorStep = resolveMapMovement([10,0,-4], { x: 0, z: 8 }, .4, obstacles);
   assert.ok(Math.abs(doorStep.z - 8) < 0.01);
 });
+
+test("axis-scaled prefab colliders follow the individual world dimensions", () => {
+  const wall: PrefabPlacement = {
+    id: "stretched", prefab: "wall-straight", position: [0,0,0],
+    rotationY: 90, scale: 1, scaleAxes: [2, 1, 0.5],
+  };
+  const obstacle = buildMapObstacles({ ...inn, objects: [], primitives: [], prefabs: [wall] }, assets)[0];
+  assert.equal(obstacle.type, "box");
+  if (obstacle.type !== "box") return;
+  assert.equal(obstacle.width, 8);
+  assert.equal(obstacle.depth, 0.2);
+  assert.equal(obstacle.maxY - obstacle.minY, 3);
+  assert.ok(Math.abs(obstacle.yaw - Math.PI / 2) < 1e-10);
+  const parsed = parsePrefabPlacements([wall], catalog)[0];
+  assert.deepEqual(parsed.scaleAxes, [2,1,0.5]);
+  assert.throws(() => parsePrefabPlacements([{ ...wall, scaleAxes: [1,0,1] }], catalog), /nombre invalide/);
+});

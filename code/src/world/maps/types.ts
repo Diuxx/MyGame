@@ -38,6 +38,7 @@ export interface MapObject {
   rotationY: number;
   colliders?: MapCollider[];
   visual?: VisualOverride;
+  layer?: string;
 }
 
 export interface MapSpawn {
@@ -61,6 +62,8 @@ export interface MapDefinition {
   objects: MapObject[];
   primitives?: MapPrimitive[];
   prefabs?: PrefabPlacement[];
+  editorLayers?: string[];
+  editorLayerStates?: Record<string, { visible: boolean; locked: boolean }>;
   exits?: MapExit[];
   spawnPoints: MapSpawn[];
   environment?: EnvironmentSettings;

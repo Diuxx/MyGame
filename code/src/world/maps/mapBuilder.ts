@@ -11,6 +11,7 @@ import type { VisualOverride } from "./editorSchema";
 import { MissingMapVisuals } from "./missingVisuals";
 import { MapModelRegistry } from "./modelRegistry";
 import { tileCenter } from "./validation";
+
 import { createZoneScene } from "./zoneScene";
 import { createPrefabRenderer } from "./prefabRenderer";
 import type { PrefabPlacement } from "./prefabDefinitions";
@@ -156,6 +157,7 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
     }
   }
 
+  let groundDebug: AbstractMesh | undefined;
   function addGroundCollider(): void {
     const { enabled, thickness } = definition.terrain.groundCollider;
     if (!enabled) return;
@@ -172,6 +174,7 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
     ground.isPickable = false;
     ground.setEnabled(false);
     debugMeshes.push(ground);
+    groundDebug = ground;
   }
 
   try {
@@ -206,7 +209,7 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
     throw error;
   }
 
-  const bounds = mapBounds(definition);
+  // Bounds must follow editable terrain dimensions, not the original snapshot.
   // Recalculate lightweight geometry after editor changes, rather than keeping
   // a collider snapshot that would not match the visible placement.
   const navigation = createNavigationData(definition, assets);
@@ -263,15 +266,67 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
       if (!placement || !Number.isFinite(factor) || factor < 0.25 || factor > 4) {
         throw new Error("Échelle du prefab invalide (0.25 à 4).");
       }
-      prefabs?.scale(id, factor);
+      prefabs?.scale(id, factor, placement.scaleAxes);
       placement.scale = factor;
       refreshCollisionData();
+    },
+    setPrefabScaleAxes(id: string, axes: MapPosition): void {
+      const placement = definition.prefabs?.find((item) => item.id === id);
+      if (!placement || axes.some((n) => !Number.isFinite(n) || n < 0.1 || n > 10)) {
+        throw new Error("Dimensions du bloc invalides (0.1 à 10).");
+      }
+      prefabs?.scale(id, placement.scale, axes);
+      placement.scaleAxes = [...axes];
+      refreshCollisionData();
+    },
+    setPrefabLayer(id: string, layer: string): void {
+      const placement = definition.prefabs?.find((item) => item.id === id);
+      if (!placement || !/^[a-z0-9][a-z0-9_-]{0,79}$/i.test(layer)) {
+        throw new Error("Layer invalide.");
+      }
+      placement.layer = layer;
+    },
+    setObjectLayerVisible(layer: string, visible: boolean): void {
+      for (const item of definition.objects) {
+        if ((item.layer ?? "decoration") !== layer) continue;
+        const view = objectViews.get(item.id);
+        view?.parent.setEnabled(visible);
+      }
+    },
+    setObjectLayer(id: string, layer: string): void {
+      const object = definition.objects.find((item) => item.id === id);
+      if (!object || !/^[a-z0-9][a-z0-9_-]{0,79}$/i.test(layer)) throw new Error("Layer invalide.");
+      object.layer = layer;
+    },
+    setPrefabLayerVisibility(layer: string, visible: boolean): void {
+      prefabs?.setLayerVisible(layer, visible, definition.prefabs ?? []);
+    },
+    getPrefabRoot(id: string): TransformNode | undefined {
+      try { return prefabs?.getRoot(id); } catch { return undefined; }
+    },
+    getObjectRoot(id: string): TransformNode | undefined {
+      return objectViews.get(id)?.parent;
     },
     removePrefab(id: string): void {
       const index = definition.prefabs?.findIndex((item) => item.id === id) ?? -1;
       if (index < 0) throw new Error("Placement prefab inconnu : " + id);
       prefabs?.remove(id);
       definition.prefabs?.splice(index, 1);
+      refreshCollisionData();
+    },
+    removeObject(id: string): void {
+      const index = definition.objects.findIndex((item) => item.id === id);
+      const view = objectViews.get(id);
+      if (index < 0 || !view) throw new Error("Objet introuvable : " + id);
+      view.model.dispose();
+      for (const mesh of [...view.debug, ...view.picks]) {
+        const i = debugMeshes.indexOf(mesh);
+        if (i >= 0) debugMeshes.splice(i, 1);
+        mesh.dispose();
+      }
+      view.parent.dispose(false, false);
+      objectViews.delete(id);
+      definition.objects.splice(index, 1);
       refreshCollisionData();
     },
     async addObject(object: MapObject): Promise<void> {
@@ -324,12 +379,46 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
         console.error("Impossible de reconstruire le visuel provisoire de l'objet :", id, error);
       });
     },
+    resizeTerrain(terrain: { origin: MapPosition; tiles: (string | null)[][] }): void {
+      if (terrain.tiles.some((row) => row.some((tile) => tile !== null))) {
+        throw new Error("Le redimensionnement direct ne prend en charge que les sols primitifs.");
+      }
+      if (!definition.terrain.primitiveGround) {
+        throw new Error("Aucun sol primitif à redimensionner.");
+      }
+      const previous = {
+        origin: definition.terrain.origin,
+        tiles: definition.terrain.tiles,
+      };
+      definition.terrain.origin = terrain.origin;
+      definition.terrain.tiles = terrain.tiles;
+      try {
+        zone?.resizeGround();
+        if (groundDebug) {
+          const width = terrain.tiles[0].length * definition.tileSize;
+          const depth = terrain.tiles.length * definition.tileSize;
+          const startWidth = previous.tiles[0].length * definition.tileSize;
+          const startDepth = previous.tiles.length * definition.tileSize;
+          groundDebug.scaling.x *= width / startWidth;
+          groundDebug.scaling.z *= depth / startDepth;
+          groundDebug.position.x = terrain.origin[0] + width / 2;
+          groundDebug.position.z = terrain.origin[2] + depth / 2;
+        }
+        navigation.walkable = createNavigationData(definition, assets).walkable;
+        refreshCollisionData();
+      } catch (error) {
+        definition.terrain.origin = previous.origin;
+        definition.terrain.tiles = previous.tiles;
+        zone?.resizeGround();
+        throw error;
+      }
+    },
     nearbyInteraction(hero: MapPosition) { return interactions?.nearby(hero); },
     moveInteraction(id: string, position: MapPosition): void { interactions?.move(id, position); },
     interact(hero: MapPosition) { return interactions?.interact(hero); },
     getInventory() { return interactions?.inventory() ?? {}; },
     resolveMovement(start: MapPosition, step: GroundStep, heroRadius: number, heroHeight = 1.8): GroundStep {
-      return resolveMapMovement(start, step, heroRadius, obstacles, bounds, heroHeight);
+      return resolveMapMovement(start, step, heroRadius, obstacles, mapBounds(definition), heroHeight);
     },
     dispose(): void {
       if (disposed) return;

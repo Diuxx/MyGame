@@ -12,7 +12,7 @@ import { createMapSession } from "./mapSession";
 import { MapModelRegistry } from "./modelRegistry";
 import type { MapEditorKind, MapPlacementKind, VisualOverride } from "./editorSchema";
 import type { MapDefinition, MapPosition } from "./types";
-import { findTerrainCell, MAX_MAP_OBJECTS } from "./validation";
+import { findTerrainCell, MAX_MAP_OBJECTS, validateMapDefinition } from "./validation";
 import { nearestExit } from "./zoneExits";
 
 const DEFAULT_PLACED_ENEMY_AI: AISettings = {
@@ -166,6 +166,17 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
             else enemies.rotateEnemy(id, degrees);
           },
           setObjectCollider: level.setObjectCollider,
+          addPrefab: level.addPrefab,
+          addObject: level.addObject,
+          removeObject: level.removeObject,
+          setPrefabScaleAxes: level.setPrefabScaleAxes,
+          setPrefabLayer: level.setPrefabLayer,
+          setObjectLayer: level.setObjectLayer,
+          setObjectLayerVisible: level.setObjectLayerVisible,
+          setPrefabLayerVisibility: level.setPrefabLayerVisibility,
+          getPrefabRoot: level.getPrefabRoot,
+          getObjectRoot: level.getObjectRoot,
+          resizeTerrain: level.resizeTerrain,
           scalePrefab: level.scalePrefab,
           removePrefab: level.removePrefab,
           duplicatePrefab(id: string): string {
@@ -271,6 +282,23 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
     return result;
   }
 
+  async function restoreMap(source: unknown): Promise<void> {
+    const active = session.active;
+    if (!active) throw new Error("Charger une map avant de restaurer un brouillon.");
+    const enemyIds = new Set(active.enemyCatalog.map(({ id }) => id));
+    const validated = validateMapDefinition(source, active.assets, enemyIds);
+    if (validated.id !== active.definition.id) throw new Error("Identifiant de map différent.");
+    if (disposed) throw new Error("Le système de maps est fermé.");
+    const result = await session.replace(buildWorld({
+      map: validated, assets: active.assets, enemyCatalog: active.enemyCatalog,
+    }));
+    if (!result) throw new Error("Restauration interrompue par un autre chargement.");
+    result.setEditorEnabled(editing);
+    result.setColliderDebug(showCollisionDebug);
+    result.showAggro(showAggroDebug);
+    result.setZoneDebug(showZoneDebug);
+  }
+
   function setEditing(value: boolean): void {
     editing = value;
     world()?.setEditorEnabled(value);
@@ -304,7 +332,7 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
   scene.onDisposeObservable.addOnce(() => { void dispose(); });
   return {
     interact,
-    load, unload, setEditing, openBase,
+    load, unload, setEditing, openBase, restoreMap,
     get isEditing() { return editing; },
     get active() { return session.active; },
     get world() { return world(); },

@@ -330,7 +330,49 @@
             <button class="module-close" type="button" aria-label="Fermer l’éditeur">×</button>
           </header>
           <label class="grid-toggle"><input id="worldEditorEnabled" type="checkbox" /> Activer la sélection et le déplacement</label>
-          <label class="grid-toggle"><input id="worldEditorSnap" type="checkbox" checked /> Aimantation à 0,5 unité</label>
+          <div class="enemy-fields">
+              <label><input id="worldEditorSnap" type="checkbox" checked /> Grille</label>
+              <label>Pas
+                <select id="worldEditorSnapStep"><option value="0.25">0,25</option><option value="0.5" selected>0,5</option><option value="1">1</option></select>
+              </label>
+              <label>Rotation
+                <select id="worldEditorRotationSnap"><option value="0">Libre</option><option value="15" selected>15°</option><option value="45">45°</option><option value="90">90°</option></select>
+              </label>
+            </div>
+            <div class="enemy-fields">
+              <button id="worldEditorUndo" type="button" class="secondary">Annuler (Ctrl+Z)</button>
+              <button id="worldEditorRedo" type="button" class="secondary">Rétablir (Ctrl+Y)</button>
+              <button id="worldEditorCopy" type="button" class="secondary">Copier</button>
+              <button id="worldEditorPaste" type="button" class="secondary">Coller</button>
+              <button id="worldEditorCut" type="button" class="secondary">Couper</button>
+              <button id="worldEditorDelete" type="button" class="secondary">Supprimer</button>
+            </div>
+            <details><summary>Terrain</summary>
+              <div class="enemy-fields">
+                <label>Largeur X<input id="worldEditorTerrainWidth" type="number" min="2" step="2"/></label>
+                <label>Profondeur Z<input id="worldEditorTerrainDepth" type="number" min="2" step="2"/></label>
+              </div>
+              <label>Ancrage
+                <select id="worldEditorTerrainAnchor">
+                  <option value="center">Centre</option>
+                  <option value="origin">Origine (coin sud-ouest)</option>
+                </select>
+              </label>
+              <button id="worldEditorResizeTerrain" type="button" class="secondary">Redimensionner le sol</button>
+            </details>
+            <details><summary>Organisation / Layers</summary>
+              <div id="worldEditorLayerList"></div>
+              <label>Nouveau layer<input id="worldEditorNewLayer" type="text" maxlength="80" placeholder="ex : architecture_2" /></label>
+              <button id="worldEditorAddLayer" class="secondary" type="button">Ajouter le layer</button>
+            </details>
+            <details><summary>Sauvegarde de brouillon</summary>
+              <p id="worldEditorDraftState" class="animation-note">Aucune modification.</p>
+              <div class="enemy-fields">
+                <button id="worldEditorSaveDraft" class="secondary" type="button">Sauver brouillon</button>
+                <button id="worldEditorRestoreDraft" class="secondary" type="button">Restaurer</button>
+                <button id="worldEditorRemoveDraft" class="secondary" type="button">Supprimer le brouillon</button>
+              </div>
+            </details>
           <p class="animation-note">Choisis un élément du catalogue, puis clique sur le terrain pour le poser. Maintiens le clic sur un élément pour le déplacer. En mode édition, utilise les flèches ↑ ↓ ← → pour déplacer la caméra. Quitter le mode recentre sur le héros.</p>
           <div id="worldEditorCatalog">
             <details open><summary>Décors</summary><div id="worldEditorCatalogObjects" class="world-editor-catalog"></div></details>
@@ -340,6 +382,27 @@
             <button id="worldEditorCancelPlacement" class="secondary wide" type="button" hidden>Annuler le placement</button>
           </div>
           <p id="worldEditorSelection" class="animation-note"></p>
+           <p class="animation-note">Shift+Clic : sélection multiple · Ctrl+C/V/X · Suppr · Ctrl+Z/Y · PageUp/PageDown.</p>
+           <div class="enemy-fields">
+             <label>Palier Y
+               <select id="worldEditorHeightStep">
+                 <option value="0.25">0,25</option><option value="0.5" selected>0,5</option>
+                 <option value="1">1</option><option value="2">2</option>
+               </select>
+             </label>
+             <button id="worldEditorDown" type="button" class="secondary">Descendre</button>
+             <button id="worldEditorUp" type="button" class="secondary">Monter</button>
+           </div>
+           <div class="enemy-fields">
+             <label>Outil
+               <select id="worldEditorTool">
+                 <option value="select">Sélection</option>
+                 <option value="move">Déplacer (G)</option>
+                 <option value="rotate">Rotation (R)</option>
+                 <option value="scale">Échelle (S)</option>
+               </select>
+             </label>
+           </div>
           <div id="worldEditorFields" hidden>
             <div class="enemy-fields">
               <label>X<input id="worldEditorX" type="number" step="0.1" /></label>
@@ -349,7 +412,20 @@
             </div>
             <fieldset id="worldEditorPrefabFields" hidden>
               <p class="animation-note">Bloc réutilisable : édition de l'instance uniquement, la définition est partagée.</p>
-              <label>Échelle<input id="worldEditorPrefabScale" type="number" min="0.25" max="4" step="0.05" value="1" /></label>
+              <label>Échelle uniforme<input id="worldEditorPrefabScale" type="number" min="0.25" max="4" step="0.05" value="1" /></label>
+              <div class="enemy-fields">
+                <label>Longueur X<input id="worldEditorPrefabSizeX" type="number" min="0.01" step="0.1"/></label>
+                <label>Hauteur Y<input id="worldEditorPrefabSizeY" type="number" min="0.01" step="0.1"/></label>
+                <label>Profondeur Z<input id="worldEditorPrefabSizeZ" type="number" min="0.01" step="0.1"/></label>
+              </div>
+              <label>Layer
+                <select id="worldEditorObjectLayer">
+                  <option value="architecture">Architecture</option>
+                  <option value="furniture">Mobilier</option>
+                  <option value="decoration">Décoration</option>
+                  <option value="entities">Entités</option>
+                </select>
+              </label>
               <div class="enemy-fields">
                 <button id="worldEditorDuplicatePrefab" type="button" class="secondary">Dupliquer ce bloc</button>
                 <button id="worldEditorDeletePrefab" type="button" class="secondary">Supprimer ce bloc</button>

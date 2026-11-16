@@ -14,6 +14,9 @@ export function createZoneScene(
   const textures: DynamicTexture[] = [];
   const casters: AbstractMesh[] = [];
   const debug: AbstractMesh[] = [];
+  let groundMesh: AbstractMesh | undefined;
+  let groundWidth = 0;
+  let groundDepth = 0;
 
   function material(color: string): StandardMaterial {
     let existing = materials.get(color);
@@ -191,6 +194,9 @@ export function createZoneScene(
       map.terrain.primitiveGround.color);
     ground.position.set(x + width / 2, y - 0.01, z + depth / 2);
     ground.receiveShadows = true;
+    groundMesh = ground;
+    groundWidth = width;
+    groundDepth = depth;
     const pattern = map.terrain.primitiveGround.pattern;
     if (pattern === "training" || pattern === "nature") {
       const groundMaterial = ground.material as StandardMaterial;
@@ -207,6 +213,15 @@ export function createZoneScene(
   }
 
   return {
+    resizeGround(): void {
+      if (!groundMesh) return;
+      const width = map.terrain.tiles[0].length * map.tileSize;
+      const depth = map.terrain.tiles.length * map.tileSize;
+      const [x, y, z] = map.terrain.origin;
+      groundMesh.scaling.x = width / groundWidth;
+      groundMesh.scaling.z = depth / groundDepth;
+      groundMesh.position.set(x + width / 2, y - 0.01, z + depth / 2);
+    },
     setDebug(visible: boolean): void {
       for (const marker of debug) marker.setEnabled(visible);
     },

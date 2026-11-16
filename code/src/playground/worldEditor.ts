@@ -7,6 +7,8 @@ import type { MapEditorKind, MapPlacementKind, VisualOverride } from "../world/m
 import { findTerrainCell, tileCenter } from "../world/maps/validation";
 import type { createMapSystem } from "../world/maps/mapSystem";
 import { downloadJson, requireElement } from "../ui/dom";
+import { bindWorldEditorV2, type EditorSelectionRef } from "./editorInteractionV2";
+import { snapWallEndpoint } from "./editorSnapping";
 
 type SelectionKind = MapEditorKind | "practice";
 interface Selection { kind: SelectionKind; id: string; mapId: string }
@@ -60,7 +62,11 @@ export function bindWorldEditor(
   marker.isPickable = false;
   marker.setEnabled(false);
   let selected: Selection | undefined;
-  let drag: { pointerId: number; offsetX: number; offsetZ: number } | undefined;
+  let selectedItems: Selection[] = [];
+  let extraMarkers: ReturnType<typeof MeshBuilder.CreateTorus>[] = [];
+  let v2: ReturnType<typeof bindWorldEditorV2> | undefined;
+  let drag: { pointerId: number; offsetX: number; offsetZ: number;
+    before: { ref: EditorSelectionRef; position: MapPosition }[] } | undefined;
   let currentMap = maps.world;
   let pendingPlacement: Placement | undefined;
   let placing = false;
@@ -128,6 +134,10 @@ export function bindWorldEditor(
 
   function clearSelection(): void {
     selected = undefined;
+    selectedItems = [];
+    for (const mesh of extraMarkers) mesh.dispose();
+    extraMarkers = [];
+    v2?.onSelectionChanged();
     stopDrag();
     panel.hidden = true;
     marker.setEnabled(false);
@@ -145,16 +155,52 @@ export function bindWorldEditor(
     return target?.interaction.position;
   }
 
+  function positionFor(ref: EditorSelectionRef): MapPosition | undefined {
+    const active = maps.world;
+    if (!active) return undefined;
+    if (ref.kind === "prefab") return active.definition.prefabs?.find((item) => item.id === ref.id)?.position;
+    if (ref.kind === "object") return active.definition.objects.find((item) => item.id === ref.id)?.position;
+    if (ref.kind === "enemy") return active.simulation.list()
+      .find((item) => item.spec.id === ref.id)?.spec.position;
+    if (ref.kind === "practice") return practice.get(ref.id)?.position;
+    return active.definition.interactions?.find((item) => item.id === ref.id)?.position;
+  }
   function setMarker(): void {
     const point = position();
     marker.setEnabled(enabled.checked && !!point);
     if (point) marker.position.set(point[0], point[1] + 0.065, point[2]);
+    const others = selectedItems.filter((ref) =>
+      ref.kind !== selected?.kind || ref.id !== selected.id);
+    while (extraMarkers.length > others.length) extraMarkers.pop()?.dispose();
+    while (extraMarkers.length < others.length) {
+      const ring = MeshBuilder.CreateTorus("world-editor-extra-ring", {
+        diameter: 1.5, thickness: 0.05, tessellation: 24,
+      }, scene);
+      ring.material = markerMaterial;
+      ring.isPickable = false;
+      extraMarkers.push(ring);
+    }
+    for (const [index, ref] of others.entries()) {
+      const at = positionFor(ref);
+      extraMarkers[index].setEnabled(enabled.checked && !!at);
+      if (at) extraMarkers[index].position.set(at[0], at[1] + 0.065, at[2]);
+    }
   }
 
-  function select(kind: SelectionKind, id: string): void {
+  function select(kind: SelectionKind, id: string, additive = false, keepGroup = false): void {
     const map = maps.world;
     if (!map) return;
-    selected = { kind, id, mapId: map.definition.id };
+    const entry = { kind, id, mapId: map.definition.id };
+    if (additive) {
+      const index = selectedItems.findIndex((item) => item.kind === kind && item.id === id);
+      if (index >= 0) selectedItems.splice(index, 1);
+      else selectedItems.push(entry);
+      if (!selectedItems.length) return clearSelection();
+      selected = selectedItems.at(-1);
+    } else {
+      selected = entry;
+      if (!keepGroup) selectedItems = [entry];
+    }
     const target = getSelected();
     if (!target) return clearSelection();
     const spec = target.kind === "object" ? target.object :
@@ -177,6 +223,7 @@ export function bindWorldEditor(
     visualSettings.hidden = target.kind === "interaction" || target.kind === "practice" ||
       target.kind === "prefab";
     setMarker();
+    v2?.onSelectionChanged();
     if (target.kind === "interaction" || target.kind === "practice") return;
     const placement = target.kind === "object" ? target.object :
       target.kind === "prefab" ? target.placement : target.actor.spec;
@@ -221,7 +268,11 @@ export function bindWorldEditor(
     ];
     moveSelected(target, selected, point);
     if (target.kind === "object" || target.kind === "enemy" || target.kind === "prefab") {
-      target.active.editor.rotate(target.kind, selected.id, numerical("worldEditorRotation"));
+      const raw = numerical("worldEditorRotation");
+      const increment = v2?.rotationSnap ?? 0;
+      const degrees = increment ? Math.round(raw / increment) * increment : raw;
+      target.active.editor.rotate(target.kind, selected.id, degrees);
+      setNumber("worldEditorRotation", degrees);
     }
     setMarker();
   }
@@ -294,11 +345,19 @@ export function bindWorldEditor(
     if (!cell) return undefined;
     if (pendingPlacement?.kind === "tile") return tileCenter(map, cell.row, cell.column);
     const snapped: MapPosition = [snap(point.x), y, snap(point.z)];
+    if (pendingPlacement?.kind === "prefab" && maps.world?.assets.prefabs) {
+      const proposed = { id: "__preview__", prefab: pendingPlacement.id, position: snapped,
+        rotationY: 0, scale: 1 };
+      const anchor = snapWallEndpoint(snapped[0], snapped[2], proposed,
+        map.prefabs ?? [], maps.world.assets.prefabs);
+      if (anchor && findTerrainCell(map, anchor.x, anchor.z)) return [anchor.x, y, anchor.z];
+    }
     return findTerrainCell(map, snapped[0], snapped[2]) ? snapped : [point.x, y, point.z];
   }
 
   function snap(value: number): number {
-    return snapToGrid.checked ? Math.round(value * 2) / 2 : value;
+    const step = v2?.snapStep ?? (snapToGrid.checked ? 0.5 : 0);
+    return step > 0 ? Math.round(value / step) * step : value;
   }
 
   function cancelPendingPlacement(): void {
@@ -347,6 +406,12 @@ export function bindWorldEditor(
   canvas.addEventListener("pointerdown", (event) => {
     const active = maps.world;
     if (!enabled.checked || event.button !== 0 || drag || !active || placing) return;
+    if (v2?.isPasting) {
+      const point = placementPoint(event);
+      if (!point) return report("Cliquer dans le terrain.");
+      void v2.placePaste(point).catch(report);
+      return;
+    }
     const placement = pendingPlacement;
     if (placement) {
       const point = placementPoint(event);
@@ -356,7 +421,10 @@ export function bindWorldEditor(
       void active.editor.place(placement.kind, placement.id, point).then((id) => {
         if (signal.aborted || maps.world !== active || pendingPlacement !== placement) return;
         cancelPendingPlacement();
-        if (id && placement.kind !== "tile") select(placement.kind, id);
+        if (id && placement.kind !== "tile") {
+          select(placement.kind, id);
+          v2?.onPlacement(placement.kind, id);
+        }
         status.textContent = placement.label + " · Placement terminé.";
       }).catch((error) => {
         if (!signal.aborted && maps.world === active && pendingPlacement === placement) report(error);
@@ -376,12 +444,26 @@ export function bindWorldEditor(
       clearSelection();
       return;
     }
-    select(kind, id);
+    if (v2 && !v2.isSelectable({ kind, id })) return report("Layer masqué ou verrouillé.");
+    if (event.shiftKey) {
+      select(kind, id, true);
+      return;
+    }
+    const keepGroup = selectedItems.length > 1 && selectedItems.some((entry) =>
+      entry.kind === kind && entry.id === id);
+    select(kind, id, false, keepGroup);
+    if (v2?.tool !== "select") return;
     const point = position();
     const location = point && pickPosition(event, point[1]);
     if (!point || !location) return;
     canvas.setPointerCapture(event.pointerId);
-    drag = { pointerId: event.pointerId, offsetX: point[0] - location.x, offsetZ: point[2] - location.z };
+    drag = {
+      pointerId: event.pointerId, offsetX: point[0] - location.x, offsetZ: point[2] - location.z,
+      before: selectedItems.flatMap((item) => {
+        const current = positionFor(item);
+        return current ? [{ ref: { kind: item.kind, id: item.id }, position: [...current] as MapPosition }] : [];
+      }),
+    };
     canvas.classList.add("map-editor-dragging");
   }, { signal });
 
@@ -400,7 +482,19 @@ export function bindWorldEditor(
     if (!location) return;
     const next: MapPosition = [snap(location.x + drag.offsetX), point[1], snap(location.z + drag.offsetZ)];
     if (next[0] === point[0] && next[2] === point[2]) return;
-    moveSelected(target, selected, next);
+    const activeSelection = selected;
+    const primary = drag.before.find(({ ref }) => ref.kind === activeSelection.kind && ref.id === activeSelection.id);
+    const dx = primary ? next[0] - primary.position[0] : next[0] - point[0];
+    const dz = primary ? next[2] - primary.position[2] : next[2] - point[2];
+    const destinations = drag.before.map(({ ref, position }) => ({
+      ref, point: [snap(position[0] + dx), position[1], snap(position[2] + dz)] as MapPosition,
+    }));
+    if (destinations.some((item) => !findTerrainCell(target.active.definition,
+      item.point[0], item.point[2]))) return;
+    for (const item of destinations) {
+      if (item.ref.kind === "practice") practice.move(item.ref.id, item.point);
+      else target.active.editor.move(item.ref.kind, item.ref.id, item.point);
+    }
     setNumber("worldEditorX", next[0]);
     setNumber("worldEditorZ", next[2]);
     setMarker();
@@ -411,18 +505,74 @@ export function bindWorldEditor(
 
   for (const eventName of ["pointerup", "pointercancel", "lostpointercapture"] as const) {
     canvas.addEventListener(eventName, (event) => {
-      if (drag?.pointerId === event.pointerId) stopDrag();
+      if (drag?.pointerId === event.pointerId) {
+          v2?.recordMove(drag.before);
+          stopDrag();
+        }
     }, { signal });
   }
 
   for (const id of ["worldEditorX", "worldEditorY", "worldEditorZ", "worldEditorRotation"]) {
     requireElement<HTMLInputElement>(id).addEventListener("change", () => {
-      try { applyPlacement(); status.textContent = "Placement mis à jour."; } catch (error) { report(error); }
+      try {
+        const selectedRef = selected ? { ...selected } : undefined;
+        const target = getSelected();
+        const oldPosition = target ? [...target.kind === "enemy" ? target.actor.spec.position
+          : target.kind === "practice" ? target.enemy.position
+          : target.kind === "object" ? target.object.position
+          : target.kind === "prefab" ? target.placement.position
+          : target.interaction.position] as MapPosition : undefined;
+        const oldRotation = target?.kind === "object" ? target.object.rotationY
+          : target?.kind === "prefab" ? target.placement.rotationY
+          : target?.kind === "enemy" ? target.actor.spec.rotationY : undefined;
+        applyPlacement();
+        if (selectedRef && target && oldPosition && selectedRef.kind !== "practice") {
+          const world = target.active;
+          const newPosition: MapPosition = [
+            numerical("worldEditorX"), numerical("worldEditorY"), numerical("worldEditorZ"),
+          ];
+          const newRotation = oldRotation === undefined ? undefined : numerical("worldEditorRotation");
+          if (newPosition.some((value, i) => value !== oldPosition[i]) ||
+              (newRotation !== undefined && newRotation !== oldRotation)) {
+            v2?.recordTransform({
+              label: "Modifier le placement",
+              run: () => {
+                world.editor.move(selectedRef.kind as "object" | "prefab" | "enemy" | "interaction", selectedRef.id, newPosition);
+                if (newRotation !== undefined && (selectedRef.kind === "object" ||
+                    selectedRef.kind === "prefab" || selectedRef.kind === "enemy")) {
+                  world.editor.rotate(selectedRef.kind, selectedRef.id, newRotation);
+                }
+              },
+              undo: () => {
+                world.editor.move(selectedRef.kind as "object" | "prefab" | "enemy" | "interaction", selectedRef.id, oldPosition);
+                if (oldRotation !== undefined && (selectedRef.kind === "object" ||
+                    selectedRef.kind === "prefab" || selectedRef.kind === "enemy")) {
+                  world.editor.rotate(selectedRef.kind, selectedRef.id, oldRotation);
+                }
+              },
+            });
+          }
+        }
+        status.textContent = "Placement mis à jour.";
+      } catch (error) { report(error); }
     }, { signal });
   }
   requireElement<HTMLInputElement>("worldEditorPrefabScale").addEventListener("change", () => {
-    try { applyParameters(); status.textContent = "Échelle du prefab mise à jour."; }
-    catch (error) { report(error); }
+    try {
+      const target = getSelected();
+      const previous = target?.kind === "prefab" ? target.placement.scale : undefined;
+      applyParameters();
+      if (target?.kind === "prefab" && previous !== undefined && previous !== target.placement.scale) {
+        const world = target.active;
+        const id = target.placement.id;
+        const next = target.placement.scale;
+        v2?.recordTransform({
+          label: "Échelle uniforme", run: () => world.editor.scalePrefab(id, next),
+          undo: () => world.editor.scalePrefab(id, previous),
+        });
+      }
+      status.textContent = "Échelle du prefab mise à jour.";
+    } catch (error) { report(error); }
   }, { signal });
   duplicatePrefab.addEventListener("click", () => {
     const target = getSelected();
@@ -430,6 +580,7 @@ export function bindWorldEditor(
     try {
       const id = target.active.editor.duplicatePrefab(selected.id);
       select("prefab", id);
+      v2?.onPlacement("prefab", id);
       status.textContent = "Bloc dupliqué : " + id;
     } catch (error) { report(error); }
   }, { signal });
@@ -437,7 +588,14 @@ export function bindWorldEditor(
     const target = getSelected();
     if (!target || target.kind !== "prefab" || !selected) return;
     try {
+      const snapshot = structuredClone(target.placement);
+      const world = target.active;
       target.active.editor.removePrefab(selected.id);
+      v2?.recordTransform({
+        label: "Supprimer prefab",
+        run: () => world.editor.removePrefab(snapshot.id),
+        undo: () => world.editor.addPrefab(structuredClone(snapshot)),
+      });
       clearSelection();
       status.textContent = "Bloc supprimé.";
     } catch (error) { report(error); }
@@ -446,8 +604,51 @@ export function bindWorldEditor(
     "worldEditorSpeed", "worldEditorAggro", "worldEditorAttackRange", "worldEditorLeash",
     "worldEditorCollisionRadius", "worldEditorHurtboxRadius"]) {
     requireElement<HTMLInputElement>(id).addEventListener("change", () => {
-      try { applyParameters(); status.textContent = "Paramètres de collision ou d'IA actualisés."; }
-      catch (error) { report(error); }
+      try {
+        const target = getSelected();
+        const previousCollider = target?.kind === "object"
+          ? structuredClone((target.object.colliders ??
+            target.active.assets.objects[target.object.asset].colliders)[0]) : undefined;
+        const enemyValues = target?.kind === "enemy" ? {
+          movementSpeed: target.actor.entity.stats.movementSpeed,
+          collisionRadius: target.actor.entity.collision?.radius ?? 0.6,
+          hurtboxRadius: target.actor.entity.definition.hurtbox.shape === "cylinder"
+            ? target.actor.entity.definition.hurtbox.radius : 0.6,
+          aggroRadius: target.actor.spec.ai.aggroRadius,
+          attackRange: target.actor.spec.ai.attackRange,
+          leashRadius: target.actor.spec.ai.leashRadius,
+        } : undefined;
+        applyParameters();
+        if (target?.kind === "object" && previousCollider) {
+          const world = target.active;
+          const id = target.object.id;
+          const current = structuredClone((target.object.colliders ??
+            world.assets.objects[target.object.asset].colliders)[0]);
+          v2?.recordTransform({
+            label: "Dimensions collider",
+            run: () => world.editor.setObjectCollider(id, current),
+            undo: () => world.editor.setObjectCollider(id, previousCollider),
+          });
+        } else if (target?.kind === "enemy" && enemyValues) {
+          const world = target.active;
+          const id = target.actor.spec.id;
+          const next = {
+            movementSpeed: target.actor.entity.stats.movementSpeed,
+            collisionRadius: target.actor.entity.collision?.radius ?? 0.6,
+            hurtboxRadius: target.actor.entity.definition.hurtbox.shape === "cylinder"
+              ? target.actor.entity.definition.hurtbox.radius : 0.6,
+            aggroRadius: target.actor.spec.ai.aggroRadius,
+            attackRange: target.actor.spec.ai.attackRange,
+            leashRadius: target.actor.spec.ai.leashRadius,
+          };
+          v2?.recordTransform({
+            label: "Paramètres ennemi",
+            run: () => world.editor.setEnemyParameters(id, next),
+            undo: () => world.editor.setEnemyParameters(id, enemyValues),
+          });
+        }
+        status.textContent = "Paramètres de collision ou d'IA actualisés.";
+      } catch (error) { report(error); }
     }, { signal });
   }
 
@@ -482,6 +683,7 @@ export function bindWorldEditor(
       await target.active.editor.setVisual(target.kind, selection.id, visual, preview);
       preview = undefined; // Its lifetime now belongs to the model's texture.
       if (isCurrent()) {
+        v2?.onDirectChange();
         status.textContent = "Aperçu appliqué. Pour le rendre permanent, copier les assets dans public/assets puis exporter le JSON.";
       }
     } catch (error) {
@@ -508,6 +710,7 @@ export function bindWorldEditor(
     currentMap = maps.world;
     clearSelection();
     buildCatalog();
+    v2?.onMapChanged();
     if (pendingPlacement && currentMap) status.textContent = "Cliquer sur le terrain pour placer " + pendingPlacement.label + ".";
   });
   signal.addEventListener("abort", () => {
@@ -517,10 +720,23 @@ export function bindWorldEditor(
     scene.onBeforeRenderObservable.remove(observer);
     maps.setEditing(false);
     marker.dispose();
+    for (const ring of extraMarkers) ring.dispose();
+    extraMarkers = [];
     markerMaterial.dispose();
   }, { once: true });
   clearSelection();
   buildCatalog();
+  v2 = bindWorldEditorV2({
+    scene, canvas, maps, signal, enabled: () => enabled.checked,
+    selection: () => selectedItems.map(({ kind, id }) => ({ kind, id })),
+    select: (kind, id) => select(kind, id),
+    clearSelection,
+    updateSelection: () => {
+      if (selected) select(selected.kind, selected.id, false, selectedItems.length > 1);
+      else setMarker();
+    },
+    status,
+  });
 
   return { get enabled() { return enabled.checked; } };
 }

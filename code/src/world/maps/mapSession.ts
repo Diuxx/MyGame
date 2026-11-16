@@ -10,10 +10,9 @@ export function createMapSession<T extends MapLifecycle>(build: (id: string) => 
   let closed = false;
   const pending = new Set<Promise<T>>();
 
-  async function load(id: string, validate?: (candidate: T) => void): Promise<T | undefined> {
+  async function replace(task: Promise<T>, validate?: (candidate: T) => void): Promise<T | undefined> {
     if (closed) throw new Error("Le système de maps est déjà fermé.");
     const request = ++generation;
-    const task = build(id);
     pending.add(task);
     let next: T;
     try {
@@ -38,6 +37,11 @@ export function createMapSession<T extends MapLifecycle>(build: (id: string) => 
     return next;
   }
 
+  async function load(id: string, validate?: (candidate: T) => void): Promise<T | undefined> {
+    if (closed) throw new Error("Le système de maps est déjà fermé.");
+    return replace(build(id), validate);
+  }
+
   function unload(): void {
     ++generation;
     current?.dispose();
@@ -46,6 +50,7 @@ export function createMapSession<T extends MapLifecycle>(build: (id: string) => 
 
   return {
     load,
+    replace,
     unload,
     get active(): T | undefined { return current; },
     async dispose(): Promise<void> {

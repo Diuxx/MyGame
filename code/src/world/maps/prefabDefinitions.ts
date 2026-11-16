@@ -25,6 +25,8 @@ export interface PrefabPlacement {
   position: MapPosition;
   rotationY: number;
   scale: number;
+  scaleAxes?: MapPosition;
+  layer?: string;
 }
 
 const IDENTIFIER = /^[a-z0-9][a-z0-9_-]{0,79}$/i;
@@ -149,6 +151,10 @@ export function parsePrefabPlacements(raw: unknown, catalog?: PrefabCatalog): Pr
       position: vector(item.position, path + ".position"),
       rotationY: number(item.rotationY ?? 0, path + ".rotationY"),
       scale: number(item.scale ?? 1, path + ".scale", 0.25, 4),
+      ...(item.scaleAxes === undefined ? {} : {
+        scaleAxes: vector(item.scaleAxes, path + ".scaleAxes", 0.1),
+      }),
+      ...(item.layer === undefined ? {} : { layer: identifier(item.layer, path + ".layer") }),
     };
   });
 }
