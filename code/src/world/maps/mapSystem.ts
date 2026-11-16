@@ -6,6 +6,7 @@ import { clearMapProgress, readMapProgress, saveMapProgress } from "../../enemie
 import type { EnemyEvent, SavedMapProgress } from "../../enemies/mapEnemySimulation";
 import { MAX_MAP_ENEMIES, type AISettings } from "../../enemies/mapEnemyConfig";
 import { DEFAULT_ENVIRONMENT, type EnvironmentSettings } from "./environmentSettings";
+import { defaultLighting, parseLightingSettings, type LightingSettings } from "./lightingSettings";
 import { loadAssetCatalog, loadMapData, isMapId, type MapId } from "./dataLoader";
 import { buildMap } from "./mapBuilder";
 import { createMapSession } from "./mapSession";
@@ -35,7 +36,7 @@ function placementId(base: string, entries: readonly { id: string }[]): string {
 export interface MapSystemOptions {
   hero: TransformNode;
   shadows: ShadowGenerator;
-  applyEnvironment(value: EnvironmentSettings): void;
+  applyLighting(environment: EnvironmentSettings, lighting: LightingSettings): void;
   isHeroAlive(): boolean;
   onHeroHit(damage: number): void;
   onDamage?(event: DamageResolved): void;
@@ -98,7 +99,10 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
           enemies.activate();
           level.setEditorEnabled(editing);
           enemies.setEditorEnabled(editing);
-          if (useEnvironment) options.applyEnvironment(map.environment ?? DEFAULT_ENVIRONMENT);
+          if (useEnvironment) options.applyLighting(
+            map.environment ?? DEFAULT_ENVIRONMENT,
+            map.lighting ?? defaultLighting(map.environment ?? DEFAULT_ENVIRONMENT),
+          );
         },
         setVisible(visible: boolean): void {
           level.setVisible(visible);
@@ -112,6 +116,11 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
           enemies.setEditorEnabled(visible);
         },
         editor: {
+          setLighting(value: LightingSettings): void {
+            const parsed = parseLightingSettings(value, map.environment ?? DEFAULT_ENVIRONMENT);
+            options.applyLighting(map.environment ?? DEFAULT_ENVIRONMENT, parsed);
+            map.lighting = parsed;
+          },
           async place(kind: MapPlacementKind, asset: string, point: MapPosition): Promise<string | undefined> {
             if (placing) throw new Error("Un placement est en cours.");
             const cell = findTerrainCell(map, point[0], point[2]);
@@ -325,7 +334,7 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
     base?.setColliderDebug(showCollisionDebug);
     base?.showAggro(showAggroDebug);
     base?.setZoneDebug(showZoneDebug);
-    options.applyEnvironment(DEFAULT_ENVIRONMENT);
+    options.applyLighting(DEFAULT_ENVIRONMENT, defaultLighting(DEFAULT_ENVIRONMENT));
   }
 
   async function dispose(): Promise<void> {
