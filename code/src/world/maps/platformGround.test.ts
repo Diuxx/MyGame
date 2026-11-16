@@ -74,7 +74,15 @@ test("terrain resize and style switches reuse and dispose the same slab safely",
   map.terrain.visual = { style: "platform", thickness: 2, sideColor: "#BBBBBB" };
   zone.refreshGround();
   zone.refreshGround();
+  for (let i = 0; i < 4; i++) {
+    map.terrain.visual = { style: "flat" };
+    zone.refreshGround();
+    map.terrain.visual = { style: "platform", thickness: 2,
+      sideColor: i % 2 ? "#CCCCCC" : "#BBBBBB" };
+    zone.refreshGround();
+  }
   assert.equal(scene.meshes.filter((mesh) => mesh.name === "zone-platform:platform-test").length, 1);
+  assert.equal(scene.materials.filter((mat) => mat.name === "zone-platform-side:platform-test").length, 1);
   zone.dispose();
   root.dispose();
   assert.equal(scene.meshes.length, 0);
