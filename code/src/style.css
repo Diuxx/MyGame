@@ -407,3 +407,22 @@ button.ws-scene-entry:hover { background: #2c4235; }
 @media (max-width: 760px) {
   #ws-inspector-toggle { font-size: 20px; }
 }
+
+/* Keep the contextual properties above terrain and other secondary settings. */
+.ws-context-inspector { display: grid; gap: 8px; padding: 12px 0; border-bottom: 1px solid #415544; }
+.ws-context-inspector #worldEditorSelection {
+  margin: 0 0 3px; padding: 11px 12px; border: 1px solid #4b6b52;
+  border-radius: 9px; background: #2b4234; color: #e5f3e4; font-weight: 650;
+}
+.ws-context-inspector > .enemy-fields { margin-top: 0; }
+.ws-context-inspector #worldEditorFields { padding: 0; }
+.ws-context-inspector #worldEditorFields:not([hidden]) { display: grid; gap: 9px; }
+#ws-module-host[hidden] { display: none !important; }
+.workspace-app .ws-inspector-open { display: none; }
+.workspace-app.ws-inspector-collapsed .ws-inspector-open { display: inline-block; }
+.workspace-app.ws-inspector-collapsed .ws-statusbar { grid-column: 1 / -1; }
+@media (max-width: 760px) {
+  .workspace-app .ws-inspector-open { display: inline-block; }
+  .workspace-app .ws-identity { display: none; }
+  .workspace-app .ws-explorer-toggle { display: inline-block; }
+}

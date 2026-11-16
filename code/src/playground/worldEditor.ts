@@ -775,7 +775,7 @@ export function bindWorldEditor(
     },
     selectObject(kind: "prefab" | "object" | "enemy" | "interaction", id: string,
       additive = false): void {
-      if (!enabled.checked) return;
+      if (!enabled.checked || v2 && !v2.isSelectable({ kind, id })) return;
       select(kind, id, additive);
     },
   };
