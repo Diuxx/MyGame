@@ -5,6 +5,7 @@ import type { createMapSystem } from "../world/maps/mapSystem.ts";
 import type { MapObject, MapPosition } from "../world/maps/types.ts";
 import type { PrefabPlacement } from "../world/maps/prefabDefinitions.ts";
 import { findTerrainCell } from "../world/maps/validation.ts";
+import { fitWallToTerrain, isWallPrefab } from "../world/maps/wallPlacement.ts";
 import { createEditorCommands, groupEditorCommands, type EditorCommand } from "./editorCommands.ts";
 import { copyPrefabs, pastePrefabs, type PrefabClipboard } from "./editorClipboard.ts";
 import { resizeTerrain } from "./editorTerrain.ts";
@@ -250,9 +251,17 @@ export function bindWorldEditorV2(context: EditorContext) {
     if (!clipboard) return;
     clipboard.data.items.forEach((item, index) => {
       const offset = item.position.map((axis, i) => axis - clipboard!.data.origin[i]);
-      pasteGhosts[index]?.position.set(
-        position[0] + offset[0], position[1] + offset[1] + 0.5, position[2] + offset[2],
-      );
+      let point = [position[0] + offset[0], position[1] + offset[1],
+        position[2] + offset[2]] as MapPosition;
+      if (clipboard?.kind === "prefab" && maps.world) {
+        try {
+          point = fitWallToTerrain(maps.world.definition, maps.world.assets.prefabs,
+            { ...item as PrefabPlacement, position: point }).position;
+        } catch {
+          // The actual paste validates and reports an oversized wall explicitly.
+        }
+      }
+      pasteGhosts[index]?.position.set(point[0], point[1] + 0.5, point[2]);
     });
   }
 
@@ -266,6 +275,7 @@ export function bindWorldEditorV2(context: EditorContext) {
     );
     const items = clipboard.kind === "prefab"
       ? pastePrefabs(clipboard.data, position, used)
+        .map((item) => fitWallToTerrain(world.definition, world.assets.prefabs, item))
       : clipboard.data.items.map((item) => {
         const id = uniqueId(item.id, used);
         used.add(id);
@@ -504,12 +514,29 @@ export function bindWorldEditorV2(context: EditorContext) {
     const world = maps.world;
     if (!world || world !== current) return;
     const ref = gizmoRef;
-    const currentPosition: MapPosition = [
+    let currentPosition: MapPosition = [
       gizmoNode.position.x, gizmoNode.position.y, gizmoNode.position.z,
     ];
     const rotated = gizmoNode.rotation.y * 180 / Math.PI;
     const scaled: MapPosition = [gizmoNode.scaling.x, gizmoNode.scaling.y, gizmoNode.scaling.z];
     const before = structuredClone(gizmoBase);
+    if (ref.kind === "prefab") {
+      const placement = world.definition.prefabs?.find((item) => item.id === ref.id);
+      if (placement && isWallPrefab(placement.prefab)) {
+        try {
+          const axes: MapPosition = scaled.map((value) => value / placement.scale) as unknown as MapPosition;
+          currentPosition = fitWallToTerrain(world.definition, world.assets.prefabs, {
+            ...placement, position: currentPosition, rotationY: rotated, scaleAxes: axes,
+          }).position;
+        } catch (error) {
+          status.textContent = error instanceof Error ? error.message : String(error);
+          gizmoNode.position.set(...before.position);
+          gizmoNode.rotation.y = before.rotation;
+          gizmoNode.scaling.set(...before.axes);
+          return;
+        }
+      }
+    }
     const positionChanged = currentPosition.some((v, i) => v !== before.position[i]);
     const rotationChanged = Math.abs(rotated - before.rotation * 180 / Math.PI) > 0.0001;
     const scaleChanged = scaled.some((v, i) => Math.abs(v - before.axes[i]) > 0.0001);
@@ -747,6 +774,10 @@ export function bindWorldEditorV2(context: EditorContext) {
     get rotationSnap() { return Number(rotationStep.value); },
     isSelectable,
     get isPasting() { return pendingPaste; },
+    get isPastingWall() {
+      return pendingPaste && clipboard?.kind === "prefab" &&
+        clipboard.data.items.every((item) => isWallPrefab(item.prefab));
+    },
     async placePaste(position: MapPosition): Promise<void> { await pasteAt(position); },
     cancelPaste,
     onPlacement(kind: string, id: string | undefined): void {
