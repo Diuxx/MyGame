@@ -430,3 +430,25 @@ button.ws-scene-entry:hover { background: #2c4235; }
 .workspace-app .ws-relocated-source { display: none !important; }
 .workspace-app[data-workspace-mode="test"] .ws-inspector-open,
 .workspace-app[data-workspace-mode="test"] .ws-explorer-toggle { display: none !important; }
+
+/* The map load result must remain visible even while the map module is closed. */
+.workspace-app #ws-map-feedback {
+  flex: 0 1 40%;
+  min-width: 0;
+  color: #d6e4c4;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.workspace-app .ws-left-footer {
+  display: grid;
+  gap: 7px;
+}
+.workspace-app .ws-left-footer button {
+  text-align: left;
+}
+.workspace-app #ws-open-whitebox {
+  background: #34553e;
+  border-color: #698769;
+  color: #e6f4df;
+}
