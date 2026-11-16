@@ -75,8 +75,9 @@ export function bindPlaygroundWorkspace(
   scene: Scene, maps: MapSystem, editor: WorldEditor, signal: AbortSignal,
 ): void {
   const app = requireElement<HTMLElement>("app");
-  const stage = app.querySelector<HTMLElement>(".stage");
-  if (!stage) throw new Error("La scène du Playground est introuvable.");
+  const stageCandidate = app.querySelector<HTMLElement>(".stage");
+  if (!stageCandidate) throw new Error("La scène du Playground est introuvable.");
+  const stage: HTMLElement = stageCandidate;
 
   const top = surface("header", "ws-top", "ws-top",
     '<div class="ws-logo" aria-hidden="true">◈</div>' +
@@ -87,6 +88,7 @@ export function bindPlaygroundWorkspace(
     '<div class="ws-map-picker"><label for="mapSelect">Map</label><div id="ws-map-select-host"></div><div id="ws-map-load-host"></div></div>' +
     '<span id="ws-top-fps"></span>' +
     '<button id="ws-debug-toggle" class="ws-header-control" type="button" aria-expanded="false" title="Affichages de debug">⌘ Debug</button>' +
+    '<button id="ws-inspector-open" class="ws-header-control ws-inspector-open" type="button" aria-expanded="false" title="Afficher l’inspecteur">☷ Inspecteur</button>' +
     '<div class="ws-mode-switch" role="group" aria-label="Mode du Playground">' +
     '<button id="ws-edit-mode" type="button" aria-pressed="true">✎ Édition</button>' +
     '<button id="ws-test-mode" type="button" aria-pressed="false">▶ Tester le jeu</button></div>');
@@ -190,6 +192,15 @@ export function bindPlaygroundWorkspace(
   }
 
   const catalog = requireElement("worldEditorCatalog");
+  const editorModule = requireElement("worldEditorModule");
+  const selection = requireElement("worldEditorSelection");
+  const properties = requireElement("worldEditorFields");
+  const heightControls = requireElement("worldEditorHeightStep").closest(".enemy-fields");
+  const contextInspector = document.createElement("section");
+  contextInspector.className = "ws-context-inspector";
+  contextInspector.append(selection, properties);
+  if (heightControls) contextInspector.append(heightControls);
+  editorModule.querySelector(".module-header")?.after(contextInspector);
   requireElement("ws-catalog-pane").append(catalog);
   const debugControls = requireElement("ws-debug-controls");
   for (const id of DEBUG_CONTROLS) {
@@ -201,7 +212,6 @@ export function bindPlaygroundWorkspace(
 
   let activeArea: WorkspaceArea = "world";
   let activeModule: WorkspaceModuleId | undefined;
-  let leftTab: "scene" | "catalog" = "scene";
   const expandedGroups = new Set(["Architecture", "Mobilier", "Décors", "Ennemis", "Terrain", "Interactions"]);
 
   const areaButtons = new Map<WorkspaceArea, HTMLButtonElement>();
@@ -267,7 +277,6 @@ export function bindPlaygroundWorkspace(
   }
 
   function setLeftTab(tab: "scene" | "catalog"): void {
-    leftTab = tab;
     requireElement<HTMLElement>("ws-scene-pane").hidden = tab !== "scene";
     requireElement<HTMLElement>("ws-catalog-pane").hidden = tab !== "catalog";
     for (const [id, value] of [["ws-scene-tab", "scene"], ["ws-catalog-tab", "catalog"]]) {
@@ -403,17 +412,27 @@ export function bindPlaygroundWorkspace(
     }, { signal });
   }
   const inspectorToggle = requireElement<HTMLButtonElement>("ws-inspector-toggle");
-  inspectorToggle.addEventListener("click", () => {
-    app.classList.toggle("ws-inspector-collapsed");
-    inspectorToggle.setAttribute("aria-expanded", String(!app.classList.contains("ws-inspector-collapsed")));
-  }, { signal });
+  const inspectorOpen = requireElement<HTMLButtonElement>("ws-inspector-open");
+  function toggleInspector(): void {
+    if (window.matchMedia("(max-width: 760px)").matches) {
+      app.classList.toggle("ws-mobile-inspector-open");
+      inspectorOpen.setAttribute("aria-expanded",
+        String(app.classList.contains("ws-mobile-inspector-open")));
+    } else {
+      app.classList.toggle("ws-inspector-collapsed");
+      inspectorOpen.setAttribute("aria-expanded",
+        String(!app.classList.contains("ws-inspector-collapsed")));
+    }
+  }
+  inspectorToggle.addEventListener("click", toggleInspector, { signal });
+  inspectorOpen.addEventListener("click", toggleInspector, { signal });
   requireElement("ws-explorer-toggle").addEventListener("click", () => {
     app.classList.toggle("ws-explorer-open");
     requireElement<HTMLButtonElement>("ws-explorer-toggle").setAttribute("aria-expanded",
       String(app.classList.contains("ws-explorer-open")));
   }, { signal });
 
-  const toolButtons = [...toolbar.querySelectorAll<HTMLButtonElement>("[data-workspace-tool]")];
+  const toolButtons = Array.from(toolbar.querySelectorAll<HTMLButtonElement>("[data-workspace-tool]"));
   function reflectTool(): void {
     for (const button of toolButtons) {
       const active = button.dataset.workspaceTool === toolSelector.value;
