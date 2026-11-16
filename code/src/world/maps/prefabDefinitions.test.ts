@@ -170,3 +170,20 @@ test("colored blockout modules preserve validated surfaces and share their maste
   scene.dispose();
   engine.dispose();
 });
+
+test("the enclosed Playground perimeter blocks movement but the light fixtures do not", () => {
+  const playground = validateMapDefinition(readJson("maps/playground.json"), assets);
+  const obstacles = buildMapObstacles(playground, assets);
+  assert.equal(obstacles.length, 40); // 36 wall sections and four corner pillars.
+  const positions = [
+    { start: [0, 0, 14] as const, step: { x: 0, z: 10 }, coordinate: "z" as const, limit: 17.5 },
+    { start: [0, 0, -14] as const, step: { x: 0, z: -10 }, coordinate: "z" as const, limit: -17.5 },
+    { start: [14, 0, 0] as const, step: { x: 10, z: 0 }, coordinate: "x" as const, limit: 17.5 },
+    { start: [-14, 0, 0] as const, step: { x: -10, z: 0 }, coordinate: "x" as const, limit: -17.5 },
+  ];
+  for (const { start, step, coordinate, limit } of positions) {
+    const moved = resolveMapMovement(start, step, 0.45, obstacles);
+    const final = start[coordinate === "x" ? 0 : 2] + moved[coordinate];
+    assert.ok(Math.abs(final) < Math.abs(limit), "The hero must stop before the wall");
+  }
+});
