@@ -3,7 +3,7 @@ import {
   type AbstractMesh, type InstancedMesh, type Mesh, type Scene, type ShadowGenerator,
 } from "@babylonjs/core";
 import type { MapPosition } from "./types.ts";
-import type { PrefabCatalog, PrefabPart, PrefabPartKind, PrefabPlacement } from "./prefabDefinitions.ts";
+import type { PrefabCatalog, PrefabPart, PrefabPlacement } from "./prefabDefinitions.ts";
 
 interface PrefabView {
   root: TransformNode;
