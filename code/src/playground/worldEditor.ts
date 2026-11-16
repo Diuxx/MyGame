@@ -181,11 +181,12 @@ export function bindWorldEditor(
       target.kind === "prefab" ? target.placement : target.actor.spec;
     setNumber("worldEditorRotation", placement.rotationY);
     if (target.kind === "prefab") {
-      setNumber("worldEditorPrefabScale", placement.scale);
+      setNumber("worldEditorPrefabScale", target.placement.scale);
       return;
     }
-    setNumber("worldEditorScale", placement.visual?.scale ?? 1);
-    requireElement<HTMLInputElement>("worldEditorTint").value = placement.visual?.tint ?? "#ffffff";
+    const visual = target.kind === "object" ? target.object.visual : target.actor.spec.visual;
+    setNumber("worldEditorScale", visual?.scale ?? 1);
+    requireElement<HTMLInputElement>("worldEditorTint").value = visual?.tint ?? "#ffffff";
     if (target.kind === "object") {
       const shape = (target.object.colliders ?? target.active.assets.objects[target.object.asset].colliders)[0];
       setNumber("worldEditorColliderWidth", shape?.type === "box" ? shape.size[0] : (shape?.radius ?? 0.5) * 2);

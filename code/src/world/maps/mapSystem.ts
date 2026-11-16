@@ -160,7 +160,7 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
             else if (kind === "enemy") enemies.moveEnemy(id, position);
             else level.moveInteraction(id, position);
           },
-          rotate(kind: "object" | "enemy", id: string, degrees: number): void {
+          rotate(kind: "object" | "enemy" | "prefab", id: string, degrees: number): void {
             if (kind === "object") level.rotateObject(id, degrees);
             else if (kind === "prefab") level.rotatePrefab(id, degrees);
             else enemies.rotateEnemy(id, degrees);
