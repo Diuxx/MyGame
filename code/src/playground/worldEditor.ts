@@ -602,9 +602,51 @@ export function bindWorldEditor(
     "worldEditorSpeed", "worldEditorAggro", "worldEditorAttackRange", "worldEditorLeash",
     "worldEditorCollisionRadius", "worldEditorHurtboxRadius"]) {
     requireElement<HTMLInputElement>(id).addEventListener("change", () => {
-      try { applyParameters(); v2?.onDirectChange();
-        status.textContent = "Paramètres de collision ou d'IA actualisés."; }
-      catch (error) { report(error); }
+      try {
+        const target = getSelected();
+        const previousCollider = target?.kind === "object"
+          ? structuredClone((target.object.colliders ??
+            target.active.assets.objects[target.object.asset].colliders)[0]) : undefined;
+        const enemyValues = target?.kind === "enemy" ? {
+          movementSpeed: target.actor.entity.stats.movementSpeed,
+          collisionRadius: target.actor.entity.collision?.radius ?? 0.6,
+          hurtboxRadius: target.actor.entity.definition.hurtbox.shape === "cylinder"
+            ? target.actor.entity.definition.hurtbox.radius : 0.6,
+          aggroRadius: target.actor.spec.ai.aggroRadius,
+          attackRange: target.actor.spec.ai.attackRange,
+          leashRadius: target.actor.spec.ai.leashRadius,
+        } : undefined;
+        applyParameters();
+        if (target?.kind === "object" && previousCollider) {
+          const world = target.active;
+          const id = target.object.id;
+          const current = structuredClone((target.object.colliders ??
+            world.assets.objects[target.object.asset].colliders)[0]);
+          v2?.recordTransform({
+            label: "Dimensions collider",
+            run: () => world.editor.setObjectCollider(id, current),
+            undo: () => world.editor.setObjectCollider(id, previousCollider),
+          });
+        } else if (target?.kind === "enemy" && enemyValues) {
+          const world = target.active;
+          const id = target.actor.spec.id;
+          const next = {
+            movementSpeed: target.actor.entity.stats.movementSpeed,
+            collisionRadius: target.actor.entity.collision?.radius ?? 0.6,
+            hurtboxRadius: target.actor.entity.definition.hurtbox.shape === "cylinder"
+              ? target.actor.entity.definition.hurtbox.radius : 0.6,
+            aggroRadius: target.actor.spec.ai.aggroRadius,
+            attackRange: target.actor.spec.ai.attackRange,
+            leashRadius: target.actor.spec.ai.leashRadius,
+          };
+          v2?.recordTransform({
+            label: "Paramètres ennemi",
+            run: () => world.editor.setEnemyParameters(id, next),
+            undo: () => world.editor.setEnemyParameters(id, enemyValues),
+          });
+        }
+        status.textContent = "Paramètres de collision ou d'IA actualisés.";
+      } catch (error) { report(error); }
     }, { signal });
   }
 
