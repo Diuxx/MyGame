@@ -7,7 +7,7 @@ import type {
 } from "./types.ts";
 
 const IDENTIFIER = /^[a-z0-9][a-z0-9_-]{0,79}$/i;
-const MODEL_PATH = /^\/assets\/(?!.*(?:\.\.|\/\/|\\|[?#]))[a-z0-9_./-]+\.glb$/i;
+const MODEL_PATH = /^\/assets\/(?!.*(?:\.\.|\/\/|\\|[?#]))[a-z0-9_./-]+\.(?:glb|gltf)$/i;
 const MAX_TILES = 4096;
 export const MAX_MAP_OBJECTS = 256;
 
@@ -49,7 +49,7 @@ function position(value: unknown, label: string): MapPosition {
 
 function modelPath(value: unknown, label: string): string {
   if (typeof value !== "string" || !MODEL_PATH.test(value)) {
-    throw new Error(label + " : chemin GLB attendu sous /assets/.");
+    throw new Error(label + " : chemin glTF/GLB attendu sous /assets/.");
   }
   return value;
 }

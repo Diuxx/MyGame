@@ -30,7 +30,7 @@ export class MapModelRegistry {
         container.dispose();
         return null;
       }).catch((error: unknown) => {
-        console.warn("Map : fichier GLB absent ou illisible :", path, error);
+        console.warn("Map : fichier 3D absent ou illisible :", path, error);
         return null;
       });
       this.sources.set(path, pending);
@@ -83,7 +83,7 @@ export class MapModelRegistry {
     if (this.disposed) throw new Error("Registre libéré pendant l'instanciation.");
     if (!source) return null;
     if (!source.rootNodes.length || !source.meshes.some((mesh) => mesh.getTotalVertices() > 0)) {
-      console.warn("Map : modèle GLB vide, représentation de collision utilisée :", path);
+      console.warn("Map : modèle 3D vide, représentation de collision utilisée :", path);
       return null;
     }
     let placed: InstantiatedEntries | undefined;
@@ -112,7 +112,7 @@ export class MapModelRegistry {
       return placed;
     } catch (error) {
       placed?.dispose();
-      console.warn("Map : duplication GLB impossible, remplacement par un volume :", path, error);
+      console.warn("Map : duplication de modèle impossible, remplacement par un volume :", path, error);
       return null;
     }
   }

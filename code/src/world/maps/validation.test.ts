@@ -18,6 +18,20 @@ test("example maps and composite collider assets validate", () => {
   assert.equal(validateMapDefinition(load("maps/forest.json"), assets).id, "forest");
 });
 
+test("nature showcase accepts textured glTF assets without changing existing maps", () => {
+  const showcase = validateMapDefinition(load("maps/nature-showcase.json"), assets);
+  assert.equal(showcase.id, "nature-showcase");
+  assert.equal(showcase.terrain.primitiveGround?.pattern, "nature");
+  assert.ok(showcase.objects.length > 80);
+  assert.ok(showcase.objects.every(({ asset }) => assets.objects[asset].model.endsWith(".gltf")));
+  assert.ok(showcase.spawnPoints.some(({ type }) => type === "player"));
+  const gltf = assets.objects.nature_pine_1;
+  assert.equal(gltf.model, "/assets/models/nature-megakit/Pine_1.gltf");
+  const invalid = structuredClone(load("definitions/assets.json")) as Record<string, any>;
+  invalid.objects.nature_pine_1.model = "/assets/models/../secrets.gltf";
+  assert.throws(() => validateMapAssets(invalid), /chemin/);
+});
+
 test("tile centers use corner origin and column X / row Z", () => {
   assert.deepEqual(tileCenter(dojo, 0, 0), [1, 0, 1]);
   assert.deepEqual(tileCenter(dojo, 2, 3), [7, 0, 5]);

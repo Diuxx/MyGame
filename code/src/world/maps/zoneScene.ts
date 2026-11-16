@@ -67,6 +67,53 @@ export function createZoneScene(
     return texture;
   }
 
+  /** Cheap deterministic ground detail for the nature preview, without a tiled mesh grid. */
+  function natureTexture(baseColor: string): DynamicTexture {
+    const texture = new DynamicTexture("nature-ground-texture", 1024, scene, false);
+    const context = texture.getContext();
+    context.fillStyle = baseColor;
+    context.fillRect(0, 0, 1024, 1024);
+
+    let seed = 20261116;
+    const random = () => {
+      seed = (1664525 * seed + 1013904223) >>> 0;
+      return seed / 4294967296;
+    };
+    const shades = ["#597b56", "#719469", "#86a477", "#a0aa7c"];
+    for (let index = 0; index < 7500; index++) {
+      context.fillStyle = shades[Math.floor(random() * shades.length)];
+      const x = random() * 1024;
+      const y = random() * 1024;
+      const size = 1 + random() * 6;
+      context.fillRect(x, y, size, size * 0.6);
+    }
+
+    // One readable corridor through the forest, leaving a combat clearing in the middle.
+    context.lineJoin = "round";
+    context.beginPath();
+    for (let step = 0; step <= 48; step++) {
+      const y = 1050 - step * 23;
+      const bend = 55 * Math.sin(step * 0.28) * Math.min(1, Math.abs(y - 512) / 450);
+      const x = 512 + bend;
+      if (step === 0) context.moveTo(x, y);
+      else context.lineTo(x, y);
+    }
+    context.strokeStyle = "#7a7854";
+    context.lineWidth = 120;
+    context.stroke();
+    context.strokeStyle = "#aa9770";
+    context.lineWidth = 99;
+    context.stroke();
+
+    context.beginPath();
+    context.arc(512, 512, 120, 0, Math.PI * 2);
+    context.fillStyle = "#ac9972";
+    context.fill();
+    texture.update();
+    textures.push(texture);
+    return texture;
+  }
+
   function track(mesh: AbstractMesh, color: string, castsShadow = false): AbstractMesh {
     mesh.parent = root;
     mesh.material = material(color);
@@ -144,10 +191,13 @@ export function createZoneScene(
       map.terrain.primitiveGround.color);
     ground.position.set(x + width / 2, y - 0.01, z + depth / 2);
     ground.receiveShadows = true;
-    if (map.terrain.primitiveGround.pattern === "training") {
+    const pattern = map.terrain.primitiveGround.pattern;
+    if (pattern === "training" || pattern === "nature") {
       const groundMaterial = ground.material as StandardMaterial;
       groundMaterial.diffuseColor = Color3.White();
-      groundMaterial.diffuseTexture = trainingTexture(map.terrain.primitiveGround.color);
+      groundMaterial.diffuseTexture = pattern === "training"
+        ? trainingTexture(map.terrain.primitiveGround.color)
+        : natureTexture(map.terrain.primitiveGround.color);
     }
   }
   for (const item of map.primitives ?? []) primitive(item);

@@ -94,5 +94,5 @@ test("the goblin's external clips bind to independent instances and reject incom
   assert.equal(await registry.instantiate(idle, holder, clips), null);
   const brokenFile = "data:model/gltf-binary;base64,Z2xURgAAAAA=";
   assert.equal(await registry.instantiate(brokenFile, holder), null);
-  assert.match(String(warn.mock.calls.at(-1)?.arguments[0]), /fichier GLB absent ou illisible/);
+  assert.match(String(warn.mock.calls.at(-1)?.arguments[0]), /fichier 3D absent ou illisible/);
 });

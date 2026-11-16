@@ -8,6 +8,7 @@ const MAPS = {
   forest: "/assets/maps/forest.json",
   "prototype-forest": "/assets/maps/prototype-forest.json",
   "prototype-arena": "/assets/maps/prototype-arena.json",
+  "nature-showcase": "/assets/maps/nature-showcase.json",
 } as const;
 export type MapId = keyof typeof MAPS;
 export const AVAILABLE_MAPS: readonly MapId[] = Object.keys(MAPS) as MapId[];
