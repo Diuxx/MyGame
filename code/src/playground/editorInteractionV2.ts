@@ -469,6 +469,11 @@ export function bindWorldEditorV2(context: EditorContext) {
       const update = (layer: string) => {
         if (ref.kind === "prefab") world.editor.setPrefabLayer(ref.id, layer);
         else world.editor.setObjectLayer(ref.id, layer);
+        // Moving a block to an already-hidden layer must update the rendered view.
+        for (const state of layers.all()) {
+          world.editor.setPrefabLayerVisibility(state.id, state.visible);
+          world.editor.setObjectLayerVisible(state.id, state.visible);
+        }
       };
       return { label: "Changer de layer", run: () => update(next), undo: () => update(from) };
     });
