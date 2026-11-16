@@ -57,7 +57,8 @@ export function bindEditorCameraNavigation(
     const horizontal = Number(held.has("ArrowRight")) - Number(held.has("ArrowLeft"));
     const vertical = Number(held.has("ArrowUp")) - Number(held.has("ArrowDown"));
     const delta = Math.min(scene.getEngine().getDeltaTime() / 1000, MAX_DELTA_SECONDS);
-    const bounds = getMap() ? terrainBounds(getMap()!) : undefined;
+    const map = getMap();
+    const bounds = map ? terrainBounds(map) : undefined;
     const next = panCameraFocus(camera.focus, horizontal, vertical, camera.alpha,
       PAN_SPEED * delta, bounds);
     camera.follow(next.x, next.z);
