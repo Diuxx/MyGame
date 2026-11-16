@@ -4,7 +4,7 @@ import type { createMapSystem } from "../world/maps/mapSystem";
 import type { MapDefinition } from "../world/maps/types";
 import { requireElement } from "../ui/dom";
 import type { bindWorldEditor } from "./worldEditor";
-import { WORKSPACE_AREAS, allWorkspaceModuleIds, modulesForArea, type WorkspaceArea, type WorkspaceModuleId } from "./workspaceModules";
+import { WORKSPACE_AREAS, allWorkspaceModuleIds, modulesForArea, setWorkspaceEditingState, type WorkspaceArea, type WorkspaceModuleId } from "./workspaceModules";
 
 type WorldEditor = ReturnType<typeof bindWorldEditor>;
 type MapSystem = ReturnType<typeof createMapSystem>;
@@ -212,7 +212,7 @@ export function bindPlaygroundWorkspace(
 
   let activeArea: WorkspaceArea = "world";
   let activeModule: WorkspaceModuleId | undefined;
-  const expandedGroups = new Set(["Architecture", "Mobilier", "Décors", "Ennemis", "Terrain", "Interactions"]);
+  const expandedGroups = new Set(["Architecture", "Mobilier", "Décors", "Ennemis", "Terrain", "Interactions", "architecture", "furniture", "decoration", "entities"]);
 
   const areaButtons = new Map<WorkspaceArea, HTMLButtonElement>();
   for (const area of WORKSPACE_AREAS) {
@@ -349,10 +349,7 @@ export function bindPlaygroundWorkspace(
   }
 
   function setEditing(editing: boolean): void {
-    if (editInput.checked !== editing) {
-      editInput.checked = editing;
-      editInput.dispatchEvent(new Event("change", { bubbles: true }));
-    }
+    setWorkspaceEditingState(editInput, editing);
     reflectMode();
   }
 

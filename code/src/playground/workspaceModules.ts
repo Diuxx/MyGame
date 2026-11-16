@@ -52,3 +52,17 @@ export function modulesForArea(area: WorkspaceArea): readonly {
 export function allWorkspaceModuleIds(): WorkspaceModuleId[] {
   return WORKSPACE_AREAS.flatMap((area) => area.modules.map((module) => module.id));
 }
+
+/**
+ * The existing editor checkbox is the single authority for editing state.
+ * Dispatching change goes through the original camera, combat and input hooks.
+ */
+export function setWorkspaceEditingState(
+  input: { checked: boolean; dispatchEvent(event: Event): boolean },
+  editing: boolean,
+): boolean {
+  if (input.checked === editing) return false;
+  input.checked = editing;
+  input.dispatchEvent(new Event("change", { bubbles: true }));
+  return true;
+}
