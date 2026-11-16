@@ -169,19 +169,21 @@ export function bindWorldEditor(
     const point = position();
     marker.setEnabled(enabled.checked && !!point);
     if (point) marker.position.set(point[0], point[1] + 0.065, point[2]);
-    for (const mesh of extraMarkers) mesh.dispose();
-    extraMarkers = [];
-    for (const ref of selectedItems) {
-      if (ref.kind === selected?.kind && ref.id === selected.id) continue;
-      const at = positionFor(ref);
-      if (!at || !enabled.checked) continue;
-      const extra = MeshBuilder.CreateTorus("world-editor-extra-ring", {
+    const others = selectedItems.filter((ref) =>
+      ref.kind !== selected?.kind || ref.id !== selected.id);
+    while (extraMarkers.length > others.length) extraMarkers.pop()?.dispose();
+    while (extraMarkers.length < others.length) {
+      const ring = MeshBuilder.CreateTorus("world-editor-extra-ring", {
         diameter: 1.5, thickness: 0.05, tessellation: 24,
       }, scene);
-      extra.position.set(at[0], at[1] + 0.065, at[2]);
-      extra.material = markerMaterial;
-      extra.isPickable = false;
-      extraMarkers.push(extra);
+      ring.material = markerMaterial;
+      ring.isPickable = false;
+      extraMarkers.push(ring);
+    }
+    for (const [index, ref] of others.entries()) {
+      const at = positionFor(ref);
+      extraMarkers[index].setEnabled(enabled.checked && !!at);
+      if (at) extraMarkers[index].position.set(at[0], at[1] + 0.065, at[2]);
     }
   }
 
@@ -718,6 +720,8 @@ export function bindWorldEditor(
     scene.onBeforeRenderObservable.remove(observer);
     maps.setEditing(false);
     marker.dispose();
+    for (const ring of extraMarkers) ring.dispose();
+    extraMarkers = [];
     markerMaterial.dispose();
   }, { once: true });
   clearSelection();
