@@ -72,7 +72,7 @@ test("terrain resize validates centered growth and keeps existing data", () => {
   assert.equal(grown.tiles.length, 8);
   assert.equal(grown.tiles[0].length, 8);
   assert.equal(map.terrain.tiles.length, 4);
-  assert.throws(() => resizeTerrain(map, { width: 6, depth: 6 }, "center"), /hors des limites/);
+  assert.throws(() => resizeTerrain(map, { width: 6, depth: 6 }, "center"), /cellules par paires/);
   assert.throws(() => resizeTerrain(map, { width: 11, depth: 12 }, "origin"), /multiple positif/);
   assert.throws(() => resizeTerrain(map, { width: 1024, depth: 1024 }, "origin"), /4096/);
 });
