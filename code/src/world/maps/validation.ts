@@ -220,6 +220,8 @@ export function validateMapDefinition(
       primitiveGround: parsePrimitiveGround(terrain.primitiveGround) },
     objects, spawnPoints, primitives: parseMapPrimitives(input.primitives),
     prefabs: parsePrefabPlacements(input.prefabs, assets.prefabs),
+    editorLayers: input.editorLayers === undefined ? undefined :
+      list(input.editorLayers, "editorLayers").map((value) => identifier(value, "editorLayers.id")),
     exits: parseMapExits(input.exits), environment: parseEnvironmentSettings(input.environment), enemyCatalog,
     ...encounters, interactions: parseWorldInteractions(input.interactions),
   };

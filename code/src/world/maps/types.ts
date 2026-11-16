@@ -62,6 +62,7 @@ export interface MapDefinition {
   objects: MapObject[];
   primitives?: MapPrimitive[];
   prefabs?: PrefabPlacement[];
+  editorLayers?: string[];
   exits?: MapExit[];
   spawnPoints: MapSpawn[];
   environment?: EnvironmentSettings;

@@ -10,7 +10,7 @@ import { copyPrefabs, pastePrefabs, type PrefabClipboard } from "./editorClipboa
 import { resizeTerrain } from "./editorTerrain.ts";
 import { createEditorDrafts } from "./editorDrafts.ts";
 import { createEditorLayers, defaultLayerForObject, defaultLayerForPrefab } from "./editorLayers.ts";
-import { angleSnap, gridSnap, snapWallEndpoint } from "./editorSnapping.ts";
+import { gridSnap } from "./editorSnapping.ts";
 import { prefabDimensions } from "./editorGeometry.ts";
 import { createEditorGizmos, type EditorGizmoTool } from "./editorGizmos.ts";
 import { requireElement } from "../ui/dom.ts";
@@ -33,7 +33,7 @@ interface EditorContext {
 
 type Clipboard =
   | { kind: "prefab"; data: PrefabClipboard }
-  | { kind: "object"; data: { items: MapObject[]; origin: MapPosition } };
+  | { kind: "object"; data: { items: readonly MapObject[]; origin: MapPosition } };
 
 const EDITABLE_KINDS = new Set(["prefab", "object"]);
 const isFormControl = (target: EventTarget | null): boolean =>
@@ -68,7 +68,6 @@ export function bindWorldEditorV2(context: EditorContext) {
   const drafts = createEditorDrafts(localStorage);
   let current = maps.world;
   let originalFingerprint = current ? drafts.fingerprint(current.definition) : "";
-  let dirty = false;
   let saveTimer: number | undefined;
   let clipboard: Clipboard | undefined;
   let pendingPaste = false;
@@ -124,7 +123,6 @@ export function bindWorldEditorV2(context: EditorContext) {
   }
 
   function noteChange(): void {
-    dirty = true;
     draftState.textContent = "Modifications non exportées — brouillon local automatique.";
     if (saveTimer !== undefined) window.clearTimeout(saveTimer);
     saveTimer = window.setTimeout(() => {
@@ -624,14 +622,13 @@ export function bindWorldEditorV2(context: EditorContext) {
   }, { signal });
   original("worldEditorRestoreDraft").addEventListener("click", () => {
     report((async () => {
-      const world = active();
+      active();
       const source = originalMapSnapshot;
       if (!source) throw new Error("Aucune map source disponible.");
       const draft = drafts.read(source);
       if (!draft) throw new Error("Aucun brouillon disponible.");
       await maps.restoreMap(draft);
       onMapChanged();
-      dirty = true;
       draftState.textContent = "Brouillon restauré. Exporter le JSON pour le conserver.";
     })());
   }, { signal });
@@ -650,7 +647,6 @@ export function bindWorldEditorV2(context: EditorContext) {
     current = maps.world;
     originalMapSnapshot = current ? structuredClone(current.definition) : undefined;
     originalFingerprint = originalMapSnapshot ? drafts.fingerprint(originalMapSnapshot) : "";
-    dirty = false;
     layers.clearCustom();
     for (const id of current?.definition.editorLayers ?? []) layers.ensure(id);
     for (const item of current?.definition.prefabs ?? []) {
