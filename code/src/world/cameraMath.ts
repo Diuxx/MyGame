@@ -29,3 +29,29 @@ export function calculateOrthographicBounds(
 export function degreesToRadians(degrees: number): number {
   return degrees * (Math.PI / 180);
 }
+
+// Camera-local keyboard panning on the horizontal plane, independent of Babylon.
+export interface CameraFocus { x: number; z: number }
+export interface CameraPanBounds { minX: number; maxX: number; minZ: number; maxZ: number }
+
+export function panCameraFocus(
+  focus: CameraFocus,
+  horizontal: number,
+  vertical: number,
+  cameraAlpha: number,
+  distance: number,
+  bounds?: CameraPanBounds,
+): CameraFocus {
+  const axisLength = Math.hypot(horizontal, vertical);
+  if (!axisLength || distance <= 0) return { ...focus };
+  const right = horizontal / axisLength;
+  const forward = vertical / axisLength;
+  // ArcRotateCamera alpha determines the camera-to-target direction on XZ.
+  const dx = (-Math.sin(cameraAlpha) * right - Math.cos(cameraAlpha) * forward) * distance;
+  const dz = (Math.cos(cameraAlpha) * right - Math.sin(cameraAlpha) * forward) * distance;
+  const x = focus.x + dx;
+  const z = focus.z + dz;
+  return bounds
+    ? { x: clamp(x, bounds.minX, bounds.maxX), z: clamp(z, bounds.minZ, bounds.maxZ) }
+    : { x, z };
+}

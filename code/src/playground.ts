@@ -9,6 +9,7 @@ import { startEnemyTools } from "./playground/enemyTools";
 import { bindCollisionTools } from "./playground/collisionTools";
 import { bindMapTools } from "./playground/mapTools";
 import { bindWorldEditor } from "./playground/worldEditor";
+import { bindEditorCameraNavigation } from "./playground/editorCameraNavigation";
 import { createMapSystem } from "./world/maps/mapSystem";
 import { createMapTransitions } from "./world/maps/zoneTransitions";
 import { terrainBounds } from "./world/maps/validation";
@@ -118,7 +119,12 @@ export async function startPlayground(
   });
   bindMapTools(maps, character.root, cameraControls, signal, zoneTransitions);
   bindFloatingTextTools(floatingText, character.root, signal);
-  const worldEditor = bindWorldEditor(scene, canvas, maps, enemies, signal);
+  const editorCamera = bindEditorCameraNavigation(scene, cameraControls, character.root,
+    () => maps.world?.definition, signal);
+  const worldEditor = bindWorldEditor(scene, canvas, maps, enemies, signal, (editing) => {
+    controller?.clearHeldInput();
+    editorCamera.setEnabled(editing);
+  });
   const collisions = bindCollisionTools(scene, character.root, enemies, signal,
     (start, step, radius, height) => maps.world?.resolveMovement(start, step, radius, height) ?? step);
   const attackTools = bindAttackTools(scene, character.root, signal, () => heroState.stats.attack);

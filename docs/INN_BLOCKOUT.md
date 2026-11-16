@@ -18,7 +18,7 @@ The ground floor is walkable. Stairs and mezzanines are **decorative and blocked
 
 ## Edit and reuse
 
-Enable **Éditeur de monde**. The **Blocs réutilisables (whitebox)** catalogue lists all available blocks. Click one, then click the floor to place it. Select an existing block to drag it or change its position, rotation, and scale. **Dupliquer ce bloc** creates an independent placement with shared geometry; **Supprimer ce bloc** removes that instance. Export the map JSON to keep the new layout.
+Enable **Éditeur de monde**. Use the **arrow keys** to pan the camera relative to its current orientation while editing; camera focus stays within map bounds. The hero remains stationary and disabling the editor instantly recenters the camera on the hero. Arrow keys are ignored for editor panning when a form control is focused. The **Blocs réutilisables (whitebox)** catalogue lists all available blocks. Click one, then click the floor to place it. Select an existing block to drag it or change its position, rotation, and scale. **Dupliquer ce bloc** creates an independent placement with shared geometry; **Supprimer ce bloc** removes that instance. Export the map JSON to keep the new layout.
 
 Placements are records under `prefabs` in `code/public/assets/maps/prototype-inn.json`:
 

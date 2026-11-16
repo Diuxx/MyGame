@@ -325,6 +325,7 @@ export function createCharacterController(
   return {
     attack,
     dodge: startDodge,
+    clearHeldInput(): void { input.clearInput(); },
     interruptForZoneChange(): void {
       if (action) finishAction();
       input.clearInput();

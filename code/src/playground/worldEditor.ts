@@ -29,6 +29,7 @@ export function bindWorldEditor(
   scene: Scene, canvas: HTMLCanvasElement, maps: ReturnType<typeof createMapSystem>,
   practice: ReturnType<typeof createEnemyScene>,
   signal: AbortSignal,
+  onEditingChange: (enabled: boolean) => void = () => {},
 ) {
   const enabled = requireElement<HTMLInputElement>("worldEditorEnabled");
   const quickToggle = requireElement<HTMLInputElement>("worldEditorQuickToggle");
@@ -309,12 +310,13 @@ export function bindWorldEditor(
   enabled.addEventListener("change", () => {
     quickToggle.checked = enabled.checked;
     maps.setEditing(enabled.checked);
+    onEditingChange(enabled.checked);
     canvas.classList.toggle("map-editor-active", enabled.checked);
     clearSelection();
     if (!enabled.checked) cancelPendingPlacement();
     status.textContent = enabled.checked
-      ? "Maintenir le clic gauche sur un élément et le faire glisser. Le combat est suspendu."
-      : "Mode combat réactivé.";
+      ? "Flèches : déplacer la caméra. Clic gauche : déplacer un élément. Combat suspendu."
+      : "Mode combat réactivé. Caméra recentrée sur le héros.";
   }, { signal });
 
   catalog.addEventListener("click", (event) => {
