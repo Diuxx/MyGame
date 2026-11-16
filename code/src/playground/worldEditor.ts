@@ -63,6 +63,7 @@ export function bindWorldEditor(
   marker.setEnabled(false);
   let selected: Selection | undefined;
   let selectedItems: Selection[] = [];
+  let extraMarkers: ReturnType<typeof MeshBuilder.CreateTorus>[] = [];
   let v2: ReturnType<typeof bindWorldEditorV2> | undefined;
   let drag: { pointerId: number; offsetX: number; offsetZ: number } | undefined;
   let currentMap = maps.world;
@@ -133,6 +134,8 @@ export function bindWorldEditor(
   function clearSelection(): void {
     selected = undefined;
     selectedItems = [];
+    for (const mesh of extraMarkers) mesh.dispose();
+    extraMarkers = [];
     v2?.onSelectionChanged();
     stopDrag();
     panel.hidden = true;
@@ -151,10 +154,34 @@ export function bindWorldEditor(
     return target?.interaction.position;
   }
 
+  function positionFor(ref: EditorSelectionRef): MapPosition | undefined {
+    const active = maps.world;
+    if (!active) return undefined;
+    if (ref.kind === "prefab") return active.definition.prefabs?.find((item) => item.id === ref.id)?.position;
+    if (ref.kind === "object") return active.definition.objects.find((item) => item.id === ref.id)?.position;
+    if (ref.kind === "enemy") return active.simulation.list()
+      .find((item) => item.spec.id === ref.id)?.spec.position;
+    if (ref.kind === "practice") return practice.get(ref.id)?.position;
+    return active.definition.interactions?.find((item) => item.id === ref.id)?.position;
+  }
   function setMarker(): void {
     const point = position();
     marker.setEnabled(enabled.checked && !!point);
     if (point) marker.position.set(point[0], point[1] + 0.065, point[2]);
+    for (const mesh of extraMarkers) mesh.dispose();
+    extraMarkers = [];
+    for (const ref of selectedItems) {
+      if (ref.kind === selected?.kind && ref.id === selected.id) continue;
+      const at = positionFor(ref);
+      if (!at || !enabled.checked) continue;
+      const extra = MeshBuilder.CreateTorus("world-editor-extra-ring", {
+        diameter: 1.5, thickness: 0.05, tessellation: 24,
+      }, scene);
+      extra.position.set(at[0], at[1] + 0.065, at[2]);
+      extra.material = markerMaterial;
+      extra.isPickable = false;
+      extraMarkers.push(extra);
+    }
   }
 
   function select(kind: SelectionKind, id: string, additive = false, keepGroup = false): void {
@@ -311,6 +338,13 @@ export function bindWorldEditor(
     if (!cell) return undefined;
     if (pendingPlacement?.kind === "tile") return tileCenter(map, cell.row, cell.column);
     const snapped: MapPosition = [snap(point.x), y, snap(point.z)];
+    if (pendingPlacement?.kind === "prefab" && maps.world?.assets.prefabs) {
+      const proposed = { id: "__preview__", prefab: pendingPlacement.id, position: snapped,
+        rotationY: 0, scale: 1 };
+      const anchor = snapWallEndpoint(snapped[0], snapped[2], proposed,
+        map.prefabs ?? [], maps.world.assets.prefabs);
+      if (anchor && findTerrainCell(map, anchor.x, anchor.z)) return [anchor.x, y, anchor.z];
+    }
     return findTerrainCell(map, snapped[0], snapped[2]) ? snapped : [point.x, y, point.z];
   }
 
