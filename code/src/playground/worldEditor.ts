@@ -7,6 +7,8 @@ import type { MapEditorKind, MapPlacementKind, VisualOverride } from "../world/m
 import { findTerrainCell, tileCenter } from "../world/maps/validation";
 import type { createMapSystem } from "../world/maps/mapSystem";
 import { downloadJson, requireElement } from "../ui/dom";
+import { bindWorldEditorV2, type EditorSelectionRef } from "./editorInteractionV2";
+import { snapWallEndpoint } from "./editorSnapping";
 
 type SelectionKind = MapEditorKind | "practice";
 interface Selection { kind: SelectionKind; id: string; mapId: string }
@@ -60,6 +62,8 @@ export function bindWorldEditor(
   marker.isPickable = false;
   marker.setEnabled(false);
   let selected: Selection | undefined;
+  let selectedItems: Selection[] = [];
+  let v2: ReturnType<typeof bindWorldEditorV2> | undefined;
   let drag: { pointerId: number; offsetX: number; offsetZ: number } | undefined;
   let currentMap = maps.world;
   let pendingPlacement: Placement | undefined;
@@ -128,6 +132,8 @@ export function bindWorldEditor(
 
   function clearSelection(): void {
     selected = undefined;
+    selectedItems = [];
+    v2?.onSelectionChanged();
     stopDrag();
     panel.hidden = true;
     marker.setEnabled(false);
@@ -151,10 +157,20 @@ export function bindWorldEditor(
     if (point) marker.position.set(point[0], point[1] + 0.065, point[2]);
   }
 
-  function select(kind: SelectionKind, id: string): void {
+  function select(kind: SelectionKind, id: string, additive = false, keepGroup = false): void {
     const map = maps.world;
     if (!map) return;
-    selected = { kind, id, mapId: map.definition.id };
+    const entry = { kind, id, mapId: map.definition.id };
+    if (additive) {
+      const index = selectedItems.findIndex((item) => item.kind === kind && item.id === id);
+      if (index >= 0) selectedItems.splice(index, 1);
+      else selectedItems.push(entry);
+      if (!selectedItems.length) return clearSelection();
+      selected = selectedItems.at(-1);
+    } else {
+      selected = entry;
+      if (!keepGroup) selectedItems = [entry];
+    }
     const target = getSelected();
     if (!target) return clearSelection();
     const spec = target.kind === "object" ? target.object :
@@ -177,6 +193,7 @@ export function bindWorldEditor(
     visualSettings.hidden = target.kind === "interaction" || target.kind === "practice" ||
       target.kind === "prefab";
     setMarker();
+    v2?.onSelectionChanged();
     if (target.kind === "interaction" || target.kind === "practice") return;
     const placement = target.kind === "object" ? target.object :
       target.kind === "prefab" ? target.placement : target.actor.spec;
@@ -298,7 +315,8 @@ export function bindWorldEditor(
   }
 
   function snap(value: number): number {
-    return snapToGrid.checked ? Math.round(value * 2) / 2 : value;
+    const step = v2?.snapStep ?? (snapToGrid.checked ? 0.5 : 0);
+    return step > 0 ? Math.round(value / step) * step : value;
   }
 
   function cancelPendingPlacement(): void {
@@ -347,6 +365,12 @@ export function bindWorldEditor(
   canvas.addEventListener("pointerdown", (event) => {
     const active = maps.world;
     if (!enabled.checked || event.button !== 0 || drag || !active || placing) return;
+    if (v2?.isPasting) {
+      const point = placementPoint(event);
+      if (!point) return report("Cliquer dans le terrain.");
+      void v2.placePaste(point).catch(report);
+      return;
+    }
     const placement = pendingPlacement;
     if (placement) {
       const point = placementPoint(event);
@@ -356,7 +380,10 @@ export function bindWorldEditor(
       void active.editor.place(placement.kind, placement.id, point).then((id) => {
         if (signal.aborted || maps.world !== active || pendingPlacement !== placement) return;
         cancelPendingPlacement();
-        if (id && placement.kind !== "tile") select(placement.kind, id);
+        if (id && placement.kind !== "tile") {
+          select(placement.kind, id);
+          v2?.onPlacement(placement.kind, id);
+        }
         status.textContent = placement.label + " · Placement terminé.";
       }).catch((error) => {
         if (!signal.aborted && maps.world === active && pendingPlacement === placement) report(error);
@@ -376,7 +403,15 @@ export function bindWorldEditor(
       clearSelection();
       return;
     }
-    select(kind, id);
+    if (v2 && !v2.isSelectable({ kind, id })) return report("Layer masqué ou verrouillé.");
+    if (event.shiftKey) {
+      select(kind, id, true);
+      return;
+    }
+    const keepGroup = selectedItems.length > 1 && selectedItems.some((entry) =>
+      entry.kind === kind && entry.id === id);
+    select(kind, id, false, keepGroup);
+    if (v2?.tool !== "select") return;
     const point = position();
     const location = point && pickPosition(event, point[1]);
     if (!point || !location) return;
@@ -508,6 +543,7 @@ export function bindWorldEditor(
     currentMap = maps.world;
     clearSelection();
     buildCatalog();
+    v2?.onMapChanged();
     if (pendingPlacement && currentMap) status.textContent = "Cliquer sur le terrain pour placer " + pendingPlacement.label + ".";
   });
   signal.addEventListener("abort", () => {
@@ -521,6 +557,17 @@ export function bindWorldEditor(
   }, { once: true });
   clearSelection();
   buildCatalog();
+  v2 = bindWorldEditorV2({
+    scene, canvas, maps, signal, enabled: () => enabled.checked,
+    selection: () => selectedItems.map(({ kind, id }) => ({ kind, id })),
+    select: (kind, id) => select(kind, id),
+    clearSelection,
+    updateSelection: () => {
+      if (selected) select(selected.kind, selected.id, false, selectedItems.length > 1);
+      else setMarker();
+    },
+    status,
+  });
 
   return { get enabled() { return enabled.checked; } };
 }
