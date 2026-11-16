@@ -452,3 +452,35 @@ button.ws-scene-entry:hover { background: #2c4235; }
   border-color: #698769;
   color: #e6f4df;
 }
+
+/* Vertical placement controls in the contextual inspector: one full-width step
+   selector above a balanced pair of direction buttons. Shared .enemy-fields
+   remains unchanged for the other Playground modules. */
+.workspace-app .ws-context-inspector .world-editor-height-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 8px;
+  margin: 0;
+}
+.workspace-app .ws-context-inspector .world-editor-height-label {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+}
+.workspace-app .ws-context-inspector .world-editor-height-label select {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+.workspace-app .ws-context-inspector .world-editor-height-controls > button {
+  width: 100%;
+  min-width: 0;
+  min-height: 36px;
+  margin: 0;
+  padding: 9px 6px;
+  white-space: nowrap;
+  text-align: center;
+}
