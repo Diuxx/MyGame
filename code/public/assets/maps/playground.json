@@ -1,13 +1,13 @@
 {
   "version": 1,
   "id": "playground",
-  "name": "Terrain d'entraînement",
+  "name": "Playground — Arène blockout lumineuse",
   "tileSize": 2,
   "terrain": {
     "origin": [
-      -30,
+      -18,
       0,
-      -30
+      -18
     ],
     "tiles": [
       [
@@ -28,33 +28,9 @@
         null,
         null,
         null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
         null
       ],
       [
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
         null,
         null,
         null,
@@ -92,33 +68,9 @@
         null,
         null,
         null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
         null
       ],
       [
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
         null,
         null,
         null,
@@ -156,33 +108,9 @@
         null,
         null,
         null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
         null
       ],
       [
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
         null,
         null,
         null,
@@ -220,33 +148,9 @@
         null,
         null,
         null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
         null
       ],
       [
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
         null,
         null,
         null,
@@ -284,33 +188,9 @@
         null,
         null,
         null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
         null
       ],
       [
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
         null,
         null,
         null,
@@ -348,33 +228,9 @@
         null,
         null,
         null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
         null
       ],
       [
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
         null,
         null,
         null,
@@ -412,33 +268,9 @@
         null,
         null,
         null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
         null
       ],
       [
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
         null,
         null,
         null,
@@ -476,33 +308,9 @@
         null,
         null,
         null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
         null
       ],
       [
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
         null,
         null,
         null,
@@ -540,417 +348,9 @@
         null,
         null,
         null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
         null
       ],
       [
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null
-      ],
-      [
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null
-      ],
-      [
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null
-      ],
-      [
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null
-      ],
-      [
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null
-      ],
-      [
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null
-      ],
-      [
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null
-      ],
-      [
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null
-      ],
-      [
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null
-      ],
-      [
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null
-      ],
-      [
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null
-      ],
-      [
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null
-      ],
-      [
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
         null,
         null,
         null,
@@ -973,184 +373,120 @@
     ],
     "groundCollider": {
       "enabled": true,
-      "thickness": 0.2
+      "thickness": 0.3
     },
     "primitiveGround": {
-      "color": "#738a70",
-      "pattern": "training"
+      "color": "#3E414B"
+    },
+    "visual": {
+      "style": "platform",
+      "thickness": 1.1,
+      "sideColor": "#262934"
     }
   },
   "objects": [],
   "primitives": [
     {
-      "id": "west-post",
+      "id": "floor-nw",
       "kind": "box",
       "position": [
-        -23,
-        0.85,
-        -8
+        -9,
+        -0.045,
+        -9
       ],
       "size": [
-        1.7,
-        1.7,
-        1.7
+        17.84,
+        0.1,
+        17.84
       ],
       "rotationY": 0,
-      "color": "#b2a88d",
-      "blocksMovement": true
+      "color": "#50535F",
+      "blocksMovement": false
     },
     {
-      "id": "east-post",
+      "id": "floor-ne",
       "kind": "box",
       "position": [
-        23,
-        0.85,
-        -8
+        9,
+        -0.045,
+        -9
       ],
       "size": [
-        1.7,
-        1.7,
-        1.7
+        17.84,
+        0.1,
+        17.84
       ],
       "rotationY": 0,
-      "color": "#b2a88d",
-      "blocksMovement": true
+      "color": "#545762",
+      "blocksMovement": false
     },
     {
-      "id": "north-stone-left",
+      "id": "floor-sw",
       "kind": "box",
       "position": [
-        -19,
-        0.55,
-        19
+        -9,
+        -0.045,
+        9
       ],
       "size": [
-        3,
-        1.1,
-        2
+        17.84,
+        0.1,
+        17.84
       ],
-      "rotationY": 25,
-      "color": "#89978a",
-      "blocksMovement": true
+      "rotationY": 0,
+      "color": "#545762",
+      "blocksMovement": false
     },
     {
-      "id": "north-stone-right",
+      "id": "floor-se",
       "kind": "box",
       "position": [
-        18,
-        0.55,
-        19
+        9,
+        -0.045,
+        9
       ],
       "size": [
-        3.2,
-        1.1,
-        2
+        17.84,
+        0.1,
+        17.84
       ],
-      "rotationY": -24,
-      "color": "#89978a",
-      "blocksMovement": true
+      "rotationY": 0,
+      "color": "#50535F",
+      "blocksMovement": false
     },
     {
-      "id": "training-crate-left",
-      "kind": "box",
-      "position": [
-        -18,
-        0.6,
-        -16
-      ],
-      "size": [
-        2,
-        1.2,
-        2
-      ],
-      "rotationY": 15,
-      "color": "#9e896d",
-      "blocksMovement": true
-    },
-    {
-      "id": "training-crate-right",
-      "kind": "box",
-      "position": [
-        17,
-        0.6,
-        -15
-      ],
-      "size": [
-        2,
-        1.2,
-        2
-      ],
-      "rotationY": -8,
-      "color": "#9e896d",
-      "blocksMovement": true
-    },
-    {
-      "id": "west-marker",
+      "id": "center-disc-outer",
       "kind": "cylinder",
       "position": [
-        -25,
-        0.85,
-        16
+        0,
+        0.018,
+        0
       ],
       "size": [
-        1.2,
-        1.7,
-        1.2
+        7,
+        0.032,
+        7
       ],
       "rotationY": 0,
-      "color": "#8296a1",
-      "blocksMovement": true
+      "color": "#6B6A79",
+      "blocksMovement": false
     },
     {
-      "id": "east-marker",
+      "id": "center-disc-inner",
       "kind": "cylinder",
       "position": [
-        25,
-        0.85,
-        15
+        0,
+        0.04,
+        0
       ],
       "size": [
-        1.2,
-        1.7,
-        1.2
+        5.9,
+        0.032,
+        5.9
       ],
       "rotationY": 0,
-      "color": "#8296a1",
-      "blocksMovement": true
-    },
-    {
-      "id": "back-stone",
-      "kind": "sphere",
-      "position": [
-        -10,
-        0.5,
-        -23
-      ],
-      "size": [
-        2,
-        1,
-        2
-      ],
-      "rotationY": 0,
-      "color": "#a2a69c",
-      "blocksMovement": true
-    },
-    {
-      "id": "front-stone",
-      "kind": "sphere",
-      "position": [
-        10,
-        0.5,
-        24
-      ],
-      "size": [
-        2.2,
-        1,
-        2
-      ],
-      "rotationY": 0,
-      "color": "#a2a69c",
-      "blocksMovement": true
+      "color": "#575A69",
+      "blocksMovement": false
     }
   ],
   "spawnPoints": [
@@ -1160,7 +496,7 @@
       "position": [
         0,
         0,
-        -14
+        -10
       ],
       "rotationY": 0
     }
@@ -1170,16 +506,17 @@
       "id": "practice-target",
       "enemyId": "target-wood",
       "position": [
+        -5,
         0,
-        0,
-        0
+        3
       ],
       "rotationY": 180,
       "activation": {
         "mode": "always"
       },
       "respawn": {
-        "mode": "never"
+        "mode": "afterDelay",
+        "delaySeconds": 7
       },
       "persistDeath": false,
       "ai": {
@@ -1194,12 +531,12 @@
       }
     },
     {
-      "id": "goblin-pair-left",
-      "enemyId": "goblin",
+      "id": "practice-target-right",
+      "enemyId": "target-wood",
       "position": [
-        -9,
+        5,
         0,
-        11
+        3
       ],
       "rotationY": 180,
       "activation": {
@@ -1207,71 +544,15 @@
       },
       "respawn": {
         "mode": "afterDelay",
-        "delaySeconds": 10
+        "delaySeconds": 7
       },
       "persistDeath": false,
       "ai": {
         "profile": "guard",
-        "aggroRadius": 5.5,
-        "attackRange": 1.4,
-        "leashRadius": 12,
-        "attackCooldown": 2,
-        "skills": [
-          "slash"
-        ]
-      }
-    },
-    {
-      "id": "goblin-pair-right",
-      "enemyId": "goblin",
-      "position": [
-        -5,
-        0,
-        11
-      ],
-      "rotationY": 180,
-      "activation": {
-        "mode": "always"
-      },
-      "respawn": {
-        "mode": "afterDelay",
-        "delaySeconds": 10
-      },
-      "persistDeath": false,
-      "ai": {
-        "profile": "guard",
-        "aggroRadius": 5.5,
-        "attackRange": 1.4,
-        "leashRadius": 12,
-        "attackCooldown": 2,
-        "skills": [
-          "slash"
-        ]
-      }
-    },
-    {
-      "id": "goblin-solo",
-      "enemyId": "goblin",
-      "position": [
-        15,
-        0,
-        9
-      ],
-      "rotationY": 220,
-      "activation": {
-        "mode": "always"
-      },
-      "respawn": {
-        "mode": "afterDelay",
-        "delaySeconds": 10
-      },
-      "persistDeath": false,
-      "ai": {
-        "profile": "guard",
-        "aggroRadius": 5.5,
-        "attackRange": 1.4,
-        "leashRadius": 12,
-        "attackCooldown": 2,
+        "aggroRadius": 2,
+        "attackRange": 1,
+        "leashRadius": 3,
+        "attackCooldown": 3,
         "skills": [
           "slash"
         ]
@@ -1280,11 +561,636 @@
   ],
   "lighting": {
     "world": {
-      "enabled": true
+      "enabled": true,
+      "ambient": {
+        "enabled": true,
+        "color": "#AEBBDB",
+        "groundColor": "#282C3D",
+        "intensity": 0.18
+      },
+      "sun": {
+        "enabled": false,
+        "color": "#FFF1DE",
+        "intensity": 0.8,
+        "direction": [
+          -0.7,
+          -1.4,
+          0.5
+        ],
+        "shadows": {
+          "enabled": false,
+          "darkness": 0.28,
+          "resolution": 1024
+        }
+      }
     },
     "map": {
       "enabled": true,
-      "lights": []
+      "lights": [
+        {
+          "id": "center-glow",
+          "type": "point",
+          "enabled": true,
+          "position": [
+            0,
+            4.2,
+            0
+          ],
+          "color": "#FFE1AB",
+          "intensity": 2,
+          "range": 15,
+          "shadows": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "wall-north",
+          "type": "point",
+          "enabled": true,
+          "position": [
+            0,
+            2.85,
+            -16.85
+          ],
+          "color": "#FFA866",
+          "intensity": 2.6,
+          "range": 11,
+          "shadows": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "wall-south",
+          "type": "point",
+          "enabled": true,
+          "position": [
+            0,
+            2.85,
+            16.85
+          ],
+          "color": "#FFA866",
+          "intensity": 2.6,
+          "range": 11,
+          "shadows": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "wall-west",
+          "type": "point",
+          "enabled": true,
+          "position": [
+            -16.85,
+            2.85,
+            0
+          ],
+          "color": "#FF9A59",
+          "intensity": 2.6,
+          "range": 11,
+          "shadows": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "wall-east",
+          "type": "point",
+          "enabled": true,
+          "position": [
+            16.85,
+            2.85,
+            0
+          ],
+          "color": "#FF9A59",
+          "intensity": 2.6,
+          "range": 11,
+          "shadows": {
+            "enabled": false
+          }
+        }
+      ]
+    }
+  },
+  "prefabs": [
+    {
+      "id": "north-wall-1",
+      "prefab": "wall-dark",
+      "position": [
+        -16,
+        0,
+        -18
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "north-wall-2",
+      "prefab": "wall-dark",
+      "position": [
+        -12,
+        0,
+        -18
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "north-wall-3",
+      "prefab": "wall-dark",
+      "position": [
+        -8,
+        0,
+        -18
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "north-wall-4",
+      "prefab": "wall-dark",
+      "position": [
+        -4,
+        0,
+        -18
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "north-wall-5",
+      "prefab": "wall-dark",
+      "position": [
+        0,
+        0,
+        -18
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "north-wall-6",
+      "prefab": "wall-dark",
+      "position": [
+        4,
+        0,
+        -18
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "north-wall-7",
+      "prefab": "wall-dark",
+      "position": [
+        8,
+        0,
+        -18
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "north-wall-8",
+      "prefab": "wall-dark",
+      "position": [
+        12,
+        0,
+        -18
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "north-wall-9",
+      "prefab": "wall-dark",
+      "position": [
+        16,
+        0,
+        -18
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "south-wall-1",
+      "prefab": "wall-dark-low",
+      "position": [
+        -16,
+        0,
+        18
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "south-wall-2",
+      "prefab": "wall-dark-low",
+      "position": [
+        -12,
+        0,
+        18
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "south-wall-3",
+      "prefab": "wall-dark-low",
+      "position": [
+        -8,
+        0,
+        18
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "south-wall-4",
+      "prefab": "wall-dark-low",
+      "position": [
+        -4,
+        0,
+        18
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "south-wall-5",
+      "prefab": "wall-dark-low",
+      "position": [
+        0,
+        0,
+        18
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "south-wall-6",
+      "prefab": "wall-dark-low",
+      "position": [
+        4,
+        0,
+        18
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "south-wall-7",
+      "prefab": "wall-dark-low",
+      "position": [
+        8,
+        0,
+        18
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "south-wall-8",
+      "prefab": "wall-dark-low",
+      "position": [
+        12,
+        0,
+        18
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "south-wall-9",
+      "prefab": "wall-dark-low",
+      "position": [
+        16,
+        0,
+        18
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "west-wall-1",
+      "prefab": "wall-dark",
+      "position": [
+        -18,
+        0,
+        -16
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "west-wall-2",
+      "prefab": "wall-dark",
+      "position": [
+        -18,
+        0,
+        -12
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "west-wall-3",
+      "prefab": "wall-dark",
+      "position": [
+        -18,
+        0,
+        -8
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "west-wall-4",
+      "prefab": "wall-dark",
+      "position": [
+        -18,
+        0,
+        -4
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "west-wall-5",
+      "prefab": "wall-dark",
+      "position": [
+        -18,
+        0,
+        0
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "west-wall-6",
+      "prefab": "wall-dark",
+      "position": [
+        -18,
+        0,
+        4
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "west-wall-7",
+      "prefab": "wall-dark",
+      "position": [
+        -18,
+        0,
+        8
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "west-wall-8",
+      "prefab": "wall-dark",
+      "position": [
+        -18,
+        0,
+        12
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "west-wall-9",
+      "prefab": "wall-dark",
+      "position": [
+        -18,
+        0,
+        16
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "east-wall-1",
+      "prefab": "wall-dark-low",
+      "position": [
+        18,
+        0,
+        -16
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "east-wall-2",
+      "prefab": "wall-dark-low",
+      "position": [
+        18,
+        0,
+        -12
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "east-wall-3",
+      "prefab": "wall-dark-low",
+      "position": [
+        18,
+        0,
+        -8
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "east-wall-4",
+      "prefab": "wall-dark-low",
+      "position": [
+        18,
+        0,
+        -4
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "east-wall-5",
+      "prefab": "wall-dark-low",
+      "position": [
+        18,
+        0,
+        0
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "east-wall-6",
+      "prefab": "wall-dark-low",
+      "position": [
+        18,
+        0,
+        4
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "east-wall-7",
+      "prefab": "wall-dark-low",
+      "position": [
+        18,
+        0,
+        8
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "east-wall-8",
+      "prefab": "wall-dark-low",
+      "position": [
+        18,
+        0,
+        12
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "east-wall-9",
+      "prefab": "wall-dark-low",
+      "position": [
+        18,
+        0,
+        16
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "corner-northwest",
+      "prefab": "pillar-dark",
+      "position": [
+        -18,
+        0,
+        -18
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "corner-northeast",
+      "prefab": "pillar-dark",
+      "position": [
+        18,
+        0,
+        -18
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "corner-southwest",
+      "prefab": "pillar-dark",
+      "position": [
+        -18,
+        0,
+        18
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "corner-southeast",
+      "prefab": "pillar-dark",
+      "position": [
+        18,
+        0,
+        18
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "sconce-north",
+      "prefab": "lamp-wall-blockout",
+      "position": [
+        0,
+        0,
+        -17.35
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "sconce-south",
+      "prefab": "lamp-wall-blockout",
+      "position": [
+        0,
+        0,
+        17.35
+      ],
+      "rotationY": 180,
+      "scale": 1
+    },
+    {
+      "id": "sconce-west",
+      "prefab": "lamp-wall-blockout",
+      "position": [
+        -17.35,
+        0,
+        0
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "sconce-east",
+      "prefab": "lamp-wall-blockout",
+      "position": [
+        17.35,
+        0,
+        0
+      ],
+      "rotationY": -90,
+      "scale": 1
+    },
+    {
+      "id": "center-light-fixture",
+      "prefab": "lamp-center-blockout",
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "rotationY": 0,
+      "scale": 1
+    }
+  ],
+  "environment": {
+    "background": "#1A1C28",
+    "ambient": {
+      "color": "#C7D0E8",
+      "intensity": 0.18
+    },
+    "sun": {
+      "color": "#FFF3DE",
+      "intensity": 0,
+      "direction": [
+        -0.7,
+        -1.4,
+        0.5
+      ],
+      "shadows": {
+        "enabled": false,
+        "darkness": 0.28,
+        "resolution": 1024
+      }
+    },
+    "fog": {
+      "enabled": false,
+      "color": "#1A1C28",
+      "density": 0.005
     }
   }
 }
