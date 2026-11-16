@@ -9,6 +9,7 @@ import type { createMapSystem } from "../world/maps/mapSystem";
 import { downloadJson, requireElement } from "../ui/dom";
 import { bindWorldEditorV2, type EditorSelectionRef } from "./editorInteractionV2";
 import { snapWallEndpoint } from "./editorSnapping";
+import { fitWallToTerrain, isNearTerrain, isWallPrefab } from "../world/maps/wallPlacement";
 
 type SelectionKind = MapEditorKind | "practice";
 interface Selection { kind: SelectionKind; id: string; mapId: string }
@@ -274,6 +275,12 @@ export function bindWorldEditor(
       target.active.editor.rotate(target.kind, selected.id, degrees);
       setNumber("worldEditorRotation", degrees);
     }
+    const actual = position();
+    if (actual) {
+      setNumber("worldEditorX", actual[0]);
+      setNumber("worldEditorY", actual[1]);
+      setNumber("worldEditorZ", actual[2]);
+    }
     setMarker();
   }
 
@@ -342,16 +349,26 @@ export function bindWorldEditor(
     const point = pickPosition(event, y);
     if (!point) return undefined;
     const cell = findTerrainCell(map, point.x, point.z);
-    if (!cell) return undefined;
-    if (pendingPlacement?.kind === "tile") return tileCenter(map, cell.row, cell.column);
-    const snapped: MapPosition = [snap(point.x), y, snap(point.z)];
+    const placingWall = pendingPlacement?.kind === "prefab" && isWallPrefab(pendingPlacement.id);
+    const copyingWalls = v2?.isPastingWall ?? false;
+    if (!cell && !((placingWall || copyingWalls) &&
+      isNearTerrain(map, point.x, point.z, map.tileSize / 4))) return undefined;
+    if (pendingPlacement?.kind === "tile") {
+      return cell ? tileCenter(map, cell.row, cell.column) : undefined;
+    }
+    let snapped: MapPosition = [snap(point.x), y, snap(point.z)];
     if (pendingPlacement?.kind === "prefab" && maps.world?.assets.prefabs) {
       const proposed = { id: "__preview__", prefab: pendingPlacement.id, position: snapped,
         rotationY: 0, scale: 1 };
       const anchor = snapWallEndpoint(snapped[0], snapped[2], proposed,
         map.prefabs ?? [], maps.world.assets.prefabs);
-      if (anchor && findTerrainCell(map, anchor.x, anchor.z)) return [anchor.x, y, anchor.z];
+      if (anchor) snapped = [anchor.x, y, anchor.z];
+      if (placingWall) {
+        return fitWallToTerrain(map, maps.world.assets.prefabs,
+          { ...proposed, position: snapped }).position;
+      }
     }
+    if (copyingWalls) return snapped;
     return findTerrainCell(map, snapped[0], snapped[2]) ? snapped : [point.x, y, point.z];
   }
 
@@ -486,17 +503,30 @@ export function bindWorldEditor(
     const primary = drag.before.find(({ ref }) => ref.kind === activeSelection.kind && ref.id === activeSelection.id);
     const dx = primary ? next[0] - primary.position[0] : next[0] - point[0];
     const dz = primary ? next[2] - primary.position[2] : next[2] - point[2];
-    const destinations = drag.before.map(({ ref, position }) => ({
+    let destinations = drag.before.map(({ ref, position }) => ({
       ref, point: [snap(position[0] + dx), position[1], snap(position[2] + dz)] as MapPosition,
     }));
+    try {
+      destinations = destinations.map((item) => {
+        if (item.ref.kind !== "prefab") return item;
+        const placement = target.active.definition.prefabs?.find((p) => p.id === item.ref.id);
+        if (!placement) return item;
+        return { ...item, point: fitWallToTerrain(target.active.definition,
+          target.active.assets.prefabs, { ...placement, position: item.point }).position };
+      });
+    } catch (error) {
+      report(error);
+      return;
+    }
     if (destinations.some((item) => !findTerrainCell(target.active.definition,
       item.point[0], item.point[2]))) return;
     for (const item of destinations) {
       if (item.ref.kind === "practice") practice.move(item.ref.id, item.point);
       else target.active.editor.move(item.ref.kind, item.ref.id, item.point);
     }
-    setNumber("worldEditorX", next[0]);
-    setNumber("worldEditorZ", next[2]);
+    const actual = positionFor(activeSelection);
+    setNumber("worldEditorX", actual?.[0] ?? next[0]);
+    setNumber("worldEditorZ", actual?.[2] ?? next[2]);
     setMarker();
   }, { signal });
   canvas.addEventListener("pointerleave", () => {
