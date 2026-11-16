@@ -153,10 +153,10 @@ export function bindLightingTools(
       fill("lightingLightDarkness", light.shadows.darkness);
       requireElement("lightingRangeField").hidden =
         light.type !== "point" && light.type !== "spot";
-      for (const element of document.querySelectorAll<HTMLElement>(".lighting-direction-field")) {
+      document.querySelectorAll<HTMLElement>(".lighting-direction-field").forEach((element) => {
         element.hidden = light.type !== "directional" && light.type !== "spot" &&
           light.type !== "hemispheric";
-      }
+      });
       requireElement("lightingAngleField").hidden = light.type !== "spot";
       requireElement("lightingExponentField").hidden = light.type !== "spot";
       requireElement("lightingGroundField").hidden = light.type !== "hemispheric";
