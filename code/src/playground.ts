@@ -8,6 +8,7 @@ import { createEnemyScene } from "./enemies/enemyScene";
 import { startEnemyTools } from "./playground/enemyTools";
 import { bindCollisionTools } from "./playground/collisionTools";
 import { bindMapTools } from "./playground/mapTools";
+import { bindLightingTools } from "./playground/lightingTools";
 import { bindWorldEditor } from "./playground/worldEditor";
 import { bindEditorCameraNavigation } from "./playground/editorCameraNavigation";
 import { createMapSystem } from "./world/maps/mapSystem";
@@ -117,6 +118,7 @@ export async function startPlayground(
     },
   });
   bindMapTools(maps, character.root, cameraControls, signal, zoneTransitions);
+  bindLightingTools(scene, maps, character.root, signal);
   bindFloatingTextTools(floatingText, character.root, signal);
   const editorCamera = bindEditorCameraNavigation(scene, cameraControls, character.root,
     () => maps.world?.definition, signal);
