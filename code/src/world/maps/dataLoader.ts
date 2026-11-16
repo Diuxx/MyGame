@@ -1,6 +1,7 @@
 import { mapEnemyCatalogPath, validateMapAssets, validateMapDefinition } from "./validation.ts";
 import type { MapAssets, MapDefinition } from "./types";
 import { loadEnemyDefinitions } from "../../enemies/enemyDefinitions.ts";
+import { parsePrefabCatalog } from "./prefabDefinitions.ts";
 
 const MAPS = {
   playground: "/assets/maps/playground.json",
@@ -9,6 +10,7 @@ const MAPS = {
   "prototype-forest": "/assets/maps/prototype-forest.json",
   "prototype-arena": "/assets/maps/prototype-arena.json",
   "nature-showcase": "/assets/maps/nature-showcase.json",
+  "prototype-inn": "/assets/maps/prototype-inn.json",
 } as const;
 export type MapId = keyof typeof MAPS;
 export const AVAILABLE_MAPS: readonly MapId[] = Object.keys(MAPS) as MapId[];
@@ -61,7 +63,12 @@ export async function loadMapData(id: MapId): Promise<{
   const path = mapEnemyCatalogPath(rawMap);
   const overrides = path ? loadEnemyDefinitions(await fetchJson(path)) : [];
   const enemyCatalog = [...new Map([...defaults, ...overrides].map((enemy) => [enemy.id, enemy])).values()];
-  const map = validateMapDefinition(rawMap, assets, new Set(enemyCatalog.map((enemy) => enemy.id)));
+  const usesPrefabs = !!rawMap && typeof rawMap === "object" && !Array.isArray(rawMap) &&
+    Object.hasOwn(rawMap, "prefabs");
+  const withPrefabs = usesPrefabs
+    ? { ...assets, prefabs: parsePrefabCatalog(await fetchJson("/assets/definitions/blockout-prefabs.json")) }
+    : assets;
+  const map = validateMapDefinition(rawMap, withPrefabs, new Set(enemyCatalog.map((enemy) => enemy.id)));
   if (map.id !== id) throw new Error("Identifiant de map inattendu : " + map.id);
-  return { assets, map, enemyCatalog };
+  return { assets: withPrefabs, map, enemyCatalog };
 }

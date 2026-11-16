@@ -1,6 +1,7 @@
 import type { GroundStep } from "../../combat/bodyCollision.ts";
 import type { MapAssets, MapBounds, MapDefinition, MapPosition } from "./types.ts";
 import { terrainBounds } from "./validation.ts";
+import { rotateLocal } from "./prefabDefinitions.ts";
 
 export type FlatObstacle = {
   x: number;
@@ -49,6 +50,26 @@ export function buildMapObstacles(map: MapDefinition, assets: MapAssets): FlatOb
     result.push(primitive.kind === "box"
       ? { ...bounds, type: "box", width, depth, yaw: primitive.rotationY * Math.PI / 180 }
       : { ...bounds, type: "circle", radius: Math.max(width, depth) / 2 });
+  }
+  for (const placement of map.prefabs ?? []) {
+    const prefab = assets.prefabs?.[placement.prefab];
+    if (!prefab) throw new Error("Prefab introuvable : " + placement.prefab);
+    const radians = placement.rotationY * Math.PI / 180;
+    for (const collider of prefab.colliders) {
+      const offset = rotateLocal(collider.position[0], collider.position[2], radians);
+      const centerY = placement.position[1] + collider.position[1] * placement.scale;
+      const height = (collider.type === "box" ? collider.size[1] : collider.height) * placement.scale;
+      const bounds = {
+        x: placement.position[0] + offset.x * placement.scale,
+        z: placement.position[2] + offset.z * placement.scale,
+        minY: centerY - height / 2,
+        maxY: centerY + height / 2,
+      };
+      result.push(collider.type === "box"
+        ? { ...bounds, type: "box", width: collider.size[0] * placement.scale,
+            depth: collider.size[2] * placement.scale, yaw: radians }
+        : { ...bounds, type: "circle", radius: collider.radius * placement.scale });
+    }
   }
   return result;
 }

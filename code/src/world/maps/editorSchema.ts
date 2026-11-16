@@ -5,8 +5,8 @@ export interface VisualOverride {
   tint?: string;
   scale?: number;
 }
-export type MapEditorKind = "object" | "enemy" | "interaction";
-export type MapPlacementKind = "tile" | "object" | "enemy";
+export type MapEditorKind = "object" | "enemy" | "interaction" | "prefab";
+export type MapPlacementKind = "tile" | "object" | "enemy" | "prefab";
 export type MapEditorTarget = { editorKind: MapEditorKind; editorId: string };
 
 export type InteractionKind = "pickup" | "inspect" | "interact";
