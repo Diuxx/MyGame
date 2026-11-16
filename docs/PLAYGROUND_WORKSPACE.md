@@ -1,0 +1,92 @@
+# Playground Workspace — Édition et test du héros
+
+## Objet
+
+La page `npm run dev-playground` conserve son moteur Babylon.js, son personnage, ses animations, ses maps et ses contrôleurs. Le workspace réorganise les **mêmes éléments HTML existants** autour d'une scène centrale, sans créer de second Playground ou recopier la logique des modules.
+
+L'interface propose :
+
+- **Barre supérieure** : map active, sélection de map, chargement, FPS, debug et commutateur **Édition / Tester le jeu**.
+- **Barre d'outils** : sélection, déplacement, rotation, échelle, snapping, rotation par incréments, annuler/rétablir, copier/coller/couper/supprimer et export JSON.
+- **Explorateur gauche** : onglets **Scène** (hiérarchie et recherche) et **Catalogue** (Prefabs, décors, tuiles, ennemis/cibles).
+- **Inspecteur droit** : propriétés de l'élément sélectionné et outils classés par domaine.
+- **Barre d'état** : map, nombre d'éléments sélectionnés et mode actif.
+
+## Modes
+
+**Édition** : bouton **✎ Édition**. Les contrôles de construction sont visibles. Le héros ne se déplace plus ; les flèches déplacent la caméra selon les règles existantes. Sélectionner un objet dans le monde ou dans l'explorateur affiche ses propriétés en tête de l'inspecteur.
+
+**Tester le jeu** : bouton **▶ Tester le jeu**. Les panneaux d'édition se masquent, le canvas s'agrandit et le HUD ainsi que les contrôles du héros restent disponibles. Le retour en édition conserve la même scène, la map, le personnage, l'équipement et les ennemis. La caméra reprend son suivi habituel à la sortie de l'édition.
+
+**F2** alterne les deux modes lorsque le focus n'est pas dans un formulaire. Le mode Gameplay séparé de Vite (`npm run dev-gameplay`) reste inchangé.
+
+La seule source de vérité est le contrôle historique `worldEditorEnabled`. Le nouveau commutateur déclenche son événement `change` standard : `maps.setEditing`, le contrôleur humain, la caméra et l'IA de ciblage utilisent donc toujours la même logique qu'avant. L'ancienne option « Mode édition de la map » n'est plus affichée une seconde fois.
+
+## Où sont les 12 modules ?
+
+| Espace | Modules déjà existants |
+| --- | --- |
+| **Monde** | Éditeur de monde, Maps 3D modulaires, Caméra |
+| **Héros** | Animations de déplacement, Animations d'action, Modèle chargé, Commandes |
+| **Combat** | Target Lock, Collisions et hitboxes, Zone d'attaque / Portée |
+| **Ennemis** | Gestion des ennemis |
+| **Effets** | Floating Text |
+| **Debug** | Commandes existantes d'affichage de hitbox du héros, hurtboxes/colliders ennemis, zone d'attaque, colliders de map, aggro, spawns et grille |
+
+En mode test, le bouton **Debug** ouvre un petit panneau flottant contenant les mêmes commandes de visualisation. Les autres réglages restent accessibles en édition.
+
+## Doublons d'interface
+
+Les raccourcis rapides historiques et les champs détaillés correspondaient déjà à un seul état :
+
+- `worldEditorEnabled` / `worldEditorQuickToggle` → un seul commutateur de mode visible.
+- `heroHitboxVisible` / `heroHitboxQuickToggle` → commande principale dans **Debug**.
+- `attackHitboxVisible` / `attackHitboxQuickToggle` → commande principale dans **Debug**.
+
+Les contrôles rapides historiques restent dans le DOM, masqués, pour conserver les synchronisations et écouteurs existants. Il n'y a qu'un seul composant visible par fonction. Les options distinctes (snapping/affichage de grille, collider/hurtbox/attaque) ne sont pas fusionnées.
+
+## Choisir une map et un objet
+
+Le sélecteur de map et le bouton **Charger** de la barre supérieure sont les contrôles `mapSelect` et `mapLoad` d'origine. Les autres actions de map (retour Playground, respawn du héros, progression et affichages de zone) restent dans **Monde → Maps et zones** et **Debug**.
+
+L'explorateur de scène reflète les données de la map active. Pour les éléments déjà éditables (Prefabs, décors, ennemis persistants et interactions), cliquer sur une ligne sélectionne l'objet via `worldEditor.selectObject` ; Shift+Clic utilise la sélection multiple. Les primitives de zone, les sorties et les points d'apparition sont listés à titre informatif lorsqu'ils ne disposent pas encore d'outil de sélection directe. Les layers verrouillés ou invisibles restent protégés par la même règle que les clics dans la scène.
+
+La recherche de l'explorateur filtre les noms et identifiants. L'onglet Catalogue conserve **les mêmes boutons de création** que l'ancien éditeur.
+
+## Architecture
+
+| Fichier | Responsabilité |
+| --- | --- |
+| `code/src/playground/workspaceModules.ts` | Déclaration unique des domaines, 12 modules et commutateur de mode |
+| `code/src/playground/workspace.ts` | Construction de la disposition et déplacement des nœuds DOM existants |
+| `code/src/playground/worldEditor.ts` | Exposition minimale de la sélection à l'explorateur |
+| `code/src/playground.ts` | Assemblage au démarrage, sans modifier les règles de gameplay |
+| `code/src/style.css` | Workspace desktop, panneaux adaptés aux écrans plus petits et scène élargie en test |
+
+**Ne pas recopier les inputs dans une nouvelle interface** : les écouteurs, valeurs et états sont conservés parce que les nœuds d'origine changent uniquement de parent.
+
+Le registre des modules est vérifié par les tests. Le changement de mode est testé pour garantir une seule notification `change` par transition réelle. Un `ResizeObserver` actualise le moteur Babylon.js lorsque la taille de la scène change.
+
+## Vérification manuelle recommandée
+
+1. Démarrer `cd code && npm run dev-playground`.
+2. Vérifier que les six espaces de travail ouvrent les 12 modules existants.
+3. Sélectionner une map, la charger et revenir à la map Playground.
+4. Dans **Monde**, sélectionner un mur depuis la scène et vérifier ses dimensions dans l'inspecteur.
+5. Dans **Catalogue**, créer un Prefab, le déplacer, effectuer Undo/Redo et exporter le JSON.
+6. Cliquer sur **Tester le jeu** : vérifier ZQSD, course, attaque, esquive et Target Lock sans recharger la scène.
+7. Activer **Debug** en mode test : vérifier la hitbox du héros, les zones d'attaque et les colliders.
+8. Revenir en édition et vérifier le déplacement libre de la caméra avec les flèches.
+9. Vérifier les import/export JSON des modules d'animation, de ciblage et de Floating Text.
+10. Vérifier la navigation sur écran étroit : explorer et inspecteur repliables.
+
+Ces tests visuels doivent être exécutés dans un navigateur pour être déclarés réussis.
+
+## Limites
+
+- L'interface d'administration est optimisée pour le desktop ; sur un écran étroit, l'explorateur et l'inspecteur deviennent des panneaux superposés, sans nouvelle UI tactile de manipulation 3D.
+- Le navigateur de scène ne rend sélectionnables que les types déjà pris en charge par le World Editor ; il n'introduit pas un nouvel éditeur de primitives, spawns ou sorties.
+- Les dispositions et tailles des panneaux ne sont pas encore personnalisables et persistées.
+- Les contrôles de debug de la scène sont regroupés, sans fusionner leurs règles métier distinctes.
+
+Le présent document est modifiable. Les références `AGENTS.md`, `docs/PROJECT.md` et `docs/PROJETCT.md` sont immuables et n'ont pas été modifiées.
