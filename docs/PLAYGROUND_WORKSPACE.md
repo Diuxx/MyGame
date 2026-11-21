@@ -44,7 +44,7 @@ En mode test, le bouton **Debug** ouvre un petit panneau flottant contenant les 
 - Sur desktop, les propriétés et le panneau Outils peuvent être ouverts simultanément. Sur largeur inférieure à 760 px, les deux panneaux superposés sont mutuellement exclusifs, mais leurs états restent indépendants.
 - Fermer les outils n'efface pas le dernier module affiché. Le bouton **Outils** ou la navigation latérale le rouvre.
 - L'outil Éclairage conserve sa sélection de lumière locale ; la sélection de Prefab/ennemi/interactions demeure gérée par le World Editor. Les ennemis temporaires de test sont toujours gérés par leurs propres contrôles.
-- Les panneaux d'édition disparaissent en mode **Tester le jeu**. Au retour en édition, le panneau ouvert avant le test retrouve son état si l'entité sélectionnée reste valide.
+- Les panneaux d'édition disparaissent en mode **Tester le jeu**. Au retour en édition, l'outil global et l'état des panneaux sont restaurés. Le World Editor continue d'effacer sa sélection lors du changement de mode, conformément au comportement existant.
 
 ## Doublons d'interface
 
