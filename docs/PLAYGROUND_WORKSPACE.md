@@ -8,7 +8,7 @@ L'interface propose :
 
 - **Barre supérieure** : map active, sélection de map, chargement, FPS, debug et commutateur **Édition / Tester le jeu**.
 - **Barre d'outils** : sélection, déplacement, rotation, échelle, snapping, rotation par incréments, annuler/rétablir, copier/coller/couper/supprimer et export JSON.
-- **Explorateur gauche** : onglets **Scène** (hiérarchie et recherche) et **Catalogue** (Prefabs, décors, tuiles, ennemis/cibles).
+- **Explorateur gauche** : entrée dédiée dans la barre d'icônes, **fermée par défaut**, activable par clic et refermable par un second clic ou par la croix du panneau. À l'ouverture, on retrouve les onglets **Scène** (hiérarchie et recherche) et **Catalogue** (Prefabs, décors, tuiles, ennemis/cibles). Fermé, il libère sa colonne et agrandit le viewport ; sous 1020 px, il s'affiche en panneau flottant.
 - **Inspecteur droit** : propriétés de l'objet sélectionné, indépendantes de la navigation entre modules.
 - **Panneau Outils global** : modules classés par domaine, accessible depuis la barre supérieure ou la navigation latérale. Il peut être fermé sans effacer son contexte.
 - **Barre d'état** : map, nombre d'éléments sélectionnés et mode actif.
@@ -127,7 +127,7 @@ Le registre des modules est vérifié par les tests. Le changement de mode est t
 7. Activer **Debug** en mode test : vérifier la hitbox du héros, les zones d'attaque et les colliders.
 8. Revenir en édition et vérifier le déplacement libre de la caméra avec les flèches.
 9. Vérifier les imports/exports JSON des modules d'animation, de ciblage et de Floating Text. Replier/déplier les sections Avancé et confirmer la conservation des valeurs et événements.
-10. Vérifier la navigation sur écran étroit : explorateur, inspecteur et panneau Outils repliables, sans superposition simultanée de ces deux derniers.
+10. Vérifier le menu Explorateur dans la barre d'icônes : fermé au démarrage, ouverture par clic, fermeture par second clic ou croix, restauration des onglets Scène/Catalogue et récupération de la largeur par le canvas. Sur écran étroit, vérifier son ouverture en overlay et l'indépendance de l'inspecteur et des Outils.
 11. Supprimer l'objet sélectionné, changer de map et vérifier que l'inspecteur présente l'état vide sans affichage d'ancienne donnée.
 12. Fermer le panneau Outils, revenir en édition depuis **Tester le jeu**, puis restaurer le dernier domaine et module utilisés.
 13. Modifier un objet et une lumière, enregistrer un brouillon local, exporter la map et confirmer les messages distincts dans le navigateur.
