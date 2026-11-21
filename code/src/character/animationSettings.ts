@@ -13,7 +13,7 @@ export interface AttackComboSettings {
   inputBufferMs: number;
   resetAfterMs: number;
   chainWindow: Window;
-  followUp: { startProgress: number; blendSeconds: number };
+  followUp: { animation: string; startProgress: number; blendSeconds: number };
 }
 const CANCEL_KEYS = ["runFrom", "attackFrom", "dodgeFrom"] as const;
 type Definition = AnimationSetting & {
@@ -134,7 +134,7 @@ export const HERO_ANIMATIONS = {
   idle: requireDefinition("idle", "movement"),
   dodge: requireDefinition("dodge", "action", "dodge"),
   attack: requireDefinition("attack", "action", "impact"),
-  jump: requireDefinition("jump", "action"),
+  attackFollowUp: requireDefinition("attack-2", "action", "impact"),
   stop: requireDefinition("stop", "action"),
   dying: requireDefinition("dying", "lifecycle"),
 };
@@ -161,6 +161,13 @@ function validateComboSettings(value: unknown, impact: AttackImpact, field: stri
   const input = record(value);
   const chainWindow = animationWindow(input.chainWindow as Window, field + ".chainWindow");
   const followUp = record(input.followUp);
+  const followUpAnimation = followUp.animation;
+  const followUpDefinition = animationManifest.animations.find(({ name }) => name === followUpAnimation);
+  const followUpSettings = (animationManifest.settings as Record<string, { impact?: unknown }>)[String(followUpAnimation)];
+  if (typeof followUpAnimation !== "string" || followUpDefinition?.category !== "action" ||
+      !followUpSettings?.impact) {
+    throw new Error(`ANIMATIONS.json · ${field}.followUp.animation : clip d’action avec impact attendu.`);
+  }
   const maxChain = animationNumber(input.maxChain, field + ".maxChain", 1, 6);
   if (!Number.isInteger(maxChain)) throw new Error(`ANIMATIONS.json · ${field}.maxChain : entier attendu.`);
   const inputBufferMs = animationNumber(input.inputBufferMs, field + ".inputBufferMs", 0, 500);
@@ -177,7 +184,7 @@ function validateComboSettings(value: unknown, impact: AttackImpact, field: stri
   return {
     enabled: animationFlag(input.enabled, field + ".enabled"),
     maxChain, inputBufferMs, resetAfterMs, chainWindow,
-    followUp: { startProgress, blendSeconds },
+    followUp: { animation: followUpAnimation, startProgress, blendSeconds },
   };
 }
 
@@ -193,6 +200,7 @@ function comboSettings(value: unknown, defaults: AttackComboSettings, impact: At
     resetAfterMs: number(source.resetAfterMs, defaults.resetAfterMs, ANIMATION_RANGES.comboReset),
     chainWindow: { from: Math.max(chainWindow.from, finalImpactUntil), until: Math.max(chainWindow.until, chainWindow.from, finalImpactUntil) },
     followUp: {
+      animation: defaults.followUp.animation,
       startProgress: Math.min(number(followUp.startProgress, defaults.followUp.startProgress, ANIMATION_RANGES.progress), Math.max(0, impact.from - 0.01)),
       blendSeconds: number(followUp.blendSeconds, defaults.followUp.blendSeconds, ANIMATION_RANGES.blend),
     },
@@ -357,11 +365,14 @@ export function parseAnimationManifest(value: unknown): {
         throw new Error(`ANIMATIONS.json · ${field}.combo : non supporté.`);
       }
       const impact = record(entry.impact);
-      validateComboSettings(entry.combo, {
+      const combo = validateComboSettings(entry.combo, {
         ...animationWindow(impact as Window, field + ".impact"),
         doubleHit: animationFlag(impact.doubleHit, field + ".impact.doubleHit"),
         second: animationWindow(impact.second as Window, field + ".impact.second"),
       }, field + ".combo");
+      if (combo.followUp.animation !== definition.combo.followUp.animation) {
+        throw new Error(`ANIMATIONS.json · ${field}.combo.followUp.animation : clip incompatible.`);
+      }
     }
   }
   const transitionValues = record(input.transitions);

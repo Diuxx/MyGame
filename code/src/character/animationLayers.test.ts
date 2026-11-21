@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test, { type TestContext } from "node:test";
 import { Animation, AnimationGroup, NullEngine, Scene, TransformNode } from "@babylonjs/core";
 import { allowsLocomotion, attackLayerWeight, isUpperBodyBone } from "./animationLayers.ts";
-import { AnimationPlayer } from "./animations.ts";
+import { AnimationPlayer, ATTACK_FOLLOW_UP_ANIMATION } from "./animations.ts";
 import { createAnimationSettings, effectivePlaybackSpeed, getAnimationDefinition, HERO_ANIMATIONS } from "./animationSettings.ts";
 import { HERO_TUNING } from "./heroTuning.ts";
 import { createCharacterController } from "./characterController.ts";
@@ -13,6 +13,7 @@ test("upper-body mask includes the spine, arms, hands and fingers", () => {
     "mixamorig:Neck", "mixamorig:Head", "mixamorig:LeftShoulder",
     "mixamorig:RightArm", "mixamorig:LeftForeArm",
     "mixamorig:RightHand", "mixamorig:LeftHandThumb1",
+    "LeftThumb1", "RightHandIndex1", "head_end", "headfront",
   ]) assert.equal(isUpperBodyBone(name), true, name);
 });
 
@@ -36,6 +37,7 @@ test("attack blending ramps in, remains full, then fades before the clip ends", 
 test("light attacks permit movement but dodge and full-body previews do not", () => {
   assert.equal(allowsLocomotion(), true);
   assert.equal(allowsLocomotion("attack"), HERO_TUNING.attack.allowMovement);
+  assert.equal(allowsLocomotion("skill"), false);
   assert.equal(allowsLocomotion("dodge"), false);
   assert.equal(allowsLocomotion("preview"), false);
 });
@@ -45,7 +47,7 @@ function createPlayer(t: TestContext) {
   const scene = new Scene(engine);
   t.after(() => engine.dispose());
   const bones = ["mixamorig:Spine", "mixamorig:LeftUpLeg"].map((name) => new TransformNode(name, scene));
-  const names = new Set(["idle", "walk", "run", "stop", "attack", "dodge", "dying", "combat-stance", HERO_TUNING.blending.combatLegsClip]);
+  const names = new Set(["idle", "walk", "run", "stop", "attack", ATTACK_FOLLOW_UP_ANIMATION, "dodge", "dying", "combat-stance", "skill-2-power", "skill-3-kick", HERO_TUNING.blending.combatLegsClip]);
   const clips = [...names].map((name) => {
     const group = new AnimationGroup(name, scene);
     for (const bone of bones) {
@@ -210,17 +212,18 @@ test("combo follow-up starts at the configured frame while fading out the first 
   assert.equal(outgoing.isStarted, false);
 });
 
-test("a third chained slash can reuse the first layer after the first fade", (t) => {
+test("the follow-up plays its own layers while the first punch fades out", (t) => {
   const { player, layer } = createPlayer(t);
   player.play("attack", true, true);
   player.updateLocomotion(undefined, 0.2);
   player.finishAction(0.08);
-  player.play("attack", true, true, 0.25, 0.08);
-  player.updateLocomotion(undefined, 0.2);
-  player.finishAction(0.08);
-  player.play("attack", true, true, 0.25, 0.08);
+  player.play(ATTACK_FOLLOW_UP_ANIMATION, true, true, 0, 0.08);
+  assert.equal(layer("attack-2-upper").isStarted, true);
   assert.equal(layer("attack-upper").isStarted, true);
-  assert.equal(layer("attack-upper-combo").isStarted, true);
+  assert.equal(player.activeName, ATTACK_FOLLOW_UP_ANIMATION);
+  player.play("dying");
+  assert.equal(layer("attack-2-upper").isStarted, false);
+  assert.equal(layer("attack-upper").isStarted, false);
 });
 
 /**
@@ -259,6 +262,44 @@ function createManualInputFixture(t: TestContext) {
   }
   return { canvas, key, pointer };
 }
+
+test("a click in punch 1's chain window starts punch 2, with no third attack", (t) => {
+  const { player, layer, scene } = createPlayer(t);
+  const { canvas } = createManualInputFixture(t);
+  const controller = createCharacterController(
+    scene, canvas, new TransformNode("hero", scene), 10,
+    { follow() {}, alpha: 0 }, player, new AbortController().signal,
+  );
+  controller.attack();
+  assert.equal(controller.canUseFollowUp, false);
+  const firstPunch = layer("attack-upper");
+  firstPunch.goToFrame(firstPunch.from + (firstPunch.to - firstPunch.from) * 0.75);
+  assert.equal(controller.canUseFollowUp, true);
+  controller.attack();
+
+  assert.equal(player.activeName, ATTACK_FOLLOW_UP_ANIMATION);
+  assert.equal(controller.canUseFollowUp, false);
+  assert.equal(layer("attack-2-upper").isStarted, true);
+  controller.attack();
+  assert.equal(player.activeName, ATTACK_FOLLOW_UP_ANIMATION);
+});
+
+test("A and E trigger the skill 2 and skill 3 animations", (t) => {
+  const { player, scene } = createPlayer(t);
+  const { canvas, key } = createManualInputFixture(t);
+  const controller = createCharacterController(
+    scene, canvas, new TransformNode("hero", scene), 10,
+    { follow() {}, alpha: 0 }, player, new AbortController().signal,
+  );
+
+  key("a", "keydown");
+  assert.equal(player.activeName, "skill-2-power");
+  controller.interruptForZoneChange();
+  key("a", "keyup");
+
+  key("e", "keydown");
+  assert.equal(player.activeName, "skill-3-kick");
+});
 
 test("normal ZQSD follows camera, keeps last facing and attacks without mouse aim", (t) => {
   const { player, scene } = createPlayer(t);

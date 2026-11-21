@@ -12,7 +12,7 @@ export function attackLayerWeight(elapsed: number, remaining: number, fadeSecond
   return Math.max(0, Math.min(1, elapsed / fadeSeconds, remaining / fadeSeconds));
 }
 
-export type HeroActionKind = "attack" | "dodge" | "preview" | "stop";
+export type HeroActionKind = "attack" | "skill" | "dodge" | "preview" | "stop";
 
 /** Only a light attack allows player-directed movement; dodge owns its trajectory. */
 export function allowsLocomotion(kind?: HeroActionKind): boolean {

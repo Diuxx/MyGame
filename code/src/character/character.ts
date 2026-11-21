@@ -43,15 +43,11 @@ function getWorldBounds(meshes: AbstractMesh[]): { minimum: Vector3; maximum: Ve
   return { minimum, maximum };
 }
 
-/**
- * Import the Meshy GLB as-is. Its Armature has scale 0.01; we compute the
- * displayed size from its real bounds rather than assuming its export units.
- * Parenting the imported root also preserves its skeleton and animations.
- */
+/** Normalize the imported GLB from its mesh bounds while preserving its rig. */
 export async function loadCharacter(scene: Scene): Promise<LoadedCharacter> {
   const result = await ImportMeshAsync(CHARACTER_URL, scene, importOptions);
 
-  const hips = result.transformNodes.find(({ name }) => name === "mixamorig:Hips");
+  const hips = result.transformNodes.find(({ name }) => name === "Hips" || name === "mixamorig:Hips");
   const skinnedMesh = result.meshes.find((mesh) => mesh.skeleton?.bones.some((bone) => bone.getTransformNode() === hips));
   if (!hips || !skinnedMesh?.skeleton) {
     throw new Error(`Squelette incomplet dans ${CHARACTER_URL} : bassin introuvable.`);

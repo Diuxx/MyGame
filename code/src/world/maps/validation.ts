@@ -5,10 +5,11 @@ import { parseMapEncounters } from "../../enemies/mapEnemyConfig.ts";
 import { parseMapExits, parseMapPrimitives, parsePrimitiveGround, parseTerrainVisual } from "./zoneContent.ts";
 import { parsePrefabPlacements } from "./prefabDefinitions.ts";
 import type {
-  MapAssets, MapCollider, MapDefinition, MapPosition, MapBounds,
+  MapAssets, MapCollider, MapDefinition, MapPosition, MapBounds, ObjectSpotLight,
 } from "./types.ts";
 
 const IDENTIFIER = /^[a-z0-9][a-z0-9_-]{0,79}$/i;
+const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 const MODEL_PATH = /^\/assets\/(?!.*(?:\.\.|\/\/|\\|[?#]))[a-z0-9_./-]+\.(?:glb|gltf)$/i;
 const MAX_TILES = 4096;
 export const MAX_MAP_OBJECTS = 256;
@@ -75,6 +76,27 @@ function collider(value: unknown, label: string): MapCollider {
   throw new Error(label + " : collider non pris en charge (box ou cylinder seulement).");
 }
 
+export function parseObjectSpotLight(value: unknown, label: string): ObjectSpotLight {
+  const light = record(value, label);
+  const positionValue = position(light.position, label + ".position");
+  const direction = position(light.direction, label + ".direction");
+  if (Math.hypot(...direction) < 0.001) {
+    throw new Error(label + ".direction : direction non nulle attendue.");
+  }
+  if (typeof light.color !== "string" || !HEX_COLOR.test(light.color)) {
+    throw new Error(label + ".color : couleur #RRGGBB attendue.");
+  }
+  return {
+    position: positionValue,
+    direction,
+    color: light.color,
+    intensity: finite(light.intensity, label + ".intensity", 0, 20),
+    range: finite(light.range, label + ".range", 0.1, 200),
+    angle: finite(light.angle, label + ".angle", 5, 170),
+    exponent: finite(light.exponent, label + ".exponent", 0, 32),
+  };
+}
+
 function versions(value: unknown, label: string): Record<string, unknown> {
   const item = record(value, label);
   if (item.version !== 1) throw new Error(label + " : version JSON non prise en charge (1 attendue).");
@@ -115,6 +137,9 @@ export function validateMapAssets(value: unknown): MapAssets {
       model: modelPath(item.model, id),
       blocksNavigation: item.blocksNavigation,
       colliders: rawColliders.map((shape, index) => collider(shape, id + ".colliders[" + index + "]")),
+      ...(item.spotLight === undefined ? {} : {
+        spotLight: parseObjectSpotLight(item.spotLight, id + ".spotLight"),
+      }),
     };
   }
   return { version: 1, tiles, objects };
@@ -195,11 +220,18 @@ export function validateMapDefinition(
     if (typeof item.asset !== "string" || !Object.hasOwn(assets.objects, item.asset)) {
       throw new Error("Asset d'objet inconnu : " + String(item.asset));
     }
+    const asset = assets.objects[item.asset];
+    if (item.spotLight !== undefined && !asset.spotLight) {
+      throw new Error(objectId + ".spotLight : cet asset ne définit pas de lumière locale.");
+    }
     return {
       id: objectId,
       asset: item.asset,
       position: position(item.position, objectId + ".position"),
       rotationY: finite(item.rotationY, objectId + ".rotationY"),
+      ...(item.spotLight === undefined ? {} : {
+        spotLight: parseObjectSpotLight(item.spotLight, objectId + ".spotLight"),
+      }),
       ...(item.visual === undefined ? {} : { visual: parseVisualOverride(item.visual) }),
       ...(item.layer === undefined ? {} : {
         layer: identifier(item.layer, objectId + ".layer"),

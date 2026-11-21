@@ -46,11 +46,22 @@
               <p id="heroWeaponName" class="hero-hud-weapon-name">Sans arme</p>
             </div>
           </div>
-          <div class="hero-hud-spell" role="group" aria-label="Sorts et statistiques">
-            <div class="hero-hud-spell-slot" data-spell="spell1" role="img" aria-label="Spell 1"></div>
-            <div class="hero-hud-spell-slot" data-spell="spell2" role="img" aria-label="Spell 2"></div>
-            <div class="hero-hud-spell-slot" data-spell="spell3" role="img" aria-label="Spell 3"></div>
-            <div class="hero-hud-spell-slot" data-spell="spell4" role="img" aria-label="Spell 4"></div>
+          <div class="hero-hud-spell" role="group" aria-label="Compétences et statistiques">
+            <button class="hero-hud-spell-slot" data-spell="spell1" type="button" aria-label="Poing 1 — clic gauche" title="Poing 1 — clic gauche">
+              <img class="hero-hud-spell-icon" src="/assets/skills/punch/skill-1-punch-1.png" alt="" />
+              <kbd class="hero-hud-key">Clic</kbd>
+            </button>
+            <button class="hero-hud-spell-slot" data-spell="spell2" type="button" aria-label="Puissance — A" title="Puissance — A">
+              <img class="hero-hud-spell-icon" src="/assets/skills/punch/skill-2-power.png" alt="" />
+              <kbd class="hero-hud-key" data-key-hint="spell2">A</kbd>
+            </button>
+            <button class="hero-hud-spell-slot" data-spell="spell3" type="button" aria-label="Coup de pied — E" title="Coup de pied — E">
+              <img class="hero-hud-spell-icon" src="/assets/skills/punch/skill-3-kick.png" alt="" />
+              <kbd class="hero-hud-key" data-key-hint="spell3">E</kbd>
+            </button>
+            <div class="hero-hud-spell-slot" data-spell="spell4" role="img" aria-label="Emplacement de compétence 4 — à configurer">
+              <kbd class="hero-hud-key" data-key-hint="spell4">1</kbd>
+            </div>
             <button id="heroStatsToggle" class="hero-hud-stats-toggle" type="button" aria-controls="heroBaseStats" aria-expanded="false">Stats</button>
           </div>
           <dl id="heroBaseStats" class="hero-hud-stats" aria-label="Statistiques de base" hidden></dl>
@@ -156,11 +167,11 @@
             <label>Interagir<select id="keyInteract"></select></label>
             <label>Cible suivante<select id="keyNextTarget"></select></label>
             <label>Annuler la cible<select id="keyCancelTarget"></select></label>
-            <label>Spell 1<select id="keySpell1"></select></label>
-            <label>Spell 2<select id="keySpell2"></select></label>
-            <label>Spell 3<select id="keySpell3"></select></label>
-            <label>Spell 4<select id="keySpell4"></select></label>
+            <label>Compétence 2<select id="keySpell2"></select></label>
+            <label>Compétence 3<select id="keySpell3"></select></label>
+            <label>Emplacement 4 (placeholder)<select id="keySpell4"></select></label>
           </div>
+          <p class="micro">Compétence 1 : clic gauche.</p>
           <p class="micro">Sur la scène 3D, molette vers le haut pour zoomer et vers le bas pour dézoomer.</p>
           <button id="resetBindings" class="secondary wide" type="button">Rétablir les touches par défaut</button>
           <p id="bindingsStatus" class="micro" role="status" hidden></p>
@@ -312,13 +323,13 @@
           <select id="mapSelect"></select>
           <div class="enemy-fields">
             <button id="mapLoad" class="secondary" type="button">Charger / remplacer</button>
-            <button id="mapUnload" class="secondary" type="button">Retour Playground</button>
+            <button id="mapUnload" class="secondary" type="button">Retour à la map de départ</button>
           </div>
           <button id="mapPlaceHero" class="secondary wide" type="button">Placer le héros au spawn</button>
           <label class="grid-toggle"><input id="mapShowColliders" type="checkbox" /> Afficher les colliders de la map (jaune)</label>
           <label class="grid-toggle"><input id="mapShowAggro" type="checkbox" /> Afficher les zones d'aggro des ennemis</label>
            <label class="grid-toggle"><input id="mapShowZonePoints" type="checkbox" /> Afficher les spawns de zone</label>
-           <p class="animation-note">Map active : <strong id="mapActiveId">playground</strong></p>
+           <p class="animation-note">Map active : <strong id="mapActiveId">prototype-inn</strong></p>
           <button id="mapResetProgress" class="secondary wide" type="button">Réinitialiser les ennemis et boss</button>
           <p id="mapEnemyCount" class="animation-note"></p>
           <p class="animation-note">Les modèles GLB manquants sont remplacés par leur forme de collision avec leur nom. Les maps se trouvent dans public/assets/maps.</p>
@@ -454,6 +465,23 @@
                 <label>Hauteur<input id="worldEditorColliderHeight" type="number" min="0.01" max="100" step="0.1" /></label>
                 <label>Profondeur<input id="worldEditorColliderDepth" type="number" min="0.01" max="100" step="0.1" /></label>
               </div>
+              <fieldset id="worldEditorObjectSpotLightFields" hidden>
+                <legend>Lumière locale</legend>
+                <p class="animation-note">Réglage propre à cette instance. Les nouvelles poses gardent le défaut de l'asset.</p>
+                <div class="lighting-grid">
+                  <label>Position locale X<input id="worldEditorSpotLightPositionX" type="number" step="0.05" /></label>
+                  <label>Position locale Y<input id="worldEditorSpotLightPositionY" type="number" step="0.05" /></label>
+                  <label>Position locale Z<input id="worldEditorSpotLightPositionZ" type="number" step="0.05" /></label>
+                  <label>Couleur<input id="worldEditorSpotLightColor" type="color" /></label>
+                  <label>Direction X<input id="worldEditorSpotLightDirectionX" type="number" min="-1" max="1" step="0.1" /></label>
+                  <label>Direction Y<input id="worldEditorSpotLightDirectionY" type="number" min="-1" max="1" step="0.1" /></label>
+                  <label>Direction Z<input id="worldEditorSpotLightDirectionZ" type="number" min="-1" max="1" step="0.1" /></label>
+                  <label>Intensité<input id="worldEditorSpotLightIntensity" type="number" min="0" max="20" step="0.1" /></label>
+                  <label>Portée<input id="worldEditorSpotLightRange" type="number" min="0.1" max="200" step="0.1" /></label>
+                  <label>Ouverture (°)<input id="worldEditorSpotLightAngle" type="number" min="5" max="170" step="1" /></label>
+                  <label>Exposant (diffusion)<input id="worldEditorSpotLightExponent" type="number" min="0" max="32" step="0.1" /></label>
+                </div>
+              </fieldset>
             </fieldset>
             <fieldset id="worldEditorEnemyFields">
               <div class="enemy-fields">

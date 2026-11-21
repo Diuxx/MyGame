@@ -61,9 +61,9 @@ async function start(): Promise<void> {
       const { shadows, lighting } = createGameplayEnvironment(scene, character.root);
       const lifecycle = createHeroLifecycle(character.root, camera, animationPlayer, heroState.stats.maxHealth);
       const { vitals } = lifecycle;
-      const hud = createHeroHud(signal, heroState.baseStats);
-      hud.setEquipment(heroState.equipment.mainHand);
       let controller: ReturnType<typeof createCharacterController> | undefined;
+      const hud = createHeroHud(signal, heroState.baseStats, (slot) => controller?.useSpell(slot));
+      hud.setEquipment(heroState.equipment.mainHand);
       let targetLock: ReturnType<typeof createTargetLockSystem> | undefined;
       const maps = createMapSystem(scene, {
         hero: character.root, shadows,
@@ -109,7 +109,7 @@ async function start(): Promise<void> {
         (start, step) => maps.active?.resolveMovement(start, step, 0.4) ?? step,
         () => vitals.isAlive && !transitions.isBusy,
         (actionId) => {
-          hud.flashSpell(actionId);
+          hud.flashSpell(actionId === "attack" ? "spell1" : actionId);
           floatingText.showAction('hero', actionId, character.root);
         }, transitions.interact);
       controller.setTargetingProvider(() => targetLock?.motion);
@@ -120,6 +120,7 @@ async function start(): Promise<void> {
       controller.setTargetClickHandler(createTargetClickHandler(scene, canvas, targetLock));
       scene.onBeforeRenderObservable.add(() => {
         transitions.update();
+        hud.setFollowUpAvailable(controller?.canUseFollowUp ?? false);
         lifecycle.update(scene.getEngine().getDeltaTime() / 1000, controller,
           maps.active?.definition.spawnPoints.find((entry) => entry.type === "player"));
         hud.refresh(vitals);

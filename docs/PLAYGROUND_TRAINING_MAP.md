@@ -1,6 +1,6 @@
-# Playground — carte d'entraînement par défaut
+# Playground — ancienne carte d'entraînement
 
-Au lancement de `npm run dev-playground`, le système charge désormais **la map `playground`**, et non une scène avec cibles injectées automatiquement dans `enemyTools`.
+La map `playground` est une ancienne carte d'entraînement conservée comme définition interne. Le Playground démarre sur `prototype-inn`; `playground` n'est plus proposée dans le sélecteur.
 
 ## Contenu initial
 
@@ -10,6 +10,7 @@ Au lancement de `npm run dev-playground`, le système charge désormais **la map
 - Une cible en bois au centre à `[0,0,0]` : `target-wood`, statique, immortelle et régénérante, issue du catalogue actuel
 - Deux gobelins côte à côte à `[-9,0,11]` et `[-5,0,11]`
 - Un gobelin isolé à `[15,0,9]`
+- Un tabouret en bois facetté à `[6,0,-8]`, utilisé pour vérifier le nouvel asset dans la map
 
 Les trois gobelins utilisent **l'archétype `goblin` existant** et ses animations/GLB. Leur IA garde leur position jusqu'à détection du héros et ils réapparaissent après dix secondes. Ils restent modifiables dans l'éditeur de monde grâce à `enemySpawns` de la map.
 
@@ -18,7 +19,7 @@ La texture du sol est générée une seule fois par map via `DynamicTexture` (mo
 ## Outils conservés
 
 - `Gestion des ennemis` peut toujours **créer manuellement** une cible de test. En revanche, il n'instancie plus ses trois modèles par défaut.
-- `Maps 3D modulaires` permet toujours de passer sur `dojo`, `forest`, `prototype-forest` et `prototype-arena`. Le bouton « Retour Playground » recharge la map d'entraînement.
+- `Maps 3D modulaires` permet de passer sur `dojo`, `forest`, `prototype-forest` et `prototype-inn`. Les entrées `playground`, `prototype-arena` et `nature-showcase` sont masquées du sélecteur; l'arène prototype reste accessible par les portails de la forêt. Le bouton de retour recharge `prototype-inn`.
 - Les outils de collision, hitboxes, édition des ennemis de map, contrôle de ciblage et HUD restent disponibles.
 
 ## Fichiers
@@ -28,18 +29,12 @@ La texture du sol est générée une seule fois par map via `DynamicTexture` (mo
 - `code/src/playground/enemyTools.ts` : suppression des spawns automatiques legacy.
 - `code/src/world/maps/zoneScene.ts` : texture procédurale optionnelle.
 - `code/src/world/maps/zoneContent.ts` : validation de l'option `pattern`.
-- `code/src/playground/mapTools.ts` : choix de la map et retour au Playground.
+- `code/src/playground/mapTools.ts` : choix de la map et retour à `prototype-inn`.
 
 Ne pas modifier `AGENTS.md`, `docs/PROJECT.md` ou `docs/PROJETCT.md` lors de futurs ajustements.
 
-## Essai
+## Vérification
 
-```bash
-cd code
-npm ci
-npm run dev-playground
-```
+La map `playground` n'est pas destinée à un essai manuel depuis le sélecteur. Les tests automatisés existants vérifient toujours sa structure et la composition de sa simulation.
 
-À l'ouverture, une cible en bois et trois gobelins doivent être visibles (les gobelins au nord du cercle d'entraînement). La map peut être exportée depuis l'éditeur, puis rechargée.
-
-Les tests automatisés vérifient la structure des données et la composition de la simulation. L'apparence en moteur et la performance sur mobile demandent encore un essai réel en navigateur.
+L'apparence en moteur et la performance sur mobile demandent un essai réel en navigateur pour les maps effectivement utilisées.

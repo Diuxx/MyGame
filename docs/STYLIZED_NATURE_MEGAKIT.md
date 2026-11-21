@@ -1,11 +1,11 @@
 # Stylized Nature MegaKit — map de démonstration
 
 Cette intégration conserve le fonctionnement actuel des maps JSON, du registre de modèles et du Playground.
-La nouvelle zone **nature-showcase** ne remplace aucune map existante.
+La map de démonstration reste dans le projet, mais elle est masquée du sélecteur du Playground. Les modèles et leurs entrées au catalogue restent réutilisables sur les maps existantes.
 
 ## Installer le pack 3D
 
-Le dépôt contient les références des modèles, la map et un importateur, mais pas les 47 Mo de
+Le dépôt contient les références des modèles et un importateur, mais pas les 47 Mo de
 ressources du pack, qui proviennent de l'archive de l'utilisateur. Installer localement la version
 **Stylized Nature MegaKit [Standard]** (Quaternius) :
 
@@ -39,18 +39,12 @@ du dépôt ; son arborescence commence par `code/public/assets/models/nature-meg
 ```bash
 cd code
 npm ci
-npm run dev-playground
-```
-
-Dans le panneau **Maps 3D modulaires**, choisir **Nature — Forêt stylisée**, puis
-**Charger / remplacer**. Le héros apparaît sur le chemin, au sud de la clairière.
-
-Pour tester directement dans le mode Gameplay :
-
-```bash
 npm run dev-gameplay
-# Ouvrir /?map=nature-showcase sur l'URL locale de Vite
 ```
+
+Ouvrir `/?map=nature-showcase` sur l'URL locale de Vite pour tester la map
+dans le mode Gameplay. Pour l'utiliser dans le Playground, choisir les modèles
+Nature MegaKit dans le catalogue de l'éditeur de monde sur une map visible.
 
 ## Organisation
 
@@ -85,4 +79,4 @@ npm run build
 ```
 
 En navigateur : vérifier les textures d'écorce et de feuillage, le point d'apparition,
-les collisions, et un aller-retour Playground → Nature → Playground sans résidus visuels.
+les collisions et un aller-retour Playground → Nature → Playground sans résidus visuels.

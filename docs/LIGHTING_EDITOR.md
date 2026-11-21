@@ -62,8 +62,8 @@ shadow resolutions, too many lights and shadows on hemispheric lights.
 
 `public/assets/maps/playground.json` is a **36 × 36 unit** enclosed lighting
 test arena built from reusable geometry, not a textured or imported GLB level.
-The Playground now starts on the `prototype-inn` map; this arena remains
-available in the map selector as **Arène blockout**.
+The Playground starts on `prototype-inn`; this arena remains only as an
+internal map definition and is no longer available in the map selector.
 The ground is a four-panel gray blockout platform, with a simple circular
 center marker. Each of the four boundaries uses nine reusable wall sections,
 with tall far-facing walls and shorter near-camera walls for visibility.
@@ -88,6 +88,16 @@ lights are `lighting.map.lights`. No generated gameplay behavior is bound
 to a particular wall, lamp or target. To change the layout, edit the
 placements or use the World Editor, then export the map.
 
+### Blender fog-bank asset
+
+The reusable localized fog asset is authored in
+`code/assets/source/effects/fog-bank.blend` and exported as
+`code/public/assets/models/effects/fog-bank.glb`. Its procedural RGBA
+texture is embedded in the GLB; the glTF material uses alpha blending,
+and the asset has no collider. The `playground` map places it beneath the
+central light fixture as a legacy placement; the map is no longer part of
+the manual map-selection flow.
+
 ## Editing in the Playground
 
 1. Launch `cd code && npm run dev-playground`.
@@ -96,9 +106,13 @@ placements or use the World Editor, then export the map.
 4. Add point, spot, directional, or hemispheric lights. Select a light to change
    its full parameter set. Numeric XYZ controls or **Placer à la position du héros**
    move it. Duplicate/delete as needed.
-5. Toggle the map markers to preview positions and ranges while in editing mode.
+5. Select a placed object with an asset-defined local spotlight to edit its local
+   position and direction, color, intensity, range, cone angle and exponent. These
+   changes apply to that instance and are included in the exported map; new
+   placements continue to use the asset defaults.
+6. Toggle the map markers to preview positions and ranges while in editing mode.
    They are not part of the exported world and are hidden while testing the game.
-6. Use the existing **Exporter map JSON** command (top toolbar) to save the
+7. Use the existing **Exporter map JSON** command (top toolbar) to save the
    current `lighting` section to a file. Copy it into the versioned map asset.
    The editor's existing local draft mechanism also serializes these values.
 

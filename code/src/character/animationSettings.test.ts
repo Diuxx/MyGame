@@ -66,6 +66,7 @@ test("combo configuration survives export and import without rewriting the anima
   const loaded = parseAnimationManifest(saved);
   assert.deepEqual(saved.animations, manifest.animations);
   assert.equal(loaded.settings.attack.combo?.followUp.startProgress, 0.2);
+  assert.equal(loaded.settings.attack.combo?.followUp.animation, "attack-2");
   assert.equal(loaded.settings.attack.combo?.inputBufferMs, 150);
 });
 
@@ -85,6 +86,9 @@ test("invalid combos cannot skip an impact or chain before the last hit", () => 
   const incorrectCount = copyManifest();
   (tuning(incorrectCount, "attack").combo as Record<string, any>).maxChain = 2.5;
   assert.throws(() => parseAnimationManifest(incorrectCount), /maxChain/);
+  const incorrectFollowUp = copyManifest();
+  (tuning(incorrectFollowUp, "attack").combo as Record<string, any>).followUp.animation = "skill-2-power";
+  assert.throws(() => parseAnimationManifest(incorrectFollowUp), /followUp\.animation/);
 });
 
 test("double-hit combos cannot interrupt before the second impact", () => {

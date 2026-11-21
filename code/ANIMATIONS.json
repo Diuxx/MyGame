@@ -4,7 +4,7 @@
     {
       "name": "run",
       "source": "Running",
-      "fbx": "fbx/run.fbx",
+      "sourceFbx": "public/assets/animations/hero/fbx/run.fbx",
       "durationSeconds": 0.7333,
       "loop": true,
       "displayName": "Course",
@@ -17,8 +17,8 @@
     {
       "name": "walk",
       "source": "Walking",
-      "fbx": "fbx/walk.fbx",
-      "durationSeconds": 1.4333,
+      "sourceFbx": "public/assets/animations/hero/fbx/walk.fbx",
+      "durationSeconds": 1.4,
       "loop": true,
       "displayName": "Marche",
       "category": "movement",
@@ -30,7 +30,8 @@
     {
       "name": "combat-stance",
       "source": "Combat_Stance",
-      "durationSeconds": 1.6667,
+      "sourceFbx": "public/assets/animations/hero/fbx/idle-fight.fbx",
+      "durationSeconds": 3.6333,
       "loop": true,
       "displayName": "Posture de combat",
       "category": "movement",
@@ -43,23 +44,16 @@
     {
       "name": "idle",
       "source": "Idle_9",
-      "durationSeconds": 2,
+      "sourceFbx": "public/assets/animations/hero/fbx/idle.fbx",
+      "durationSeconds": 11.4667,
       "loop": true,
       "displayName": "Repos",
       "category": "movement"
     },
     {
-      "name": "jump",
-      "source": "Regular_Jump",
-      "durationSeconds": 1.8667,
-      "loop": false,
-      "displayName": "Saut",
-      "category": "action"
-    },
-    {
       "name": "dodge",
       "source": "Roll_Dodge_3",
-      "fbx": "fbx/dodging-back.fbx",
+      "sourceFbx": "public/assets/animations/hero/fbx/dodge.fbx",
       "durationSeconds": 2.6667,
       "loop": false,
       "displayName": "Esquive",
@@ -68,7 +62,8 @@
     {
       "name": "stop",
       "source": "Sprint_and_Sudden_Stop",
-      "durationSeconds": 2,
+      "sourceFbx": "public/assets/animations/hero/fbx/stop.fbx",
+      "durationSeconds": 0.9,
       "loop": false,
       "displayName": "Arrêt brusque après sprint",
       "category": "action"
@@ -76,16 +71,40 @@
     {
       "name": "attack",
       "source": "Thrust_Slash",
-      "fbx": "fbx/sword-slash.fbx",
-      "durationSeconds": 2.0333,
+      "sourceFbx": "public/assets/animations/hero/fbx/skill-1-punch-1.fbx",
+      "durationSeconds": 1.4667,
       "loop": false,
-      "displayName": "Attaque à l’épée",
+      "displayName": "Poing 1",
+      "category": "action"
+    },
+    {
+      "name": "attack-2",
+      "sourceFbx": "public/assets/animations/hero/fbx/skill-1-punch-2.fbx",
+      "durationSeconds": 1.3333,
+      "loop": false,
+      "displayName": "Poing 2",
+      "category": "action"
+    },
+    {
+      "name": "skill-2-power",
+      "sourceFbx": "public/assets/animations/hero/fbx/skill-2-power.fbx",
+      "durationSeconds": 2.3667,
+      "loop": false,
+      "displayName": "Puissance · compétence 2 (aperçu)",
+      "category": "action"
+    },
+    {
+      "name": "skill-3-kick",
+      "sourceFbx": "public/assets/animations/hero/fbx/skill-3-kick.fbx",
+      "durationSeconds": 1.7333,
+      "loop": false,
+      "displayName": "Coup de pied · compétence 3 (aperçu)",
       "category": "action"
     },
     {
       "name": "dying",
-      "fbx": "fbx/dying.fbx",
-      "durationSeconds": 4.6,
+      "sourceFbx": "public/assets/animations/hero/fbx/dying.fbx",
+      "durationSeconds": 4.6667,
       "loop": false,
       "displayName": "Mort",
       "category": "lifecycle"
@@ -93,7 +112,7 @@
   ],
   "skinCount": 1,
   "meshCount": 1,
-  "armatureRootScale": 0.01,
+  "armatureRootScale": 1,
   "settings": {
     "run": {
       "playbackSpeed": 1,
@@ -103,14 +122,14 @@
       }
     },
     "walk": {
-      "playbackSpeed": 1.6,
+      "playbackSpeed": 1.3,
       "movement": {
         "speed": 3,
         "sync": false
       }
     },
     "combat-stance": {
-      "playbackSpeed": 1.5,
+      "playbackSpeed": 1,
       "movement": {
         "speed": 3.5,
         "sync": true
@@ -135,11 +154,14 @@
       },
       "blendOutSeconds": 0.1
     },
+    "stop": {
+      "playbackSpeed": 1.45
+    },
     "attack": {
-      "playbackSpeed": 2.25,
+      "playbackSpeed": 1.8,
       "impact": {
-        "from": 0.39,
-        "until": 0.46,
+        "from": 0.42,
+        "until": 0.51,
         "doubleHit": false,
         "second": {
           "from": 0.63,
@@ -148,30 +170,48 @@
       },
       "cancel": {
         "runFrom": 1,
-        "attackFrom": 0.65,
+        "attackFrom": 1,
         "dodgeFrom": 0.3
       },
-      "blendOutSeconds": 0.32,
+      "blendOutSeconds": 0.24,
       "combo": {
         "enabled": true,
-        "maxChain": 3,
+        "maxChain": 2,
         "inputBufferMs": 150,
         "resetAfterMs": 600,
         "chainWindow": {
-          "from": 0.75,
-          "until": 1
+          "from": 0.66,
+          "until": 0.95
         },
         "followUp": {
+          "animation": "attack-2",
           "startProgress": 0,
-          "blendSeconds": 0.39
+          "blendSeconds": 0.18
         }
       }
     },
-    "jump": {
-      "playbackSpeed": 1.5
+    "attack-2": {
+      "playbackSpeed": 1.8,
+      "impact": {
+        "from": 0.42,
+        "until": 0.5,
+        "doubleHit": false,
+        "second": {
+          "from": 0.63,
+          "until": 0.7
+        }
+      },
+      "cancel": {
+        "runFrom": 1,
+        "dodgeFrom": 0.3
+      },
+      "blendOutSeconds": 0.24
     },
-    "stop": {
-      "playbackSpeed": 1.45
+    "skill-2-power": {
+      "playbackSpeed": 1
+    },
+    "skill-3-kick": {
+      "playbackSpeed": 1
     },
     "dying": {
       "playbackSpeed": 1
@@ -207,6 +247,6 @@
     "fullBodySpeed": 0.15,
     "attackFadeSeconds": 0.12,
     "combatLegsClip": "walk",
-    "upperBodyBonePattern": "^(?:Spine\\d*|Neck\\d*|Head(?:Top_End)?|(?:Left|Right)(?:Shoulder|Arm|ForeArm|Hand.*))$"
+    "upperBodyBonePattern": "^(?:Spine\\d*|Neck\\d*|Head(?:_End|front|Top_End)?|(?:Left|Right)(?:Shoulder|Arm|ForeArm|Hand.*|(?:Thumb|Index|Middle|Ring|Pinky)\\d+))$"
   }
 }

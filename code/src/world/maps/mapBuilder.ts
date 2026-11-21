@@ -1,5 +1,6 @@
 import {
-  Color3, MeshBuilder, StandardMaterial, TransformNode, type AbstractMesh, type Scene,
+  Color3, MeshBuilder, SpotLight, StandardMaterial, TransformNode, Vector3,
+  type AbstractMesh, type Scene,
   type ShadowGenerator,
 } from "@babylonjs/core";
 import type { GroundStep } from "../../combat/bodyCollision";
@@ -10,14 +11,16 @@ import { createNavigationData } from "./navigationData";
 import type { VisualOverride } from "./editorSchema";
 import { MissingMapVisuals } from "./missingVisuals";
 import { MapModelRegistry } from "./modelRegistry";
-import { tileCenter } from "./validation";
+import { parseObjectSpotLight, tileCenter } from "./validation";
 
 import { createZoneScene } from "./zoneScene";
 import { fitWallToTerrain } from "./wallPlacement";
 import { parseTerrainVisual, type TerrainVisual } from "./zoneContent";
 import { createPrefabRenderer } from "./prefabRenderer";
 import type { PrefabPlacement } from "./prefabDefinitions";
-import type { MapAssets, MapCollider, MapDefinition, MapObject, MapPosition } from "./types";
+import type {
+  MapAssets, MapCollider, MapDefinition, MapObject, MapPosition, ObjectSpotLight,
+} from "./types";
 
 function placeNode(scene: Scene, parent: TransformNode, id: string,
                    position: MapPosition, rotationY = 0): TransformNode {
@@ -26,6 +29,27 @@ function placeNode(scene: Scene, parent: TransformNode, id: string,
   node.position.set(...position);
   node.rotation.y = rotationY * Math.PI / 180;
   return node;
+}
+
+function updateObjectSpotLight(light: SpotLight, settings: ObjectSpotLight): void {
+  light.position.set(...settings.position);
+  light.direction.copyFrom(Vector3.FromArray([...settings.direction]).normalize());
+  light.diffuse = Color3.FromHexString(settings.color);
+  light.intensity = settings.intensity;
+  light.range = settings.range;
+  light.angle = settings.angle * Math.PI / 180;
+  light.exponent = settings.exponent;
+}
+
+function createObjectSpotLight(scene: Scene, parent: TransformNode, id: string,
+                              settings: ObjectSpotLight): SpotLight {
+  const light = new SpotLight("object-spot:" + id,
+    Vector3.FromArray([...settings.position]),
+    Vector3.FromArray([...settings.direction]).normalize(),
+    settings.angle * Math.PI / 180, settings.exponent, scene);
+  light.parent = parent;
+  updateObjectSpotLight(light, settings);
+  return light;
 }
 
 function colliderDebug(scene: Scene, parent: TransformNode, shape: MapCollider,
@@ -59,6 +83,7 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
   const objectViews = new Map<string, {
     parent: TransformNode;
     model: ReturnType<typeof createEditableModel>;
+    spotLight?: SpotLight;
     debug: AbstractMesh[];
     picks: AbstractMesh[];
   }>();
@@ -114,9 +139,17 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
       (holder) => missing.addObject(holder, object.visual?.model ?? asset.model,
         object.colliders ?? asset.colliders), true, undefined,
       { editorKind: "object", editorId: object.id });
-    const view = { parent, model, debug: [], picks: [] };
+    const view: {
+      parent: TransformNode;
+      model: ReturnType<typeof createEditableModel>;
+      spotLight?: SpotLight;
+      debug: AbstractMesh[];
+      picks: AbstractMesh[];
+    } = { parent, model, debug: [], picks: [] };
     objectViews.set(object.id, view);
     try {
+      const settings = object.spotLight ?? asset.spotLight;
+      if (settings) view.spotLight = createObjectSpotLight(scene, parent, object.id, settings);
       const imported = await model.load(object.visual);
       if (disposed) throw new Error("Carte fermée pendant le placement.");
       if (!imported) missingModels.add(object.visual?.model ?? asset.model);
@@ -391,6 +424,19 @@ export async function buildMap(scene: Scene, definition: MapDefinition, assets: 
       void view.model.load(object.visual).catch((error: unknown) => {
         console.error("Impossible de reconstruire le visuel provisoire de l'objet :", id, error);
       });
+    },
+    setObjectSpotLight(id: string, settings: ObjectSpotLight | undefined): void {
+      const object = definition.objects.find((item) => item.id === id);
+      const view = objectViews.get(id);
+      if (!object || !view) throw new Error("Objet de map inconnu : " + id);
+      const assetSpotLight = assets.objects[object.asset].spotLight;
+      if (!assetSpotLight) throw new Error("Cet objet ne possède pas de lumière locale.");
+      const validated = settings === undefined ? assetSpotLight :
+        parseObjectSpotLight(settings, id + ".spotLight");
+      if (settings === undefined) delete object.spotLight;
+      else object.spotLight = validated;
+      if (view.spotLight) updateObjectSpotLight(view.spotLight, validated);
+      else view.spotLight = createObjectSpotLight(scene, view.parent, id, validated);
     },
     setTerrainVisual(visual: TerrainVisual | undefined): void {
       const validated = parseTerrainVisual(visual);

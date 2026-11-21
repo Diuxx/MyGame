@@ -13,7 +13,7 @@ npm run dev-gameplay
 
 Le jeu démarre normalement sur `dojo`. Pour démarrer dans le prototype forêt, ouvrir l'URL du serveur Vite avec `?map=prototype-forest`.
 
-Dans le Playground (`npm run dev-playground`), choisir `Prototype — Forêt` ou `Prototype — Arène` dans **Maps 3D modulaires**, puis **Charger / remplacer**.
+Dans le Playground (`npm run dev-playground`), choisir `Prototype — Forêt` dans **Maps 3D modulaires**, puis **Charger / remplacer**. L'arène n'apparaît plus dans le sélecteur, mais reste accessible par les portails de la forêt.
 
 - Dans la forêt, traverser le portail au nord (Z positif) pour rejoindre l'arène automatiquement. Le portail à l'ouest utilise la touche d'interaction.
 - Dans l'arène, approcher le passage au sud et appuyer sur la touche d'interaction (F par défaut) pour revenir dans la forêt.

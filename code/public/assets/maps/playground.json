@@ -384,7 +384,28 @@
       "sideColor": "#262934"
     }
   },
-  "objects": [],
+  "objects": [
+    {
+      "id": "fog-bank-center",
+      "asset": "fog_bank",
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "rotationY": 0
+    },
+    {
+      "id": "fantasy-wooden-stool-test",
+      "asset": "fantasy_wooden_stool",
+      "position": [
+        6,
+        0,
+        -8
+      ],
+      "rotationY": 0
+    }
+  ],
   "primitives": [
     {
       "id": "floor-nw",
@@ -1188,7 +1209,7 @@
       }
     },
     "fog": {
-      "enabled": false,
+      "enabled": true,
       "color": "#1A1C28",
       "density": 0.005
     }

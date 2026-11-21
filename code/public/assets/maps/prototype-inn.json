@@ -253,7 +253,7 @@
         null,
         null,
         null,
-        null,
+        "fantasy_stone_paving",
         null,
         null,
         null,
@@ -312,7 +312,38 @@
       "sideColor": "#D8D8D8"
     }
   },
-  "objects": [],
+  "objects": [
+    {
+      "id": "fantasy-amber-lamp-entrance",
+      "asset": "fantasy_amber_lamp",
+      "position": [
+        4.5,
+        0,
+        12
+      ],
+      "rotationY": 0
+    },
+    {
+      "id": "fantasy-faceted-tree-courtyard",
+      "asset": "fantasy_tree_blockout",
+      "position": [
+        -4,
+        0,
+        9
+      ],
+      "rotationY": 0
+    },
+    {
+      "id": "lowpoly-stone-wall-north-test",
+      "asset": "fantasy_stone_wall_lowpoly",
+      "position": [
+        1.5,
+        0,
+        -15.5
+      ],
+      "rotationY": 0
+    }
+  ],
   "spawnPoints": [
     {
       "id": "entrance",
@@ -343,17 +374,6 @@
       "prefab": "wall-window",
       "position": [
         -2.5,
-        0,
-        -15.5
-      ],
-      "rotationY": 0,
-      "scale": 1
-    },
-    {
-      "id": "wall-straight-004",
-      "prefab": "wall-straight",
-      "position": [
-        1.5,
         0,
         -15.5
       ],
@@ -1042,7 +1062,7 @@
       }
     },
     "fog": {
-      "enabled": false,
+      "enabled": true,
       "color": "#4B4E52",
       "density": 0.005
     }

@@ -18,11 +18,12 @@ const catalog = parsePrefabCatalog(readJson("definitions/blockout-prefabs.json")
 const assets = { ...validateMapAssets(readJson("definitions/assets.json")), prefabs: catalog };
 const inn = validateMapDefinition(readJson("maps/prototype-inn.json"), assets);
 
-test("the whitebox inn is composed of reusable prefabs without new tiles or textures", () => {
+test("the whitebox inn uses reusable prefabs and one custom stone tile without textures", () => {
   assert.equal(inn.id, "prototype-inn");
   assert.ok(Object.keys(catalog).length >= 18);
   assert.ok((inn.prefabs?.length ?? 0) >= 60);
-  assert.equal(inn.terrain.tiles.flat().filter(Boolean).length, 0);
+  assert.equal(inn.terrain.tiles.flat().filter(Boolean).length, 1);
+  assert.equal(inn.terrain.tiles[13][8], "fantasy_stone_paving");
   assert.equal(inn.terrain.primitiveGround?.pattern, undefined);
   assert.ok(inn.prefabs?.filter((item) => item.prefab === "table-round").length);
   const ids = inn.prefabs?.map((item) => item.id) ?? [];

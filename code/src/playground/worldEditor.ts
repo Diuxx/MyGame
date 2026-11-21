@@ -1,7 +1,7 @@
 import {
   Color3, MeshBuilder, Plane, StandardMaterial, type Scene,
 } from "@babylonjs/core";
-import type { MapCollider, MapPosition } from "../world/maps/types";
+import type { MapCollider, MapPosition, ObjectSpotLight } from "../world/maps/types";
 import type { createEnemyScene } from "../enemies/enemyScene";
 import type { MapEditorKind, MapPlacementKind, VisualOverride } from "../world/maps/editorSchema";
 import { findTerrainCell, tileCenter } from "../world/maps/validation";
@@ -40,6 +40,7 @@ export function bindWorldEditor(
   const selectionLabel = requireElement<HTMLElement>("worldEditorSelection");
   const status = requireElement<HTMLElement>("worldEditorStatus");
   const objectSettings = requireElement<HTMLElement>("worldEditorObjectFields");
+  const objectSpotLightSettings = requireElement<HTMLElement>("worldEditorObjectSpotLightFields");
   const enemySettings = requireElement<HTMLElement>("worldEditorEnemyFields");
   const prefabSettings = requireElement<HTMLElement>("worldEditorPrefabFields");
   const duplicatePrefab = requireElement<HTMLButtonElement>("worldEditorDuplicatePrefab");
@@ -218,6 +219,9 @@ export function bindWorldEditor(
     setNumber("worldEditorY", spec.position[1]);
     setNumber("worldEditorZ", spec.position[2]);
     objectSettings.hidden = kind !== "object";
+    const assetSpotLight = target.kind === "object"
+      ? target.active.assets.objects[target.object.asset].spotLight : undefined;
+    objectSpotLightSettings.hidden = !assetSpotLight;
     enemySettings.hidden = kind !== "enemy";
     prefabSettings.hidden = kind !== "prefab";
     rotationField.hidden = target.kind === "interaction" || target.kind === "practice";
@@ -244,6 +248,20 @@ export function bindWorldEditor(
       requireElement<HTMLInputElement>("worldEditorColliderWidth").disabled = !shape;
       requireElement<HTMLInputElement>("worldEditorColliderHeight").disabled = !shape;
       requireElement<HTMLInputElement>("worldEditorColliderDepth").disabled = !shape;
+      const spotLight = target.object.spotLight ?? assetSpotLight;
+      if (spotLight) {
+        setNumber("worldEditorSpotLightPositionX", spotLight.position[0]);
+        setNumber("worldEditorSpotLightPositionY", spotLight.position[1]);
+        setNumber("worldEditorSpotLightPositionZ", spotLight.position[2]);
+        setNumber("worldEditorSpotLightDirectionX", spotLight.direction[0]);
+        setNumber("worldEditorSpotLightDirectionY", spotLight.direction[1]);
+        setNumber("worldEditorSpotLightDirectionZ", spotLight.direction[2]);
+        requireElement<HTMLInputElement>("worldEditorSpotLightColor").value = spotLight.color;
+        setNumber("worldEditorSpotLightIntensity", spotLight.intensity);
+        setNumber("worldEditorSpotLightRange", spotLight.range);
+        setNumber("worldEditorSpotLightAngle", spotLight.angle);
+        setNumber("worldEditorSpotLightExponent", spotLight.exponent);
+      }
     } else {
       const actor = target.actor;
       setNumber("worldEditorSpeed", actor.entity.stats.movementSpeed);
@@ -679,6 +697,53 @@ export function bindWorldEditor(
         }
         status.textContent = "Paramètres de collision ou d'IA actualisés.";
       } catch (error) { report(error); }
+    }, { signal });
+  }
+
+  for (const id of [
+    "worldEditorSpotLightPositionX", "worldEditorSpotLightPositionY", "worldEditorSpotLightPositionZ",
+    "worldEditorSpotLightDirectionX", "worldEditorSpotLightDirectionY", "worldEditorSpotLightDirectionZ",
+    "worldEditorSpotLightColor", "worldEditorSpotLightIntensity", "worldEditorSpotLightRange",
+    "worldEditorSpotLightAngle", "worldEditorSpotLightExponent",
+  ]) {
+    requireElement<HTMLInputElement>(id).addEventListener("change", () => {
+      const target = getSelected();
+      if (!target || target.kind !== "object" || !selected) return;
+      const defaultSpotLight = target.active.assets.objects[target.object.asset].spotLight;
+      if (!defaultSpotLight) return;
+      const previous = target.object.spotLight
+        ? structuredClone(target.object.spotLight) : undefined;
+      try {
+        const next: ObjectSpotLight = {
+          position: [
+            numerical("worldEditorSpotLightPositionX"),
+            numerical("worldEditorSpotLightPositionY"),
+            numerical("worldEditorSpotLightPositionZ"),
+          ],
+          direction: [
+            numerical("worldEditorSpotLightDirectionX"),
+            numerical("worldEditorSpotLightDirectionY"),
+            numerical("worldEditorSpotLightDirectionZ"),
+          ],
+          color: requireElement<HTMLInputElement>("worldEditorSpotLightColor").value,
+          intensity: numerical("worldEditorSpotLightIntensity"),
+          range: numerical("worldEditorSpotLightRange"),
+          angle: numerical("worldEditorSpotLightAngle"),
+          exponent: numerical("worldEditorSpotLightExponent"),
+        };
+        const world = target.active;
+        const objectId = target.object.id;
+        world.editor.setObjectSpotLight(objectId, next);
+        v2?.recordTransform({
+          label: "Lumière locale de l'objet",
+          run: () => world.editor.setObjectSpotLight(objectId, structuredClone(next)),
+          undo: () => world.editor.setObjectSpotLight(objectId,
+            previous ? structuredClone(previous) : undefined),
+        });
+        status.textContent = "Lumière locale de cet objet actualisée.";
+      } catch (error) {
+        report(error);
+      }
     }, { signal });
   }
 

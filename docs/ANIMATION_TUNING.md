@@ -44,22 +44,23 @@ Après une modification des paramètres, exercer les cas suivants :
 - Tester `attack → dodge`, `dodge → run`, `attack → idle` et la mort pendant une transition.
 - Exporter, recharger le fichier depuis le disque, puis comparer le comportement en mode Gameplay.
 
-## Combos d'attaque (POC : une animation réutilisée)
+## Combo d'attaque (Poing 1 puis Poing 2)
 
-Le manifeste versionné `code/ANIMATIONS.json` comporte `settings.attack.combo` :
+Le manifeste versionné `code/ANIMATIONS.json` configure une chaîne unique de deux coups :
 
 - `enabled` : active la chaîne de coups.
-- `maxChain` : limite le nombre de coups successifs.
+- `maxChain` : vaut 2 pour limiter la séquence à Poing 1 puis Poing 2.
 - `inputBufferMs` : autorise un clic anticipé avant la fenêtre.
 - `resetAfterMs` : délai maximal pour lancer le prochain coup **après la fin** d'une attaque normale.
 - `chainWindow.from/until` : intervalle normalisé durant lequel une attaque en cours peut être enchaînée. Le début ne peut pas précéder le dernier impact.
-- `followUp.startProgress` : position du clip utilisée **uniquement** pour les coups suivants, toujours avant le premier impact.
-- `followUp.blendSeconds` : fondu entre deux instances indépendantes des couches d'attaque.
+- `followUp.animation` : clip distinct du second coup (`attack-2`).
+- `followUp.startProgress` : position de départ du clip suivant, toujours avant son premier impact.
+- `followUp.blendSeconds` : fondu entre les couches des deux clips.
 
-Dans le Playground, ouvrir **Animations d'action → Attaque**. Ajuster les réglages de combo, consulter les plages `Fenêtre d'enchaînement` et `Préparation ignorée` sur la timeline, puis exporter le manifeste.
+Dans le Playground, ouvrir **Animations d'action → Poing 1**. Ajuster les réglages de combo, consulter les plages `Fenêtre d'enchaînement` et `Préparation ignorée` sur la timeline, puis exporter le manifeste. Les icônes de compétence 2 (Puissance) et 3 (Coup de pied) jouent désormais leurs animations avec A et E; leurs dégâts et cooldowns ne sont pas encore définis.
 
-Le premier coup joue `attack` depuis 0 %. Les suivants démarrent depuis `startProgress` et alternent deux couples de groupes Babylon.js haut/bas du corps pour conserver la pose du coup précédent durant le Crossfade. Chaque coup crée de nouvelles fenêtres d'impact non consommées ; les événements situés avant `startProgress` ne sont pas rejoués.
+Le clic gauche ou le bouton de compétence 1 lance `attack` (Poing 1). L'icône du bouton passe à Poing 2 lorsque l'enchaînement est disponible. Un clic accepté dans sa fenêtre configurée lance `attack-2` (Poing 2), avec ses propres fenêtres d'impact. Chaque clip possède deux couples indépendants de groupes Babylon.js haut/bas du corps afin de conserver la pose sortante pendant le fondu.
 
 Une esquive, une mort, une prévisualisation ou une interruption de locomotion remet le compteur de combo à zéro. Les actions maintenues au-delà du temps de récupération ne conservent pas indéfiniment la chaîne. Les règles de timing des combos sont testées dans `attackCombo.test.ts`.
 
-Les groupes alternés restent propres au héros actuel : de vrais clips distincts pour chaque attaque pourront être ajoutés plus tard sans modifier les fenêtres de gameplay.
+Après Poing 2, aucun troisième coup n'est accepté. Les fenêtres d'enchaînement, d'impact et de fondu restent réglables dans le manifeste sans modifier le contrôleur.
