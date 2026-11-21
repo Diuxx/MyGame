@@ -1,7 +1,7 @@
 /* Nicolabz is the visual source of truth for the Playground only.
    Load after style.css; do not restyle the Babylon canvas or the gameplay HUD. */
 .app.workspace-app {
-  --ws-left-width: 266px;
+  --ws-left-width: 0px;
   --ws-right-width: 306px;
   --ws-border: var(--color-border);
   --ws-text-muted: var(--color-text-secondary);
@@ -127,22 +127,35 @@
   height: 24px;
   color: var(--color-accent-contrast);
 }
-.workspace-app .ws-rail .ws-explorer-toggle { display: none; }
+/* The explorer occupies a real grid column on desktop, but starts closed.
+   Under 1020px it overlays the canvas and never reserves a grid column. */
+.app.workspace-app[data-workspace-mode="edit"].ws-explorer-open {
+  --ws-left-width: 266px;
+}
+@media (max-width: 1250px) {
+  .app.workspace-app[data-workspace-mode="edit"].ws-explorer-open {
+    --ws-left-width: 235px;
+  }
+}
 @media (max-width: 1020px) {
-  .workspace-app .ws-rail .ws-explorer-toggle {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    font-size: 10px;
-    min-height: 55px;
-    padding: 4px 1px;
-    border-radius: var(--radius-sm);
+  .app.workspace-app[data-workspace-mode="edit"].ws-explorer-open {
+    --ws-left-width: 0px;
   }
-  .workspace-app.ws-explorer-open .ws-rail .ws-explorer-toggle {
-    background: var(--color-surface);
-    color: var(--color-text);
-    border-color: var(--color-accent);
-  }
+}
+.workspace-app .ws-left[hidden] { display: none !important; }
+.workspace-app .ws-rail .ws-explorer-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 10px;
+  min-height: 55px;
+  padding: 4px 1px;
+  border-radius: var(--radius-sm);
+}
+.workspace-app .ws-rail .ws-explorer-toggle.is-active {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-color: var(--color-accent);
 }
 
 .workspace-app .ws-identity small,
