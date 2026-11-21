@@ -2,34 +2,34 @@
   "version": 1,
   "tiles": {
     "wood": {
-      "name": "Bois",
+      "name": "Dalle de bois",
       "model": "/assets/models/tiles/wood.glb",
       "walkable": true
     },
     "stone": {
-      "name": "Pierre",
+      "name": "Dalle de pierre",
       "model": "/assets/models/tiles/stone.glb",
       "walkable": true
     },
     "grass": {
-      "name": "Herbe",
+      "name": "Tuile d’herbe",
       "model": "/assets/models/tiles/grass.glb",
       "walkable": true
     },
     "water": {
-      "name": "Eau",
+      "name": "Tuile d’eau",
       "model": "/assets/models/tiles/water.glb",
       "walkable": false
     },
     "fantasy_stone_paving": {
-      "name": "Pavage de pierre facettée",
+      "name": "Pavage en pierre",
       "model": "/assets/models/tiles/fantasy-stone-paving-tile.glb",
       "walkable": true
     }
   },
   "objects": {
     "wall": {
-      "name": "Mur",
+      "name": "Mur simple",
       "model": "/assets/models/objects/wall.glb",
       "blocksNavigation": true,
       "colliders": [
@@ -49,7 +49,7 @@
       ]
     },
     "tree": {
-      "name": "Arbre",
+      "name": "Arbre simple",
       "model": "/assets/models/objects/tree.glb",
       "blocksNavigation": true,
       "colliders": [
@@ -119,7 +119,7 @@
       ]
     },
     "boulder": {
-      "name": "Rocher",
+      "name": "Gros rocher",
       "model": "/assets/models/objects/boulder.glb",
       "blocksNavigation": true,
       "colliders": [
@@ -136,13 +136,13 @@
       ]
     },
     "flowers": {
-      "name": "Fleurs",
+      "name": "Bouquet de fleurs",
       "model": "/assets/models/objects/flowers.glb",
       "blocksNavigation": false,
       "colliders": []
     },
     "nature_pine_1": {
-      "name": "Nature MegaKit — Pine 1",
+      "name": "Sapin — variante 1",
       "model": "/assets/models/nature-megakit/Pine_1.gltf",
       "blocksNavigation": true,
       "colliders": [
@@ -159,7 +159,7 @@
       ]
     },
     "nature_pine_3": {
-      "name": "Nature MegaKit — Pine 3",
+      "name": "Sapin — variante 3",
       "model": "/assets/models/nature-megakit/Pine_3.gltf",
       "blocksNavigation": true,
       "colliders": [
@@ -176,7 +176,7 @@
       ]
     },
     "nature_pine_5": {
-      "name": "Nature MegaKit — Pine 5",
+      "name": "Sapin — variante 5",
       "model": "/assets/models/nature-megakit/Pine_5.gltf",
       "blocksNavigation": true,
       "colliders": [
@@ -193,7 +193,7 @@
       ]
     },
     "nature_common_tree_1": {
-      "name": "Nature MegaKit — CommonTree 1",
+      "name": "Arbre feuillu — variante 1",
       "model": "/assets/models/nature-megakit/CommonTree_1.gltf",
       "blocksNavigation": true,
       "colliders": [
@@ -210,7 +210,7 @@
       ]
     },
     "nature_common_tree_3": {
-      "name": "Nature MegaKit — CommonTree 3",
+      "name": "Arbre feuillu — variante 3",
       "model": "/assets/models/nature-megakit/CommonTree_3.gltf",
       "blocksNavigation": true,
       "colliders": [
@@ -227,7 +227,7 @@
       ]
     },
     "nature_twisted_tree_2": {
-      "name": "Nature MegaKit — TwistedTree 2",
+      "name": "Arbre noueux — variante 2",
       "model": "/assets/models/nature-megakit/TwistedTree_2.gltf",
       "blocksNavigation": true,
       "colliders": [
@@ -244,7 +244,7 @@
       ]
     },
     "nature_rock_medium_1": {
-      "name": "Nature MegaKit — Rock Medium 1",
+      "name": "Rocher moyen — variante 1",
       "model": "/assets/models/nature-megakit/Rock_Medium_1.gltf",
       "blocksNavigation": true,
       "colliders": [
@@ -261,7 +261,7 @@
       ]
     },
     "nature_rock_medium_2": {
-      "name": "Nature MegaKit — Rock Medium 2",
+      "name": "Rocher moyen — variante 2",
       "model": "/assets/models/nature-megakit/Rock_Medium_2.gltf",
       "blocksNavigation": true,
       "colliders": [
@@ -278,67 +278,67 @@
       ]
     },
     "nature_grass_common_short": {
-      "name": "Nature MegaKit — Grass Common Short",
+      "name": "Herbe courte",
       "model": "/assets/models/nature-megakit/Grass_Common_Short.gltf",
       "blocksNavigation": false,
       "colliders": []
     },
     "nature_grass_common_tall": {
-      "name": "Nature MegaKit — Grass Common Tall",
+      "name": "Herbe haute",
       "model": "/assets/models/nature-megakit/Grass_Common_Tall.gltf",
       "blocksNavigation": false,
       "colliders": []
     },
     "nature_grass_wispy_short": {
-      "name": "Nature MegaKit — Grass Wispy Short",
+      "name": "Herbe fine et courte",
       "model": "/assets/models/nature-megakit/Grass_Wispy_Short.gltf",
       "blocksNavigation": false,
       "colliders": []
     },
     "nature_fern_1": {
-      "name": "Nature MegaKit — Fern 1",
+      "name": "Fougère",
       "model": "/assets/models/nature-megakit/Fern_1.gltf",
       "blocksNavigation": false,
       "colliders": []
     },
     "nature_flower_3_group": {
-      "name": "Nature MegaKit — Flower 3 Group",
+      "name": "Groupe de fleurs",
       "model": "/assets/models/nature-megakit/Flower_3_Group.gltf",
       "blocksNavigation": false,
       "colliders": []
     },
     "nature_bush_common": {
-      "name": "Nature MegaKit — Bush Common",
+      "name": "Buisson",
       "model": "/assets/models/nature-megakit/Bush_Common.gltf",
       "blocksNavigation": false,
       "colliders": []
     },
     "nature_bush_common_flowers": {
-      "name": "Nature MegaKit — Bush Common Flowers",
+      "name": "Buisson fleuri",
       "model": "/assets/models/nature-megakit/Bush_Common_Flowers.gltf",
       "blocksNavigation": false,
       "colliders": []
     },
     "nature_mushroom_common": {
-      "name": "Nature MegaKit — Mushroom Common",
+      "name": "Champignon",
       "model": "/assets/models/nature-megakit/Mushroom_Common.gltf",
       "blocksNavigation": false,
       "colliders": []
     },
     "nature_clover_1": {
-      "name": "Nature MegaKit — Clover 1",
+      "name": "Trèfle",
       "model": "/assets/models/nature-megakit/Clover_1.gltf",
       "blocksNavigation": false,
       "colliders": []
     },
     "nature_rockpath_round_small_1": {
-      "name": "Nature MegaKit — RockPath Round Small 1",
+      "name": "Chemin de pierres rondes",
       "model": "/assets/models/nature-megakit/RockPath_Round_Small_1.gltf",
       "blocksNavigation": false,
       "colliders": []
     },
     "nature_pebble_round_1": {
-      "name": "Nature MegaKit — Pebble Round 1",
+      "name": "Galet rond",
       "model": "/assets/models/nature-megakit/Pebble_Round_1.gltf",
       "blocksNavigation": false,
       "colliders": []
@@ -350,7 +350,7 @@
       "colliders": []
     },
     "fantasy_amber_lamp": {
-      "name": "Lampadaire fantastique bronze et ambre",
+      "name": "Lampadaire bronze et ambre",
       "model": "/assets/models/objects/fantasy-amber-street-lamp.glb",
       "blocksNavigation": true,
       "colliders": [
@@ -372,7 +372,7 @@
       }
     },
     "fantasy_tree_blockout": {
-      "name": "Arbre fantastique — Blockout",
+      "name": "Arbre facetté (prototype)",
       "model": "/assets/models/nature/fantasy-faceted-tree-blockout.glb",
       "blocksNavigation": true,
       "colliders": [
@@ -385,7 +385,7 @@
       ]
     },
     "fantasy_wooden_stool": {
-      "name": "Tabouret en bois facetté",
+      "name": "Tabouret en bois",
       "model": "/assets/models/objects/fantasy-wooden-stool.glb",
       "blocksNavigation": true,
       "colliders": [
@@ -398,7 +398,7 @@
       ]
     },
     "fantasy_stone_wall_lowpoly": {
-      "name": "Mur de pierre low-poly",
+      "name": "Mur en pierre",
       "model": "/assets/models/architecture/lowpoly-stone-wall-segment.glb",
       "blocksNavigation": true,
       "colliders": [
