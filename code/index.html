@@ -105,7 +105,7 @@
           <label class="grid-toggle"><input id="floatingTextEnabled" type="checkbox" /> Afficher les textes flottants</label>
           <label class="grid-toggle"><input id="floatingActionsEnabled" type="checkbox" /> Messages d'action</label>
           <label class="grid-toggle"><input id="floatingDamageEnabled" type="checkbox" /> Chiffres de dégâts</label>
-          <h3 class="floating-group-title">Mouvements · WALK / SPRINT / DODGE</h3>
+          <details class="ws-form-section" open><summary>Mouvements · WALK / SPRINT / DODGE</summary>
           <div class="field-row"><label for="floatingMovementSize">Taille (px)</label><output id="floatingMovementSizeValue"></output></div>
           <input id="floatingMovementSize" type="range" min="8" max="36" step="1" />
           <div class="field-row"><label for="floatingMovementDuration">Durée de vie (ms)</label><output id="floatingMovementDurationValue"></output></div>
@@ -120,7 +120,8 @@
             <button type="button" id="floatingTestSprint" class="secondary">Tester SPRINT</button>
             <button type="button" id="floatingTestDodge" class="secondary">Tester DODGE</button>
           </div>
-          <h3 class="floating-group-title">Attaque · ATTACK</h3>
+          </details>
+          <details class="ws-form-section"><summary>Attaque · ATTACK</summary>
           <div class="field-row"><label for="floatingAttackSize">Taille (px)</label><output id="floatingAttackSizeValue"></output></div>
           <input id="floatingAttackSize" type="range" min="8" max="36" step="1" />
           <div class="field-row"><label for="floatingAttackDuration">Durée de vie (ms)</label><output id="floatingAttackDurationValue"></output></div>
@@ -131,7 +132,8 @@
           <input id="floatingAttackScale" type="range" min="1" max="2.5" step="0.05" />
           <label>Couleur de l'attaque<input id="floatingAttackColor" type="color" /></label>
           <button type="button" id="floatingTestAttack" class="secondary wide">Tester ATTACK</button>
-          <h3 class="floating-group-title">Dégâts</h3>
+          </details>
+          <details class="ws-form-section"><summary>Dégâts</summary>
           <div class="field-row"><label for="floatingDamageSize">Taille normale (px)</label><output id="floatingDamageSizeValue"></output></div>
           <input id="floatingDamageSize" type="range" min="8" max="48" step="1" />
           <div class="field-row"><label for="floatingDamageDuration">Durée normale (ms)</label><output id="floatingDamageDurationValue"></output></div>
@@ -144,14 +146,17 @@
             <button type="button" id="floatingTestDamage" class="secondary">Tester 120</button>
             <button type="button" id="floatingTestCritical" class="secondary">Tester critique</button>
           </div>
-          <h3 class="floating-group-title">Configuration JSON</h3>
-          <p class="animation-note">Les modifications restent locales. Exporter le fichier complet puis remplacer code/FLOATING_TEXT.json pour les versionner.</p>
+          </details>
+          <section class="ws-persistence-group" aria-label="Export et import de la configuration des textes flottants">
+            <h3>Fichier de configuration · FLOATING_TEXT.json</h3>
+            <p class="animation-note">Les réglages s'appliquent immédiatement et utilisent un stockage local. Télécharger le fichier puis remplacer code/FLOATING_TEXT.json pour les versionner.</p>
           <button type="button" id="floatingTextExport" class="secondary wide">Exporter FLOATING_TEXT.json</button>
           <button type="button" id="floatingTextCopy" class="secondary wide">Copier le JSON complet</button>
           <button type="button" id="floatingTextImport" class="secondary wide">Importer FLOATING_TEXT.json</button>
           <input id="floatingTextImportFile" type="file" accept=".json,application/json" hidden />
           <button type="button" id="floatingTextReset" class="secondary wide">Rétablir le JSON versionné</button>
           <p id="floatingTextStatus" class="animation-note" role="status"></p>
+          </section>
         </section>
         <section id="controlsModule" class="module-window enemy-tools" aria-labelledby="controlsHeading" hidden>
           <header class="module-header">
@@ -183,8 +188,9 @@
           </header>
           <div id="animationButtons" class="animation-buttons"></div>
           <div id="movementAnimationSettings" class="animation-settings"></div>
-          <div class="animation-settings">
-            <p class="animation-note">Transitions entre animations (secondes)</p>
+          <details class="ws-form-section">
+            <summary>Avancé · Transitions entre animations (secondes)</summary>
+            <div class="animation-settings">
             <div class="field-row"><label for="transitionMove">Déplacements</label><output id="transitionMoveValue"></output></div>
             <input id="transitionMove" type="range" min="0.03" max="1" step="0.01" />
             <div class="field-row"><label for="transitionIdle">Retour au repos / collision</label><output id="transitionIdleValue"></output></div>
@@ -192,13 +198,18 @@
             <div class="field-row"><label for="transitionSlowDown">Ralentissement</label><output id="transitionSlowDownValue"></output></div>
             <input id="transitionSlowDown" type="range" min="0.03" max="1" step="0.01" />
             <p id="transitionStatus" class="animation-note" role="status"></p>
-          </div>
+            </div>
+          </details>
           <button id="pauseButton" type="button" class="secondary wide" disabled>Pause</button>
-          <button id="exportAnimationManifest" type="button" class="secondary wide">Exporter ANIMATIONS.json</button>
+          <section class="ws-persistence-group" aria-label="Configuration des animations">
+            <h3>Fichier de configuration · ANIMATIONS.json</h3>
+            <p class="animation-note">Les réglages locaux ne modifient pas le fichier du jeu. L'export télécharge une copie à intégrer dans code/ANIMATIONS.json.</p>
+          <button id="exportAnimationManifest" type="button" class="secondary wide">Télécharger ANIMATIONS.json</button>
           <button id="importAnimationManifest" type="button" class="secondary wide">Importer ANIMATIONS.json</button>
           <input id="importAnimationManifestFile" type="file" accept=".json,application/json" hidden />
           <button id="resetAnimationManifest" type="button" class="secondary wide">Réinitialiser les animations</button>
           <p id="animationConfigSource" class="animation-note" role="status">Source : ANIMATIONS.json</p>
+          </section>
         </section>
         <section id="actionsModule" class="module-window" aria-labelledby="actionsHeading" hidden>
           <header class="module-header">
@@ -228,14 +239,21 @@
               <option value="target">Cible — Z/S avancer/reculer, Q/D tourner autour</option>
             </select>
           </label>
-          <label class="grid-toggle"><input id="targetLockShowRing" type="checkbox" /> Cercle rouge sous la cible</label>
-          <label class="grid-toggle"><input id="targetLockShowRadius" type="checkbox" /> Cercle de détection (debug)</label>
+          <details class="ws-form-section">
+            <summary>Avancé · Visualisations de ciblage</summary>
+            <label class="grid-toggle"><input id="targetLockShowRing" type="checkbox" /> Cercle rouge sous la cible</label>
+            <label class="grid-toggle"><input id="targetLockShowRadius" type="checkbox" /> Cercle de détection (debug)</label>
+          </details>
           <p class="animation-note">W : sélectionner/changer de cible. X : annuler. Un coup qui touche une cible vivante la verrouille. Sans cible ou hors rayon de perte : ZQSD normal. Les animations latérales dédiées viendront ensuite.</p>
-          <button id="targetLockExport" type="button" class="secondary wide">Exporter TARGETING.json</button>
+          <section class="ws-persistence-group" aria-label="Configuration du ciblage">
+            <h3>Fichier de configuration · TARGETING.json</h3>
+            <p class="animation-note">Les ajustements du Playground sont locaux. Télécharger TARGETING.json puis l'intégrer au projet pour les versionner.</p>
+          <button id="targetLockExport" type="button" class="secondary wide">Télécharger TARGETING.json</button>
           <button id="targetLockImport" type="button" class="secondary wide">Importer TARGETING.json</button>
           <input id="targetLockImportFile" type="file" accept=".json,application/json" hidden />
           <button id="targetLockReset" type="button" class="secondary wide">Rétablir le JSON versionné</button>
           <p id="targetLockStatus" class="animation-note" role="status"></p>
+          </section>
         </section>
         <section id="enemiesModule" class="module-window enemy-tools" aria-labelledby="enemyHeading" hidden>
           <header class="module-header">
@@ -301,13 +319,16 @@
           </header>
           <label class="grid-toggle"><input id="heroSolid" type="checkbox" checked /> Activer les collisions physiques</label>
           <label class="grid-toggle"><input id="heroHitboxVisible" type="checkbox" checked /> Hitbox du héros (rouge)</label>
-          <label class="grid-toggle"><input id="enemyHitboxesVisible" type="checkbox" /> Hurtboxes des ennemis (cyan)</label>
-          <label class="grid-toggle"><input id="enemyCollidersVisible" type="checkbox" /> Colliders des ennemis (jaune)</label>
+          <details class="ws-form-section">
+            <summary>Avancé · Visualisations et volumes de collision</summary>
+            <label class="grid-toggle"><input id="enemyHitboxesVisible" type="checkbox" /> Hurtboxes des ennemis (cyan)</label>
+            <label class="grid-toggle"><input id="enemyCollidersVisible" type="checkbox" /> Colliders des ennemis (jaune)</label>
           <div class="enemy-fields">
             <label>Rayon du héros (u)<input id="heroCollisionRadius" type="number" min="0.1" max="2" step="0.05" value="0.4" /></label>
             <label>Hauteur de la hitbox (u)<input id="heroCollisionHeight" type="number" min="0.2" max="4" step="0.1" value="1.8" /></label>
             <label>Décalage vertical (u)<input id="heroCollisionOffset" type="number" min="-1" max="4" step="0.05" value="0.9" /></label>
           </div>
+          </details>
           <button id="heroCollisionReset" class="secondary wide" type="button">Rétablir les valeurs par défaut</button>
           <p class="animation-note">Le volume rouge suit le héros. La marche, la course et l’esquive partagent le même rayon de collision au sol.</p>
           <p id="heroCollisionStatus" class="animation-note" role="status"></p>
@@ -323,9 +344,12 @@
             <label>Portée de la lame (u)<input id="attackRange" type="number" min="0.1" max="8" step="0.05" value="1.8" /></label>
             <label>Rayon de la zone (u)<input id="attackRadius" type="number" min="0.05" max="3" step="0.05" value="0.55" /></label>
             <label>Hauteur du coup (u)<input id="attackHeight" type="number" min="0" max="4" step="0.05" value="1" /></label>
+          </div>
+          <details class="ws-form-section">
+            <summary>Avancé · Override des dégâts de test</summary>
             <label class="grid-toggle"><input id="attackDamageOverrideEnabled" type="checkbox" /> Forcer les dégâts (test)</label>
             <label>Dégâts (calculés ou forcés)<input id="attackDamage" type="number" min="1" max="10000" step="1" value="25" disabled /></label>
-          </div>
+          </details>
           <button id="attackHitboxReset" class="secondary wide" type="button">Rétablir l'attaque par défaut</button>
           <p class="animation-note">La zone orange suit la direction du héros et indique la portée utilisée pour calculer les coups pendant l’attaque.</p>
           <p id="attackHitboxStatus" class="animation-note" role="status"></p>
@@ -550,7 +574,9 @@
               <label>Direction Y<input id="lightingSunY" type="number" min="-10000" max="10000" step="0.1" /></label>
               <label>Direction Z<input id="lightingSunZ" type="number" min="-10000" max="10000" step="0.1" /></label>
             </div>
-            <label class="grid-toggle"><input id="lightingSunShadows" type="checkbox" /> Ombres du soleil</label>
+            <details class="ws-form-section">
+              <summary>Avancé · Ombres du soleil</summary>
+              <label class="grid-toggle"><input id="lightingSunShadows" type="checkbox" /> Ombres du soleil</label>
             <div class="lighting-grid">
               <label>Résolution
                 <select id="lightingSunResolution">
@@ -559,6 +585,7 @@
               </label>
               <label>Obscurité<input id="lightingSunDarkness" type="number" min="0" max="1" step="0.05" /></label>
             </div>
+            </details>
             <label class="grid-toggle"><input id="lightingAmbientEnabled" type="checkbox" /> Lumière ambiante</label>
             <div class="lighting-grid">
               <label>Couleur ambiante<input id="lightingAmbientColor" type="color" /></label>
@@ -610,7 +637,9 @@
                 <label id="lightingExponentField">Exponent<input id="lightingLightExponent" type="number" min="0" max="32" step="0.5" /></label>
                 <label id="lightingGroundField">Couleur du sol<input id="lightingLightGround" type="color" /></label>
               </div>
-              <label class="grid-toggle"><input id="lightingLightShadows" type="checkbox" /> Ombres locales (coûteuses sur mobile)</label>
+              <details class="ws-form-section">
+                <summary>Avancé · Ombres de la lumière sélectionnée</summary>
+                <label class="grid-toggle"><input id="lightingLightShadows" type="checkbox" /> Ombres locales (coûteuses sur mobile)</label>
               <div id="lightingShadowFields" class="lighting-grid">
                 <label>Résolution
                   <select id="lightingLightResolution">
@@ -619,6 +648,7 @@
                 </label>
                 <label>Obscurité<input id="lightingLightDarkness" type="number" min="0" max="1" step="0.05" /></label>
               </div>
+              </details>
               <button id="lightingMoveToHero" type="button" class="secondary wide">Placer à la position du héros</button>
             </div>
           </fieldset>
