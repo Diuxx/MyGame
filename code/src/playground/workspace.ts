@@ -120,8 +120,7 @@ export function bindPlaygroundWorkspace(
   const right = surface("aside", "ws-right", "ws-right",
     '<div class="ws-side-head"><strong id="ws-inspector-title">INSPECTEUR</strong><button id="ws-inspector-toggle" type="button" title="Masquer l’inspecteur" aria-label="Masquer l’inspecteur">◧</button></div>' +
     '<div id="ws-inspector-body" class="ws-inspector-body">' +
-    '<p id="ws-inspector-empty" class="ws-inspector-empty">Sélectionne un objet dans la scène ou dans l’explorateur pour afficher ses propriétés.</p></div>' +
-    '');
+    '<p id="ws-inspector-empty" class="ws-inspector-empty">Sélectionne un objet dans la scène ou dans l’explorateur pour afficher ses propriétés.</p></div>');
   right.setAttribute("aria-label", "Propriétés de la sélection");
   const toolsDock = surface("aside", "ws-tools", "ws-tools",
     '<div class="ws-side-head"><strong id="ws-tools-title">OUTILS · MONDE</strong>' +
