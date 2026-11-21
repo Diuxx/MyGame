@@ -58,7 +58,7 @@ export function allWorkspaceModuleIds(): PlaygroundModuleId[] {
   return [
     ...WORKSPACE_AREAS.flatMap((area) => area.modules.map((module) => module.id)),
     "modelModule",
-    ...HERO_TABS.flatMap((tab) => tab.modules),
+    ...HERO_TABS.flatMap<HeroModuleId>((tab) => tab.modules),
   ];
 }
 
