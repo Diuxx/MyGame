@@ -263,6 +263,36 @@
 /* Form visuals adopt Nicolabz tokens; IDs, input values and listeners are unchanged. */
 .workspace-app .nz-form-panel label,
 .workspace-app .ws-inspector-body label { color: var(--color-text); }
+.workspace-app .nz-form-panel button.wide { width: 100%; }
+.workspace-app .nz-form-panel button:not(.wide) { max-width: 100%; }
+.workspace-app .nz-form-panel input[type="range"] {
+  min-height: 0;
+  height: auto;
+  padding: 0;
+  margin-bottom: var(--space-3);
+  border: 0;
+  background: transparent;
+}
+.workspace-app .nz-form-panel input[type="color"] {
+  height: 36px;
+  min-height: 36px;
+  padding: 2px;
+}
+.workspace-app .ws-header-control,
+.workspace-app .ws-left-footer button,
+.workspace-app .ws-tool-buttons button,
+.workspace-app .ws-history-tools button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+.workspace-app .ws-left-footer button { justify-content: flex-start; }
+.workspace-app .nz-icon-button { display: inline-flex; align-items: center; justify-content: center; }
+.workspace-app .ws-history-tools .nz-icon-button { min-height: 31px; }
+.workspace-app .nz-accordion > summary { color: var(--color-text); }
+.workspace-app .ws-area-button .nz-icon { width: 20px; height: 20px; }
+
 .workspace-app .nz-form-panel input:not([type=checkbox]):not([type=radio]):not([type=range]),
 .workspace-app .nz-form-panel select,
 .workspace-app .nz-form-panel textarea,
