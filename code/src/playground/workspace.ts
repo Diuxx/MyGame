@@ -173,6 +173,21 @@ export function bindPlaygroundWorkspace(
   ] as const) {
     setNicolabzButtonIcon(requireElement<HTMLButtonElement>(id), icon, label);
   }
+  for (const id of [
+    "ws-explorer-toggle", "ws-tools-toggle", "ws-debug-toggle",
+    "ws-inspector-open", "ws-edit-mode", "ws-test-mode",
+    "ws-scene-tab", "ws-catalog-tab", "ws-open-maps",
+  ]) {
+    requireElement<HTMLButtonElement>(id).classList.add("nz-button", "nz-button-secondary");
+  }
+  requireElement<HTMLButtonElement>("ws-open-whitebox")
+    .classList.add("nz-button", "nz-button-primary");
+  for (const id of ["ws-tools-close", "ws-debug-close", "ws-inspector-toggle"]) {
+    requireElement<HTMLButtonElement>(id).classList.add("nz-icon-button");
+  }
+  for (const id of ["ws-open-collisions", "ws-open-attacks", "ws-open-map-debug"]) {
+    requireElement<HTMLButtonElement>(id).classList.add("nz-button", "nz-button-secondary");
+  }
   app.dataset.workspaceMode = "edit";
   // Both legacy launchers and floating windows remain as single DOM instances.
   const legacySidebar = requireElement<HTMLElement>("playgroundPanel");
@@ -248,6 +263,7 @@ export function bindPlaygroundWorkspace(
     if (icon) setNicolabzButtonIcon(button as HTMLButtonElement, icon);
     else button.textContent = symbol;
     button.classList.add("ws-action-button", "nz-icon-button");
+    if (id === "worldEditorDelete") button.classList.add("ws-danger-action");
   }
   historySource?.classList.add("ws-relocated-source");
 
@@ -281,7 +297,7 @@ export function bindPlaygroundWorkspace(
   const areaButtons = new Map<WorkspaceArea, HTMLButtonElement>();
   for (const area of WORKSPACE_AREAS) {
     const button = document.createElement("button");
-    button.className = "ws-area-button";
+    button.className = "ws-area-button nz-button nz-button-secondary";
     button.type = "button";
     button.dataset.area = area.id;
     button.innerHTML = '<span class="ws-area-icon" aria-hidden="true"></span><span class="ws-area-label"></span>';
