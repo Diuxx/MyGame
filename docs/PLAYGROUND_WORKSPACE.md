@@ -9,12 +9,13 @@ L'interface propose :
 - **Barre supérieure** : map active, sélection de map, chargement, FPS, debug et commutateur **Édition / Tester le jeu**.
 - **Barre d'outils** : sélection, déplacement, rotation, échelle, snapping, rotation par incréments, annuler/rétablir, copier/coller/couper/supprimer et export JSON.
 - **Explorateur gauche** : onglets **Scène** (hiérarchie et recherche) et **Catalogue** (Prefabs, décors, tuiles, ennemis/cibles).
-- **Inspecteur droit** : propriétés de l'élément sélectionné et outils classés par domaine.
+- **Inspecteur droit** : propriétés de l'objet sélectionné, indépendantes de la navigation entre modules.
+- **Panneau Outils global** : modules classés par domaine, accessible depuis la barre supérieure ou la navigation latérale. Il peut être fermé sans effacer son contexte.
 - **Barre d'état** : map, nombre d'éléments sélectionnés et mode actif.
 
 ## Modes
 
-**Édition** : bouton **✎ Édition**. Les contrôles de construction sont visibles. Le héros ne se déplace plus ; les flèches déplacent la caméra selon les règles existantes. Sélectionner un objet dans le monde ou dans l'explorateur affiche ses propriétés en tête de l'inspecteur.
+**Édition** : bouton **✎ Édition**. Les contrôles de construction sont visibles. Le héros ne se déplace plus ; les flèches déplacent la caméra selon les règles existantes. Sélectionner un objet dans le monde ou dans l'explorateur actualise son inspecteur sans changer le module ouvert. Les outils globaux peuvent rester visibles en parallèle sur desktop.
 
 **Tester le jeu** : bouton **▶ Tester le jeu**. Les panneaux d'édition se masquent, le canvas s'agrandit et le HUD ainsi que les contrôles du héros restent disponibles. Le retour en édition conserve la même scène, la map, le personnage, l'équipement et les ennemis. La caméra reprend son suivi habituel à la sortie de l'édition.
 
@@ -26,7 +27,7 @@ La seule source de vérité est le contrôle historique `worldEditorEnabled`. Le
 
 | Espace | Modules déjà existants |
 | --- | --- |
-| **Monde** | Éditeur de monde, Maps 3D modulaires, Caméra |
+| **Monde** | Éditeur de monde, Éclairage, Maps 3D modulaires, Caméra |
 | **Héros** | Animations de déplacement, Animations d'action, Modèle chargé, Commandes |
 | **Combat** | Target Lock, Collisions et hitboxes, Zone d'attaque / Portée |
 | **Ennemis** | Gestion des ennemis |
@@ -34,6 +35,16 @@ La seule source de vérité est le contrôle historique `worldEditorEnabled`. Le
 | **Debug** | Commandes existantes d'affichage de hitbox du héros, hurtboxes/colliders ennemis, zone d'attaque, colliders de map, aggro, spawns et grille |
 
 En mode test, le bouton **Debug** ouvre un petit panneau flottant contenant les mêmes commandes de visualisation. Les autres réglages restent accessibles en édition.
+
+## Inspecteur de sélection et outils globaux (Lot 2)
+
+- L'inspecteur de droite contient les nœuds d'origine `worldEditorSelection`, `worldEditorFields` et les contrôles de hauteur. Les événements de l'éditeur, la sélection multiple et les gizmos Babylon restent inchangés.
+- Sans objet sélectionné, l'inspecteur présente un état vide. Après une suppression ou un changement de map, le World Editor invalide la sélection et l'inspecteur se synchronise.
+- Le panneau flottant **Outils** est indépendant et n'occupe pas une colonne permanente du viewport. Les sections Éditeur, Éclairage, Maps, Caméra, Héros, Combat, Ennemis, Effets et Debug y conservent leurs contrôles et leurs listeners.
+- Sur desktop, les propriétés et le panneau Outils peuvent être ouverts simultanément. Sur largeur inférieure à 760 px, les deux panneaux superposés sont mutuellement exclusifs, mais leurs états restent indépendants.
+- Fermer les outils n'efface pas le dernier module affiché. Le bouton **Outils** ou la navigation latérale le rouvre.
+- L'outil Éclairage conserve sa sélection de lumière locale ; la sélection de Prefab/ennemi/interactions demeure gérée par le World Editor. Les ennemis temporaires de test sont toujours gérés par leurs propres contrôles.
+- Les panneaux d'édition disparaissent en mode **Tester le jeu**. Au retour en édition, l'outil global et l'état des panneaux sont restaurés. Le World Editor continue d'effacer sa sélection lors du changement de mode, conformément au comportement existant.
 
 ## Doublons d'interface
 
@@ -57,7 +68,7 @@ La recherche de l'explorateur filtre les noms et identifiants. L'onglet Catalogu
 
 | Fichier | Responsabilité |
 | --- | --- |
-| `code/src/playground/workspaceModules.ts` | Déclaration unique des domaines, 13 modules, historique de navigation et commutateur de mode |
+| `code/src/playground/workspaceModules.ts` | Déclaration des domaines, 13 modules, navigation, visibilité indépendante des panneaux et commutateur de mode |
 | `code/src/playground/workspace.ts` | Construction de la disposition et déplacement des nœuds DOM existants |
 | `code/src/playground/worldEditor.ts` | Exposition minimale de la sélection à l'explorateur |
 | `code/src/playground.ts` | Assemblage au démarrage, sans modifier les règles de gameplay |
@@ -67,7 +78,7 @@ La recherche de l'explorateur filtre les noms et identifiants. L'onglet Catalogu
 
 - Chaque espace conserve son dernier module ouvert durant la session du Playground. Cliquer à nouveau sur l'espace actif ne change pas de module.
 - Fermer un panneau ne réinitialise pas son dernier choix. Le même onglet peut le rouvrir, y compris dans les espaces à module unique.
-- Sélectionner un objet dans la scène ou dans l'explorateur n'ouvre plus automatiquement Monde → Éditeur. Le bouton **Propriétés** de la barre d'état permet d'y accéder explicitement.
+- Sélectionner un objet dans la scène ou dans l'explorateur n'ouvre plus automatiquement Monde → Éditeur. Le bouton **Propriétés** de la barre d'état ouvre l'inspecteur seul, sans changer le module global actif.
 - Le mode **Tester le jeu** masque les outils d'édition sans réinitialiser la navigation. Le retour en édition restaure l'espace et le module précédents.
 - Les raccourcis d'accès aux maps, aux blocs réutilisables et au debug continuent d'ouvrir explicitement leurs outils respectifs.
 
@@ -80,13 +91,15 @@ Le registre des modules est vérifié par les tests. Le changement de mode est t
 1. Démarrer `cd code && npm run dev-playground`.
 2. Vérifier que les six espaces de travail ouvrent les 13 modules existants.
 3. Sélectionner une map, la charger et revenir à la map Playground.
-4. Dans **Monde**, sélectionner un mur depuis la scène et vérifier ses dimensions dans l'inspecteur.
+4. Sélectionner un mur depuis la scène et vérifier ses dimensions dans l'inspecteur. Ouvrir **Éclairage** et **Ennemis** : l'inspecteur et la sélection du mur restent accessibles.
 5. Dans **Catalogue**, créer un Prefab, le déplacer, effectuer Undo/Redo et exporter le JSON.
 6. Cliquer sur **Tester le jeu** : vérifier ZQSD, course, attaque, esquive et Target Lock sans recharger la scène.
 7. Activer **Debug** en mode test : vérifier la hitbox du héros, les zones d'attaque et les colliders.
 8. Revenir en édition et vérifier le déplacement libre de la caméra avec les flèches.
 9. Vérifier les import/export JSON des modules d'animation, de ciblage et de Floating Text.
-10. Vérifier la navigation sur écran étroit : explorer et inspecteur repliables.
+10. Vérifier la navigation sur écran étroit : explorateur, inspecteur et panneau Outils repliables, sans superposition simultanée de ces deux derniers.
+11. Supprimer l'objet sélectionné, changer de map et vérifier que l'inspecteur présente l'état vide sans affichage d'ancienne donnée.
+12. Fermer le panneau Outils, revenir en édition depuis **Tester le jeu**, puis restaurer le dernier domaine et module utilisés.
 
 Ces tests visuels doivent être exécutés dans un navigateur pour être déclarés réussis.
 

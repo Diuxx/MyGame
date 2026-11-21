@@ -4,7 +4,7 @@ import type { createMapSystem } from "../world/maps/mapSystem";
 import type { MapDefinition } from "../world/maps/types";
 import { requireElement } from "../ui/dom";
 import type { bindWorldEditor } from "./worldEditor";
-import { WORKSPACE_AREAS, allWorkspaceModuleIds, createWorkspaceNavigation, modulesForArea, setWorkspaceEditingState, type WorkspaceArea, type WorkspaceModuleId } from "./workspaceModules";
+import { WORKSPACE_AREAS, allWorkspaceModuleIds, createWorkspaceNavigation, createWorkspacePanelState, modulesForArea, setWorkspaceEditingState, type WorkspaceArea, type WorkspaceModuleId } from "./workspaceModules";
 
 type WorldEditor = ReturnType<typeof bindWorldEditor>;
 type MapSystem = ReturnType<typeof createMapSystem>;
@@ -87,6 +87,7 @@ export function bindPlaygroundWorkspace(
     '<div class="ws-top-space"></div>' +
     '<div class="ws-map-picker"><label for="mapSelect">Map</label><div id="ws-map-select-host"></div><div id="ws-map-load-host"></div></div>' +
     '<span id="ws-top-fps"></span>' +
+    '<button id="ws-tools-toggle" class="ws-header-control" type="button" aria-controls="ws-tools" aria-expanded="false" title="Afficher les outils globaux">⚙ Outils</button>' +
     '<button id="ws-debug-toggle" class="ws-header-control" type="button" aria-expanded="false" title="Affichages de debug">⌘ Debug</button>' +
     '<button id="ws-inspector-open" class="ws-header-control ws-inspector-open" type="button" aria-expanded="false" title="Afficher l’inspecteur">☷ Inspecteur</button>' +
     '<div class="ws-mode-switch" role="group" aria-label="Mode du Playground">' +
@@ -118,6 +119,12 @@ export function bindPlaygroundWorkspace(
   left.setAttribute("aria-label", "Explorateur de scène et catalogue");
   const right = surface("aside", "ws-right", "ws-right",
     '<div class="ws-side-head"><strong id="ws-inspector-title">INSPECTEUR</strong><button id="ws-inspector-toggle" type="button" title="Masquer l’inspecteur" aria-label="Masquer l’inspecteur">◧</button></div>' +
+    '<div id="ws-inspector-body" class="ws-inspector-body">' +
+    '<p id="ws-inspector-empty" class="ws-inspector-empty">Sélectionne un objet dans la scène ou dans l’explorateur pour afficher ses propriétés.</p></div>');
+  right.setAttribute("aria-label", "Propriétés de la sélection");
+  const toolsDock = surface("aside", "ws-tools", "ws-tools",
+    '<div class="ws-side-head"><strong id="ws-tools-title">OUTILS · MONDE</strong>' +
+    '<button id="ws-tools-close" type="button" aria-label="Fermer les outils">×</button></div>' +
     '<nav id="ws-module-tabs" class="ws-module-tabs" aria-label="Outils de la catégorie"></nav>' +
     '<div id="ws-module-host" class="ws-module-host"></div>' +
     '<section id="ws-debug-panel" class="ws-debug-panel" hidden><h3>Visualisation et diagnostic</h3>' +
@@ -125,7 +132,8 @@ export function bindPlaygroundWorkspace(
     '<div class="ws-debug-shortcuts"><button id="ws-open-collisions" type="button">Paramètres des collisions</button>' +
     '<button id="ws-open-attacks" type="button">Portée et attaques</button>' +
     '<button id="ws-open-map-debug" type="button">État de la map</button></div></section>');
-  right.setAttribute("aria-label", "Inspecteur et paramètres du Playground");
+  toolsDock.hidden = true;
+  toolsDock.setAttribute("aria-label", "Outils et paramètres globaux du Playground");
   const footer = surface("footer", "ws-statusbar", "ws-statusbar",
     '<span id="ws-status-map">Aucune map</span><span class="ws-status-separator">·</span>' +
     '<span id="ws-status-selection">Aucune sélection</span>' +
@@ -140,7 +148,7 @@ export function bindPlaygroundWorkspace(
     '<div id="ws-debug-test-host"></div>');
   debugDrawer.hidden = true;
   stage.append(debugDrawer);
-  app.append(top, toolbar, rail, left, right, footer);
+  app.append(top, toolbar, rail, left, right, toolsDock, footer);
   app.classList.add("workspace-app");
   app.dataset.workspaceMode = "edit";
   // Both legacy launchers and floating windows remain as single DOM instances.
@@ -150,6 +158,7 @@ export function bindPlaygroundWorkspace(
   legacyDock.hidden = true;
 
   const navigation = createWorkspaceNavigation();
+  const panelState = createWorkspacePanelState();
   const modules = new Map<WorkspaceModuleId, HTMLElement>();
   const moduleHost = requireElement<HTMLElement>("ws-module-host");
   for (const id of allWorkspaceModuleIds()) {
@@ -159,11 +168,8 @@ export function bindPlaygroundWorkspace(
     panel.classList.add("ws-existing-module");
     panel.hidden = true;
     const closeModule = () => {
-      if (!navigation.closeModule(id)) return;
-      renderNavigation();
-      // Return focus to the launcher after hiding the focused module.
-      requireElement("ws-module-tabs")
-        .querySelector<HTMLButtonElement>(`[data-workspace-module="${id}"]`)?.focus();
+      // Closing an editor tool does not forget the last module for this area.
+      if (navigation.module === id) closeTools();
     };
     panel.querySelector<HTMLButtonElement>(".module-close")?.addEventListener("click", closeModule, { signal });
     panel.addEventListener("keydown", (event) => {
@@ -210,7 +216,6 @@ export function bindPlaygroundWorkspace(
   historySource?.classList.add("ws-relocated-source");
 
   const catalog = requireElement("worldEditorCatalog");
-  const editorModule = requireElement("worldEditorModule");
   const selection = requireElement("worldEditorSelection");
   const properties = requireElement("worldEditorFields");
   const heightControls = requireElement("worldEditorHeightStep").closest(".enemy-fields");
@@ -218,7 +223,7 @@ export function bindPlaygroundWorkspace(
   contextInspector.className = "ws-context-inspector";
   contextInspector.append(selection, properties);
   if (heightControls) contextInspector.append(heightControls);
-  editorModule.querySelector(".module-header")?.after(contextInspector);
+  requireElement("ws-inspector-body").append(contextInspector);
   requireElement("ws-catalog-pane").append(catalog);
   // Make the reusable whitebox blocks discoverable immediately without
   // changing their original buttons, listeners or catalogue data.
@@ -289,9 +294,9 @@ export function bindPlaygroundWorkspace(
       button.classList.toggle("is-active", selected);
       button.setAttribute("aria-current", selected ? "page" : "false");
     }
-    requireElement("ws-inspector-title").textContent =
-      WORKSPACE_AREAS.find((item) => item.id === activeArea)?.label.toUpperCase() ?? "INSPECTEUR";
-
+    requireElement("ws-tools-title").textContent = "OUTILS · " +
+      (WORKSPACE_AREAS.find((item) => item.id === activeArea)?.label.toUpperCase() ?? "MONDE");
+    reflectPanelVisibility();
     const isDebug = activeArea === "debug";
     moduleHost.hidden = isDebug || !activeModule;
     for (const [id, panel] of modules) panel.hidden = isDebug || activeModule !== id;
@@ -301,22 +306,48 @@ export function bindPlaygroundWorkspace(
         requireElement<HTMLInputElement>(id).closest("label")!));
     }
     requireElement<HTMLButtonElement>("ws-debug-toggle")
-      .setAttribute("aria-pressed", String(isDebug && editInput.checked));
+      .setAttribute("aria-pressed", String(isDebug && panelState.toolsOpen && editInput.checked));
     updateTabs();
   }
 
+  function isNarrowViewport(): boolean {
+    return window.matchMedia("(max-width: 760px)").matches;
+  }
+
+  function reflectPanelVisibility(): void {
+    toolsDock.hidden = !panelState.toolsOpen;
+    app.classList.toggle("ws-inspector-collapsed", !panelState.inspectorOpen(false));
+    app.classList.toggle("ws-mobile-inspector-open", panelState.inspectorOpen(true));
+    requireElement<HTMLButtonElement>("ws-inspector-open")
+      .setAttribute("aria-expanded", String(panelState.inspectorOpen(isNarrowViewport())));
+    requireElement<HTMLButtonElement>("ws-tools-toggle")
+      .setAttribute("aria-expanded", String(panelState.toolsOpen && editInput.checked));
+  }
+
+  function setToolsOpen(open: boolean): void {
+    panelState.setToolsOpen(open, isNarrowViewport());
+    renderNavigation();
+  }
+
+  function closeTools(): void {
+    setToolsOpen(false);
+    requireElement<HTMLButtonElement>("ws-tools-toggle").focus();
+  }
+
   function showModule(id: WorkspaceModuleId): void {
-    if (navigation.showModule(id)) renderNavigation();
+    navigation.showModule(id);
+    setToolsOpen(true);
   }
 
   function changeArea(area: WorkspaceArea): void {
-    if (navigation.changeArea(area)) renderNavigation();
+    navigation.changeArea(area);
+    setToolsOpen(true);
   }
 
   function openModuleInArea(area: WorkspaceArea, module: WorkspaceModuleId): void {
     navigation.changeArea(area);
     navigation.showModule(module);
-    renderNavigation();
+    setToolsOpen(true);
   }
 
   function setLeftTab(tab: "scene" | "catalog"): void {
@@ -371,6 +402,8 @@ export function bindPlaygroundWorkspace(
     requireElement("ws-status-selection").textContent = selectionCount
       ? selectionCount + " sélection(s)" : "Aucune sélection";
     requireElement<HTMLButtonElement>("ws-selection-properties").hidden = selectionCount === 0;
+    contextInspector.hidden = selectionCount === 0;
+    requireElement("ws-inspector-empty").hidden = selectionCount > 0;
     if (!map) {
       tree.textContent = "Aucune map chargée.";
       return;
@@ -404,7 +437,9 @@ export function bindPlaygroundWorkspace(
     }
     requireElement("ws-status-mode").textContent = editing ? "Mode édition" : "Test du héros";
     requireElement<HTMLButtonElement>("ws-debug-toggle")
-      .setAttribute("aria-pressed", String(editing && navigation.area === "debug"));
+      .setAttribute("aria-pressed", String(editing && navigation.area === "debug" && panelState.toolsOpen));
+    requireElement<HTMLButtonElement>("ws-tools-toggle")
+      .setAttribute("aria-expanded", String(editing && panelState.toolsOpen));
     if (editing) {
       closeDebugDrawer();
       stage.classList.remove("ws-testing");
@@ -437,19 +472,20 @@ export function bindPlaygroundWorkspace(
       String(!debugDrawer.hidden));
   }, { signal });
   requireElement("ws-debug-close").addEventListener("click", closeDebugDrawer, { signal });
+  requireElement("ws-tools-toggle").addEventListener("click", () => {
+    if (panelState.toolsOpen) closeTools();
+    else setToolsOpen(true);
+  }, { signal });
+  requireElement("ws-tools-close").addEventListener("click", closeTools, { signal });
 
   requireElement("ws-scene-tab").addEventListener("click", () => setLeftTab("scene"), { signal });
   requireElement("ws-catalog-tab").addEventListener("click", () => setLeftTab("catalog"), { signal });
   requireElement("ws-scene-search").addEventListener("input", renderSceneTree, { signal });
   requireElement("ws-selection-properties").addEventListener("click", () => {
     if (selectedEntries().length === 0) return;
-    openModuleInArea("world", "worldEditorModule");
-    if (window.matchMedia("(max-width: 760px)").matches) {
-      app.classList.add("ws-mobile-inspector-open");
-    } else {
-      app.classList.remove("ws-inspector-collapsed");
-    }
-    requireElement<HTMLButtonElement>("ws-inspector-open").setAttribute("aria-expanded", "true");
+    // Opening object properties must not change the selected global tool.
+    panelState.setInspectorOpen(true, isNarrowViewport());
+    renderNavigation();
   }, { signal });
   requireElement("ws-open-maps").addEventListener("click", () => {
     openModuleInArea("world", "mapsModule");
@@ -471,15 +507,9 @@ export function bindPlaygroundWorkspace(
   const inspectorToggle = requireElement<HTMLButtonElement>("ws-inspector-toggle");
   const inspectorOpen = requireElement<HTMLButtonElement>("ws-inspector-open");
   function toggleInspector(): void {
-    if (window.matchMedia("(max-width: 760px)").matches) {
-      app.classList.toggle("ws-mobile-inspector-open");
-      inspectorOpen.setAttribute("aria-expanded",
-        String(app.classList.contains("ws-mobile-inspector-open")));
-    } else {
-      app.classList.toggle("ws-inspector-collapsed");
-      inspectorOpen.setAttribute("aria-expanded",
-        String(!app.classList.contains("ws-inspector-collapsed")));
-    }
+    const narrow = isNarrowViewport();
+    panelState.setInspectorOpen(!panelState.inspectorOpen(narrow), narrow);
+    renderNavigation();
   }
   inspectorToggle.addEventListener("click", toggleInspector, { signal });
   inspectorOpen.addEventListener("click", toggleInspector, { signal });
@@ -521,6 +551,7 @@ export function bindPlaygroundWorkspace(
     { childList: true, subtree: true, characterData: true });
   const viewportResize = new ResizeObserver(() => scene.getEngine().resize());
   viewportResize.observe(stage);
+  window.addEventListener("resize", reflectPanelVisibility, { signal });
 
   window.addEventListener("keydown", (event) => {
     if (event.key !== "F2" || event.repeat || event.altKey || event.ctrlKey || event.metaKey ||
