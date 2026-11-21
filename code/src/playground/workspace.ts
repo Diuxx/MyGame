@@ -86,7 +86,7 @@ export function bindPlaygroundWorkspace(
   const stage: HTMLElement = stageCandidate;
 
   const top = surface("header", "ws-top", "ws-top",
-    '<div class="ws-logo" aria-hidden="true"></div>' +
+    '<div id="ws-logo" class="ws-logo" aria-hidden="true"></div>' +
     '<div class="ws-identity"><strong>IDLE RPG</strong><small>PLAYGROUND</small></div>' +
     '<div class="ws-breadcrumb"><span class="ws-muted">Projet / Monde /</span> <strong id="ws-active-name">Playground</strong></div>' +
     '<div class="ws-top-space"></div>' +
