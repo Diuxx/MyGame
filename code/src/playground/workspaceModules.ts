@@ -96,6 +96,38 @@ export function createWorkspaceNavigation(initialArea: WorkspaceArea = "world") 
 }
 
 /**
+ * Panel visibility is independent of the selected world entity and of the
+ * active tool. On narrow viewports, the two overlays are mutually exclusive.
+ */
+export function createWorkspacePanelState() {
+  let toolsOpen = false;
+  let desktopInspectorOpen = true;
+  let mobileInspectorOpen = false;
+
+  return {
+    get toolsOpen(): boolean { return toolsOpen; },
+
+    inspectorOpen(narrow: boolean): boolean {
+      return narrow ? mobileInspectorOpen : desktopInspectorOpen;
+    },
+
+    setToolsOpen(open: boolean, narrow: boolean): void {
+      toolsOpen = open;
+      if (open && narrow) mobileInspectorOpen = false;
+    },
+
+    setInspectorOpen(open: boolean, narrow: boolean): void {
+      if (narrow) {
+        mobileInspectorOpen = open;
+        if (open) toolsOpen = false;
+      } else {
+        desktopInspectorOpen = open;
+      }
+    },
+  };
+}
+
+/**
  * The existing editor checkbox is the single authority for editing state.
  * Dispatching change goes through the original camera, combat and input hooks.
  */
