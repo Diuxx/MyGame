@@ -3,12 +3,18 @@ import type { Scene } from "@babylonjs/core";
 import type { createMapSystem } from "../world/maps/mapSystem";
 import type { MapDefinition } from "../world/maps/types";
 import { requireElement } from "../ui/dom";
+import { createNicolabzIcon, setNicolabzButtonIcon, type NicolabzIconName } from "./nicolabzIcons";
 import type { bindWorldEditor } from "./worldEditor";
 import { WORKSPACE_AREAS, allWorkspaceModuleIds, createWorkspaceNavigation, createWorkspacePanelState, modulesForArea, setWorkspaceEditingState, type WorkspaceArea, type WorkspaceModuleId } from "./workspaceModules";
 
 type WorldEditor = ReturnType<typeof bindWorldEditor>;
 type MapSystem = ReturnType<typeof createMapSystem>;
 type SelectionKind = "prefab" | "object" | "enemy" | "interaction";
+
+const AREA_ICONS: Record<WorkspaceArea, NicolabzIconName> = {
+  world: "boxes", hero: "user", combat: "shield",
+  enemies: "users-round", effects: "bell", debug: "bug",
+};
 
 const DEBUG_CONTROLS = [
   "heroHitboxVisible", "enemyHitboxesVisible", "enemyCollidersVisible",
@@ -150,6 +156,23 @@ export function bindPlaygroundWorkspace(
   stage.append(debugDrawer);
   app.append(top, toolbar, rail, left, right, toolsDock, footer);
   app.classList.add("workspace-app");
+  // Keep native buttons, labels and event handlers. The Babylon transform tools
+  // retain their specialized glyphs until the design system offers equivalents.
+  for (const [id, icon, label] of [
+    ["ws-explorer-toggle", "menu"],
+    ["ws-tools-toggle", "settings", "Outils"],
+    ["ws-debug-toggle", "bug", "Debug"],
+    ["ws-inspector-open", "square-pen", "Inspecteur"],
+    ["ws-inspector-toggle", "square-pen"],
+    ["ws-tools-close", "x"],
+    ["ws-debug-close", "x"],
+    ["ws-edit-mode", "pencil", "Édition"],
+    ["ws-test-mode", "rocket", "Tester le jeu"],
+    ["ws-open-whitebox", "boxes", "Blocs réutilisables (whitebox)"],
+    ["ws-open-maps", "folder", "Gestion des maps"],
+  ] as const) {
+    setNicolabzButtonIcon(requireElement<HTMLButtonElement>(id), icon, label);
+  }
   app.dataset.workspaceMode = "edit";
   // Both legacy launchers and floating windows remain as single DOM instances.
   const legacySidebar = requireElement<HTMLElement>("playgroundPanel");
@@ -165,7 +188,9 @@ export function bindPlaygroundWorkspace(
     const panel = requireElement<HTMLElement>(id);
     modules.set(id, panel);
     moduleHost.append(panel);
-    panel.classList.add("ws-existing-module");
+    panel.classList.add("ws-existing-module", "nz-form-panel");
+    const closeIconButton = panel.querySelector<HTMLButtonElement>(".module-close");
+    if (closeIconButton) setNicolabzButtonIcon(closeIconButton, "x");
     panel.hidden = true;
     const closeModule = () => {
       // Closing an editor tool does not forget the last module for this area.
@@ -211,17 +236,18 @@ export function bindPlaygroundWorkspace(
   snapSource?.classList.add("ws-relocated-source");
   const historySource = requireElement("worldEditorUndo").closest(".enemy-fields");
   const historyHost = requireElement<HTMLElement>("ws-history-tools");
-  for (const [id, name, symbol] of [
-    ["worldEditorUndo", "Annuler (Ctrl+Z)", "↶"],
-    ["worldEditorRedo", "Rétablir (Ctrl+Y)", "↷"],
-    ["worldEditorCopy", "Copier (Ctrl+C)", "⧉"],
-    ["worldEditorPaste", "Coller (Ctrl+V)", "▤"],
-    ["worldEditorCut", "Couper (Ctrl+X)", "✂"],
-    ["worldEditorDelete", "Supprimer (Suppr)", "⌫"],
-  ]) {
+  for (const [id, name, symbol, icon] of [
+    ["worldEditorUndo", "Annuler (Ctrl+Z)", "↶", "arrow-left"],
+    ["worldEditorRedo", "Rétablir (Ctrl+Y)", "↷", "arrow-right"],
+    ["worldEditorCopy", "Copier (Ctrl+C)", "⧉", "copy"],
+    ["worldEditorPaste", "Coller (Ctrl+V)", "▤", "clipboard"],
+    ["worldEditorCut", "Couper (Ctrl+X)", "✂", undefined],
+    ["worldEditorDelete", "Supprimer (Suppr)", "⌫", "trash-2"],
+  ] as const) {
     const button = moveControl(id, historyHost, name);
-    button.textContent = symbol;
-    button.classList.add("ws-action-button");
+    if (icon) setNicolabzButtonIcon(button as HTMLButtonElement, icon);
+    else button.textContent = symbol;
+    button.classList.add("ws-action-button", "nz-icon-button");
   }
   historySource?.classList.add("ws-relocated-source");
 
@@ -259,7 +285,7 @@ export function bindPlaygroundWorkspace(
     button.type = "button";
     button.dataset.area = area.id;
     button.innerHTML = '<span class="ws-area-icon" aria-hidden="true"></span><span class="ws-area-label"></span>';
-    button.querySelector<HTMLElement>(".ws-area-icon")!.textContent = area.symbol;
+    button.querySelector<HTMLElement>(".ws-area-icon")!.append(createNicolabzIcon(AREA_ICONS[area.id]));
     button.querySelector<HTMLElement>(".ws-area-label")!.textContent = area.label;
     button.title = area.label;
     button.addEventListener("click", () => changeArea(area.id), { signal });
@@ -279,6 +305,7 @@ export function bindPlaygroundWorkspace(
         const button = document.createElement("button");
         button.type = "button";
         button.dataset.workspaceModule = item.id;
+        button.classList.add("nz-button", "nz-button-secondary");
         button.textContent = item.label;
         button.setAttribute("aria-controls", item.id);
         button.addEventListener("click", () => showModule(item.id), { signal });
