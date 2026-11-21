@@ -13,7 +13,7 @@ function between(start: string, end: string): string {
 }
 
 test("workspace form changes keep unique control IDs", () => {
-  const ids = [...html.matchAll(/\\bid="([^"]+)"/g)].map((match) => match[1]);
+  const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
   assert.equal(new Set(ids).size, ids.length);
   for (const id of ["worldEditorX", "worldEditorFields", "enemyForm", "enemyMaxHealth",
     "enemyCollisionRadius", "lightingSunShadows", "targetLockEnabled",
