@@ -50,6 +50,8 @@ class ThumbnailRenderer {
     const radius = Math.max(maximum.subtract(minimum).length() / 2, 0.05);
     const extent = radius * 1.12;
     this.camera.setTarget(center);
+    this.camera.alpha = -Math.PI / 3;
+    this.camera.beta = Math.PI / 3;
     this.camera.radius = radius * 3;
     this.camera.maxZ = radius * 10 + 10;
     this.camera.orthoLeft = -extent;
