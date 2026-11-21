@@ -7,6 +7,7 @@ import type { createCharacterController } from "../character/characterController
 import type { TransitionControls } from "./transitionTools";
 import { createAnimationTimeline, type TimelineLane } from "./animationTimeline";
 import { downloadJson, requireElement } from "../ui/dom";
+import { describeJsonExport } from "./workspacePersistence";
 
 const STORAGE_KEY = "mon-rpg.playground.animations.v2";
 const format = (value: number, digits: number) => value.toFixed(digits).replace(".", ",");
@@ -51,7 +52,7 @@ export function bindAnimationTools(
 
   requireElement<HTMLButtonElement>("exportAnimationManifest").addEventListener("click", () => {
     downloadJson("ANIMATIONS.json", serializeAnimationManifest(settings, transitions.get()));
-    refreshSource("JSON exporté : remplacer code/ANIMATIONS.json pour versionner ces réglages.");
+    refreshSource(describeJsonExport("ANIMATIONS.json", "code/ANIMATIONS.json"));
   }, { signal });
 
   const importInput = requireElement<HTMLInputElement>("importAnimationManifestFile");
@@ -72,9 +73,10 @@ export function bindAnimationTools(
       hasLocalOverrides = true;
       applySettings();
       if (saveWarning) {
-        refreshSource(`Configuration appliquée pour cette session uniquement : ${saveWarning}`);
+        refreshSource(`Configuration importée pour cette session uniquement : stockage local impossible (${saveWarning}). Télécharger ANIMATIONS.json pour l'intégrer au projet.`);
+      } else {
+        refreshSource("Configuration importée et enregistrée dans ce navigateur. Télécharger ANIMATIONS.json pour la versionner.");
       }
-      refreshSource("Configuration importée et appliquée dans le Playground. Exporter pour la versionner.");
     } catch (error) {
       refreshSource(`Import refusé : ${error instanceof Error ? error.message : String(error)}`);
     } finally {
