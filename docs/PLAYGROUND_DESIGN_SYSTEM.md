@@ -41,6 +41,12 @@ Le préfixe `nz-` est réservé aux composants Nicolabz. Les IDs existants, les 
 
 Les icônes utilisent le sprite existant `@nicolabz/design-system/icons.svg?url` via `nicolabzIcons.ts`. Vite copie le sprite dans les assets générés ; les éléments `<use>` le référencent sur la même origine. Les icônes décoratives sont marquées `aria-hidden`, tandis que les actions gardent leurs libellés ou attributs `aria-label`. Certains outils de transformation 3D gardent volontairement leurs glyphes pour éviter de leur attribuer des pictogrammes imprécis.
 
+### Identité du projet et accès à l'explorateur
+
+Le symbole générique du Playground a été remplacé par l'icône `shield` du sprite Nicolabz, déjà utilisée par l'interface. Un favicon SVG autonome `code/public/favicon.svg` reproduit le contour Lucide (licence ISC) pour les onglets de navigateur, qui ne prennent pas tous en charge les fragments de sprites SVG en favicon.
+
+Le bouton hamburger de l'en-tête a été retiré : sur les écrans de 1020 px ou moins, le bouton **Scène** du rail latéral donne accès à l'explorateur et conserve le même ID `ws-explorer-toggle` et son `aria-expanded`. Sur grand écran, l'explorateur reste affiché en permanence. La navigation conserve donc les fonctionnalités antérieures sans occuper inutilement la barre de titre.
+
 ## Risque de collision CSS et limites
 
 La bibliothèque contient aussi des sélecteurs génériques (`.panel`, `.button`, `.form-panel`). Ses feuilles sont chargées **avant** `style.css`, de façon à préserver les règles spécifiques à MyGame. Les adaptations finales sont regroupées dans `nicolabzWorkspace.css` et limitées à `.workspace-app`. Vérifier cet ordre lors de toute évolution de la chaîne Vite.
