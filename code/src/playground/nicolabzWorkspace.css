@@ -122,6 +122,29 @@
   color: var(--color-accent-contrast);
   border-radius: var(--radius-sm);
 }
+.workspace-app .ws-logo .nz-icon {
+  width: 24px;
+  height: 24px;
+  color: var(--color-accent-contrast);
+}
+.workspace-app .ws-rail .ws-explorer-toggle { display: none; }
+@media (max-width: 1020px) {
+  .workspace-app .ws-rail .ws-explorer-toggle {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 10px;
+    min-height: 55px;
+    padding: 4px 1px;
+    border-radius: var(--radius-sm);
+  }
+  .workspace-app.ws-explorer-open .ws-rail .ws-explorer-toggle {
+    background: var(--color-surface);
+    color: var(--color-text);
+    border-color: var(--color-accent);
+  }
+}
+
 .workspace-app .ws-identity small,
 .workspace-app .ws-map-picker > label,
 .workspace-app .ws-breadcrumb,
