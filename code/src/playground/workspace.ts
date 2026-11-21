@@ -442,7 +442,14 @@ export function bindPlaygroundWorkspace(
   requireElement("ws-catalog-tab").addEventListener("click", () => setLeftTab("catalog"), { signal });
   requireElement("ws-scene-search").addEventListener("input", renderSceneTree, { signal });
   requireElement("ws-selection-properties").addEventListener("click", () => {
-    if (selectedEntries().length > 0) openModuleInArea("world", "worldEditorModule");
+    if (selectedEntries().length === 0) return;
+    openModuleInArea("world", "worldEditorModule");
+    if (window.matchMedia("(max-width: 760px)").matches) {
+      app.classList.add("ws-mobile-inspector-open");
+    } else {
+      app.classList.remove("ws-inspector-collapsed");
+    }
+    requireElement<HTMLButtonElement>("ws-inspector-open").setAttribute("aria-expanded", "true");
   }, { signal });
   requireElement("ws-open-maps").addEventListener("click", () => {
     openModuleInArea("world", "mapsModule");
