@@ -83,9 +83,9 @@ export async function startPlayground(
 
   const lifecycle = createHeroLifecycle(character.root, cameraControls, animationPlayer, heroState.stats.maxHealth);
   const { vitals } = lifecycle;
-  const hud = createHeroHud(signal, heroState.baseStats);
-  hud.setEquipment(heroState.equipment.mainHand);
   let controller: ReturnType<typeof createCharacterController> | undefined;
+  const hud = createHeroHud(signal, heroState.baseStats, (slot) => controller?.useSpell(slot));
+  hud.setEquipment(heroState.equipment.mainHand);
   const maps = createMapSystem(scene, {
     hero: character.root, shadows,
     applyLighting: lighting.apply,
@@ -155,7 +155,7 @@ export async function startPlayground(
     collisions.resolveMovement,
     () => vitals.isAlive && !worldEditor.enabled && !zoneTransitions.isBusy,
     (actionId) => {
-      hud.flashSpell(actionId);
+      hud.flashSpell(actionId === "attack" ? "spell1" : actionId);
       floatingText.showAction('hero', actionId, character.root);
     }, zoneTransitions.interact);
   controller.setTargetingProvider(() => targetLock?.motion);
@@ -164,6 +164,9 @@ export async function startPlayground(
     cancel: () => targetLock?.clearTarget(),
   });
   controller.setTargetClickHandler(createTargetClickHandler(scene, canvas, targetLock));
+  scene.onBeforeRenderObservable.add(() => {
+    hud.setFollowUpAvailable(controller?.canUseFollowUp ?? false);
+  });
   requireElement<HTMLButtonElement>("simulateHeroHit").addEventListener("click", controller.receiveHit, { signal });
   const simulateHeroDeath = requireElement<HTMLButtonElement>("simulateHeroDeath");
   simulateHeroDeath.addEventListener("click", () => {
@@ -171,7 +174,10 @@ export async function startPlayground(
     simulateHeroDeath.disabled = !vitals.isAlive;
     hud.refresh(vitals);
   }, { signal });
-  const getBindings = bindControlSettings(controller.setBindings, signal);
+  const getBindings = bindControlSettings((keys) => {
+    controller?.setBindings(keys);
+    hud.setBindings(keys);
+  }, signal);
   const transitions = bindTransitionTools(animationPlayer, signal);
   const updateActiveAnimation = bindAnimationTools(animationPlayer, controller,
     new Set(character.animationGroups.map(({ name }) => name)), transitions, signal);

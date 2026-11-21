@@ -1,11 +1,12 @@
 export const DEFAULT_HERO_KEYS = {
   forward: "z", left: "q", backward: "s", right: "d", run: "shift",
-  spell1: "a", spell2: "e", spell3: "r", spell4: "1", interact: "f",
+  spell2: "a", spell3: "e", spell4: "1", interact: "f",
   nextTarget: "w", cancelTarget: "x",
 };
 export type HeroKeys = typeof DEFAULT_HERO_KEYS;
 export const HERO_SPELL_SLOTS = ["spell1", "spell2", "spell3", "spell4"] as const;
 export type HeroSpellSlot = typeof HERO_SPELL_SLOTS[number];
+const HERO_KEYBOARD_SPELL_SLOTS = ["spell2", "spell3", "spell4"] as const;
 
 const KEY_LABELS: Record<string, string> = { shift: "Maj", arrowup: "↑", arrowdown: "↓", arrowleft: "←", arrowright: "→" };
 export const heroKeyLabel = (key: string) => KEY_LABELS[key] ?? key.toUpperCase();
@@ -65,7 +66,7 @@ export function bindHeroInput(
       }
       return;
     }
-    const slot = HERO_SPELL_SLOTS.find((id) => bindings[id] === key);
+    const slot = HERO_KEYBOARD_SPELL_SLOTS.find((id) => bindings[id] === key);
     if (slot || key === bindings.interact) {
       if (event.target instanceof HTMLInputElement) return;
       event.preventDefault();

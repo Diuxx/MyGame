@@ -86,7 +86,10 @@ input[type=range] { accent-color:#a4c49e; display:block; width:100%; margin:0 0 
 .hero-hud-weapon, .hero-hud-spell-slot { border:1px solid rgba(182,208,184,.42); border-radius:9px; }
 .hero-hud-weapon { flex:0 0 60px; width:60px; height:60px; display:flex; align-items:center; justify-content:center; background:rgba(7,16,14,.4); overflow:hidden; }
 .hero-hud-spell { display:grid; grid-template-columns:repeat(4,minmax(0,40px)) minmax(max-content,1fr); align-items:center; gap:6px; margin-top:5px; }
-.hero-hud-spell-slot { aspect-ratio:1; border-radius:6px; background:#000; transition:background-color .14s, border-color .14s, box-shadow .14s; }
+.hero-hud-spell-slot { position:relative; aspect-ratio:1; border-radius:6px; padding:0; overflow:hidden; background:#000; color:inherit; font:inherit; cursor:pointer; pointer-events:auto; transition:background-color .14s, border-color .14s, box-shadow .14s; }
+.hero-hud-spell-slot:focus-visible { outline:2px solid #c3daba; outline-offset:2px; }
+.hero-hud-spell-icon { display:block; width:100%; height:100%; object-fit:cover; }
+.hero-hud-key { position:absolute; right:2px; bottom:2px; min-width:12px; padding:1px 3px; border-radius:3px; background:rgba(7,16,14,.82); color:#F0F5F1; font:600 8px/1.2 system-ui,sans-serif; text-align:center; }
 .hero-hud-spell-slot.is-highlighted { background:#343e31; border-color:#ebdba8; box-shadow:inset 0 0 8px #ebdba859,0 0 6px #ebdba869; transition:none; }
 .hero-hud-stats-toggle { justify-self:end; display:inline-flex; align-items:center; gap:7px; min-height:32px; padding:4px 8px; border:1px solid #627565; border-radius:6px; background:#26332d; color:inherit; pointer-events:auto; }
 .hero-hud-stats-toggle::after { content:""; width:5px; height:5px; border:solid currentColor; border-width:0 1px 1px 0; transform:translateY(-1px) rotate(45deg); }

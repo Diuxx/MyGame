@@ -5,7 +5,7 @@ const STORAGE_KEY = "mon-rpg.playground.keys";
 const KEYS = [..."abcdefghijklmnopqrstuvwxyz0123456789", "shift", "arrowup", "arrowdown", "arrowleft", "arrowright"];
 const FIELDS = {
   forward: "keyForward", backward: "keyBackward", left: "keyLeft", right: "keyRight", run: "keyRun",
-  spell1: "keySpell1", spell2: "keySpell2", spell3: "keySpell3", spell4: "keySpell4", interact: "keyInteract",
+  spell2: "keySpell2", spell3: "keySpell3", spell4: "keySpell4", interact: "keyInteract",
   nextTarget: "keyNextTarget", cancelTarget: "keyCancelTarget",
 } satisfies Record<keyof HeroKeys, string>;
 const ACTIONS = Object.keys(FIELDS) as (keyof HeroKeys)[];
@@ -20,8 +20,16 @@ export function bindControlSettings(setBindings: (keys: HeroKeys) => void, signa
   });
   let keys = { ...DEFAULT_HERO_KEYS };
   try {
-    const saved: Partial<HeroKeys> | null = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null");
-    if (saved) {
+    type StoredHeroKeys = Partial<HeroKeys> & { spell1?: unknown };
+    const stored: StoredHeroKeys | null = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null");
+    if (stored) {
+      const saved: Partial<HeroKeys> = "spell1" in stored
+        ? {
+          ...stored,
+          spell2: typeof stored.spell1 === "string" ? stored.spell1 : undefined,
+          spell3: stored.spell2,
+        }
+        : stored;
       const used = new Set<string>();
       const missing = ACTIONS.filter((action) => {
         const key = saved[action];

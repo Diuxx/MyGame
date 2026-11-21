@@ -1,6 +1,6 @@
 # Idle RPG — Playground 3D
 
-POC minimal **Babylon.js + TypeScript + Vite**, utilisant **le GLB Meshy fourni** par le projet. Le héros se déplace et s'anime dans une scène 3D en caméra top-down inclinée.
+POC minimal **Babylon.js + TypeScript + Vite**, utilisant le héros Warrior et ses animations FBX intégrés dans `public/models/` et `public/assets/animations/hero/fbx/`. Le héros se déplace et s'anime dans une scène 3D en caméra top-down inclinée.
 
 ## Démarrer
 
@@ -25,7 +25,7 @@ npm run build
 
 ## Ce qu'on peut tester
 
-- Les neuf clips du héros sont chargés depuis `public/assets/animations/hero/`. Leurs noms figurent dans `ANIMATIONS.json`. Relâcher les touches de déplacement en pleine course déclenche l’animation d’arrêt.
+- Les onze clips du héros sont chargés depuis `public/assets/animations/hero/`. Leurs noms figurent dans `ANIMATIONS.json`. Relâcher les touches de déplacement en pleine course déclenche l’animation d’arrêt.
 
 ### Paramètres du héros dans ANIMATIONS.json
 
@@ -37,10 +37,10 @@ npm run build
 Dans **Animations de déplacement**, **Exporter ANIMATIONS.json** inclut les valeurs réglées dans le Playground et conserve les autres sections. Le fichier téléchargé peut remplacer le manifeste. Les préférences du navigateur restent prioritaires dans le Playground.
 - **Z/S** rapprochent ou éloignent le héros du curseur. **Q/D** le déplacent perpendiculairement à gauche ou à droite. **Maj** permet de courir. Le module **Commandes** permet de modifier ces touches dans le Playground. À l’arrêt, le héros garde sa dernière orientation.
 - **Clic droit** lance une esquive dans la direction demandée, ou dans la direction du regard si aucune touche de déplacement n’est enfoncée. La direction reste fixe durant la roulade. La fenêtre d’invulnérabilité couvre 15 % à 90 % du clip par défaut (réglable) et le délai de réactivation est de 500 ms à partir du départ. Le contrôleur expose `isInvulnerable` pour la future réception de dégâts du héros.
-- L'attaque est jouée une fois. À la fin, le héros reprend le déplacement si une direction est maintenue, ou revient au repos.
+- Le clic gauche ou le bouton de compétence 1 lance Poing 1; un clic accepté dans la fenêtre d'enchaînement lance Poing 2 et fait basculer l'icône du bouton. A déclenche l'animation de Puissance (compétence 2) et E celle du Coup de pied (compétence 3). Ces deux clips ne définissent pas encore de dégâts ni de cooldown.
 - Contrôles : animation, pause/reprise, vitesse, rotation et inclinaison de la caméra, zoom orthographique et orientation du personnage.
 - Le chargement conserve les matériaux, le squelette et les animations du GLB.
-- Le personnage est **recalibré automatiquement à 1,8 unité de haut** et ses pieds sont placés au niveau du sol, ce qui compense l'échelle `0.01` du nœud `Armature` exporté par Meshy.
+- Le personnage est **recalibré automatiquement à 1,8 unité de haut** à partir de ses limites réelles et ses pieds sont placés au niveau du sol.
 - Le studio a un sol beige mat et une ombre douce projetée par la silhouette animée du héros. La case **Afficher le quadrillage** révèle les repères d'une unité.
 - Trois cibles statiques sont disposées devant le héros au démarrage. Dans **Ennemis**, choisir **Nouvel ennemi** pour régler un archétype et le créer près du héros, ou sélectionner une instance pour la modifier, la soigner ou la retirer. Un contour doré repère sa barre de vie. Dans **Collisions et hitbox**, on peut afficher la hurtbox rouge du héros, les hurtboxes cyan des ennemis et leurs colliders solides jaunes.
 - Pour toucher une cible, s’en approcher et faire un **clic gauche** dans sa direction sur le plateau. Le bouton **Attaque** reste disponible dans le module d’action. L’orientation reste fixe pendant le coup. Le coup teste la portée à 40 % du clip et inflige 25 dégâts de base par cible touchée. Une cible immortelle perd des PV jusqu’à 1. La régénération reprend après le délai configuré depuis le dernier coup.
@@ -48,7 +48,7 @@ Dans **Animations de déplacement**, **Exporter ANIMATIONS.json** inclut les val
 ## Structure
 
 ```text
-public/models/hero.glb  # Modèle Meshy riggé et texturé
+public/models/hero.glb  # Modèle Warrior riggé et texturé
 src/main.ts             # Sélection du mode et initialisation commune
 src/playground.ts       # Contrôles de test du Playground
 src/character/          # Chargement du héros, animations, entrées et mouvement
@@ -75,18 +75,26 @@ Ces valeurs sont des réglages de **playground**, pas des mesures exactes issues
 - Le déplacement est limité au sol du playground. Le héros et les mannequins disposent de colliders physiques circulaires au sol : marche, course et esquive ne traversent pas les mannequins solides. Les ennemis restent statiques ; leurs statistiques d'attaque et de vitesse ne déclenchent encore aucun comportement. Les ennemis mobiles, l'IA et la magie ne sont pas implémentés dans ce playground.
 - Après un coup porté ou reçu, le héros passe en posture de combat pendant 5 secondes. À l’arrêt il joue `combat-stance`. En mouvement, le haut du corps reste en garde et les jambes jouent `walk` à la cadence de combat.
 - Le déplacement horizontal du bassin est neutralisé au chargement. La hauteur du bassin reste animée et les pieds ne sont pas verrouillés au sol.
-- Le modèle pèse environ 12 Mo. Il faudra optimiser textures et géométrie avant de cibler les mobiles.
+- Le modèle pèse environ 8 Mo. Il faudra optimiser textures et géométrie avant de cibler les mobiles.
 - Cette archive ne contient pas `node_modules` ni `dist`. Les dépendances sont téléchargées par `npm install`.
 
 ## Provenance des assets
 
-Le fichier `hero.glb` provient du modèle Meshy fourni par l'utilisateur. Le projet ne revendique pas de droits nouveaux sur les contenus Meshy.
+Le FBX du modèle Warrior est conservé dans `public/models/hero.fbx`; les FBX des animations sources sont dans `public/assets/animations/hero/fbx/`. Le projet ne revendique pas de droits nouveaux sur ces contenus.
 
-Pour régénérer le modèle et les clips, passer le GLB source animé au script depuis la racine du dépôt. Il remplace le modèle de jeu et écrit les clips à partir des noms déclarés dans `ANIMATIONS.json`.
+Pour exporter le modèle Warrior statique depuis le FBX, utiliser le convertisseur depuis la racine du dépôt. Les sorties existantes sont refusées; employer un nouveau chemin, puis copier le GLB validé vers `code/public/models/hero.glb`.
 
 ```text
-node code/tools/extractHeroAnimations.mjs chemin/vers/hero-anime.glb
+node code/tools/convertFbxCharacter.mjs "code/public/models/hero.fbx" "exports/warrior.glb"
 ```
+
+Les clips sont exportés séparément et retargetés sur ce GLB avec `--target`. Par exemple :
+
+```powershell
+node code/tools/convertFbxAnimation.mjs "code/public/assets/animations/hero/fbx/skill-1-punch-1.fbx" "exports/hero/attack.glb" --target "code/public/models/hero.glb"
+```
+
+Le manifeste `code/ANIMATIONS.json` associe chacun des onze FBX sources à son clip GLB et définit les fenêtres de jeu. Le retargeting accepte les bassins `Hips` et `mixamorig:Hips`.
 
 Pour convertir un GLB en FBX sans les textures Metallic et Roughness,
 lancer le script Node depuis la racine du dépôt. Il utilise Blender
@@ -133,7 +141,7 @@ Pour l’utiliser sur un personnage, il faut un squelette et une pose de
 repos compatibles. Pour le gobelin, voir
 [la conversion avec adaptation au rig](../docs/GOBELIN_POC.md).
 
-Les clips `run` et `walk` du héros viennent des FBX Mixamo dans
+Les clips `run` et `walk` du héros utilisent les FBX dans
 `public/assets/animations/hero/fbx/`. L’option `--target` adapte le
 clip à la pose de repos du héros et conserve le mouvement vertical
 du bassin. Le jeu applique le déplacement horizontal.

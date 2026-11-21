@@ -1,9 +1,9 @@
 import { type Scene, type TransformNode } from "@babylonjs/core";
-import { ATTACK_ANIMATION, DEATH_ANIMATION, DODGE_ANIMATION, IDLE_ANIMATION, type AnimationPlayer } from "./animations.ts";
+import { ATTACK_ANIMATION, ATTACK_FOLLOW_UP_ANIMATION, DEATH_ANIMATION, DODGE_ANIMATION, IDLE_ANIMATION, type AnimationPlayer } from "./animations.ts";
 import { createAnimationSettings, createAttackHits, getAnimationDefinition, HERO_ANIMATIONS, type AnimationSettings } from "./animationSettings.ts";
 import { clamp } from "../world/cameraMath.ts";
 import type { Position } from "../combat/combat";
-import { bindHeroInput } from "./heroInput.ts";
+import { bindHeroInput, type HeroSpellSlot } from "./heroInput.ts";
 import { canCancelAction, type CancelTarget } from "./actionCancelling.ts";
 import { canBufferComboInput, canStartBufferedCombo, followUpStartProgress } from "./attackCombo.ts";
 import { allowsLocomotion } from "./animationLayers.ts";
@@ -15,7 +15,8 @@ import type { CameraControls } from "../world/scene";
 export interface MovementBounds { minX: number; maxX: number; minZ: number; maxZ: number }
 
 type ActiveAction =
-  | { kind: "attack"; progress: number; hits: ReturnType<typeof createAttackHits> }
+  | { kind: "attack"; clip: string; progress: number; hits: ReturnType<typeof createAttackHits> }
+  | { kind: "skill"; clip: string; slot: HeroSpellSlot; progress: number }
   | { kind: "dodge"; progress: number; direction: GroundVector; distance: number }
   | { kind: "preview" | "stop" };
 
@@ -62,20 +63,21 @@ export function createCharacterController(
     onFacingChange(root.rotation.y);
   }
 
-  function actionAnimationId(kind: ActiveAction["kind"]): string | undefined {
-    if (kind === "attack") return ATTACK_ANIMATION;
-    if (kind === "dodge") return DODGE_ANIMATION;
+  function actionAnimationId(active: ActiveAction | undefined): string | undefined {
+    if (active?.kind === "attack") return active.clip;
+    if (active?.kind === "skill") return active.clip;
+    if (active?.kind === "dodge") return DODGE_ANIMATION;
     return undefined;
   }
 
   function actionBlendOut(): number {
-    const id = action && actionAnimationId(action.kind);
+    const id = actionAnimationId(action);
     return id ? settings[id]?.blendOutSeconds ?? 0 : 0;
   }
 
   function canInterrupt(target: CancelTarget): boolean {
     if (!action || action.kind === "stop") return true;
-    const id = actionAnimationId(action.kind);
+    const id = actionAnimationId(action);
     return !!id && canCancelAction(animations.actionProgress, settings[id]?.cancel, target);
   }
 
@@ -92,14 +94,18 @@ export function createCharacterController(
     animations.play(clip, true, next.kind === "attack" && HERO_TUNING.attack.allowMovement,
       startProgress, comboBlendSeconds);
     if (next.kind === "attack" || next.kind === "dodge") onActionStarted(next.kind);
+    else if (next.kind === "skill") onActionStarted(next.slot);
     onAnimationChange();
   }
 
   function startAttack(chained: boolean): void {
     const attackSettings = settings[ATTACK_ANIMATION];
     const combo = attackSettings.combo;
+    const clip = chained && combo ? combo.followUp.animation : ATTACK_ANIMATION;
+    const clipImpact = settings[clip]?.impact;
+    if (!clipImpact) throw new Error(`ANIMATIONS.json · settings.${clip}.impact : configuration requise.`);
     const startProgress = chained && combo
-      ? followUpStartProgress(combo, attackSettings.impact!.from) : 0;
+      ? followUpStartProgress(combo, clipImpact.from) : 0;
     const blendSeconds = chained ? combo?.followUp.blendSeconds : undefined;
     const lock = readTargeting();
     // Normal attacks inherit the hero's last movement heading, not the pointer location.
@@ -111,26 +117,44 @@ export function createCharacterController(
     comboCount = chained ? comboCount + 1 : 1;
     comboResetRemaining = 0;
     queuedComboRemaining = 0;
-    beginAction(ATTACK_ANIMATION, {
-      kind: "attack", progress: startProgress,
-      hits: createAttackHits(attackSettings.impact!),
+    beginAction(clip, {
+      kind: "attack", clip, progress: startProgress,
+      hits: createAttackHits(clipImpact),
     }, startProgress, blendSeconds);
   }
 
   function attack(): void {
     if (!isInputEnabled() || animations.isPaused) return;
     const combo = settings[ATTACK_ANIMATION].combo;
-    if (action?.kind === "attack" && combo?.enabled) {
+    if (action?.kind === "attack") {
+      if (action.clip !== ATTACK_ANIMATION || !combo?.enabled) return;
       const progress = animations.actionProgress;
-      if (!canBufferComboInput(progress, animations.duration(ATTACK_ANIMATION) ?? 0, combo, comboCount)) return;
+      if (!canBufferComboInput(progress, animations.duration(action.clip) ?? 0, combo, comboCount)) return;
       if (canStartBufferedCombo(progress, combo)) startAttack(true);
       else queuedComboRemaining = combo.inputBufferMs / 1000;
       return;
     }
     if (!canStartAction("attack")) return;
     const chained = !!combo?.enabled && !action &&
-      comboCount > 0 && comboCount < combo.maxChain && comboResetRemaining > 0;
+      comboCount === 1 && comboCount < combo.maxChain && comboResetRemaining > 0;
     startAttack(chained);
+  }
+
+  function useSpell(slot: HeroSpellSlot): void {
+    if (!isInputEnabled() || animations.isPaused) return;
+    if (slot === "spell1") {
+      attack();
+      return;
+    }
+    const clip = slot === "spell2" ? "skill-2-power" :
+      slot === "spell3" ? "skill-3-kick" : undefined;
+    if (!clip) {
+      onActionStarted(slot);
+      return;
+    }
+    if (!canStartAction("attack")) return;
+    resetCombo();
+    beginAction(clip, { kind: "skill", clip, slot, progress: 0 });
   }
 
   function startDodge(): void {
@@ -171,7 +195,8 @@ export function createCharacterController(
   }
 
   function updateAction(active: ActiveAction): void {
-    if (active.kind === "attack" && (animations.activeName !== ATTACK_ANIMATION || animations.isActionInterrupted)) {
+    if ((active.kind === "attack" || active.kind === "skill") &&
+        (animations.activeName !== active.clip || animations.isActionInterrupted)) {
       finishAction();
       return;
     }
@@ -188,16 +213,20 @@ export function createCharacterController(
       }
       active.progress = progress;
       const combo = settings[ATTACK_ANIMATION].combo;
-      if (combo?.enabled && queuedComboRemaining > 0 && comboCount < combo.maxChain &&
+      if (active.clip === ATTACK_ANIMATION && combo?.enabled && queuedComboRemaining > 0 && comboCount < combo.maxChain &&
           canStartBufferedCombo(progress, combo)) {
         startAttack(true);
         return;
       }
-    }
+    } else if (active.kind === "skill") active.progress = progress;
     if (progress >= 1) {
       if (active.kind === "attack") {
-        comboResetRemaining = settings[ATTACK_ANIMATION].combo?.enabled
-          ? settings[ATTACK_ANIMATION].combo!.resetAfterMs / 1000 : 0;
+        const combo = settings[ATTACK_ANIMATION].combo;
+        if (combo?.enabled && comboCount < combo.maxChain) {
+          comboResetRemaining = combo.resetAfterMs / 1000;
+        } else {
+          resetCombo();
+        }
       }
       queuedComboRemaining = 0;
       finishAction(actionBlendOut());
@@ -211,9 +240,7 @@ export function createCharacterController(
     wasMoving = true;
   }
 
-  const input = bindHeroInput(canvas, attack, startDodge, signal, (slot) => {
-    if (isInputEnabled() && !animations.isPaused) onActionStarted(slot);
-  }, () => {
+  const input = bindHeroInput(canvas, attack, startDodge, signal, useSpell, () => {
     if (isInputEnabled()) onInteract();
   }, () => {
     if (isInputEnabled() && !animations.isPaused) targetActions?.cycle();
@@ -316,7 +343,8 @@ export function createCharacterController(
     lastLocomotion = locomotion;
     wasSprinting = moving && movement === HERO_ANIMATIONS.run && !action;
     if (moving || wasMoving || restChanged || attacking) {
-      animations.updateLocomotion(moving ? movement.id : undefined, delta, previousAnimation === ATTACK_ANIMATION);
+      animations.updateLocomotion(moving ? movement.id : undefined, delta,
+        previousAnimation === ATTACK_ANIMATION || previousAnimation === ATTACK_FOLLOW_UP_ANIMATION);
     }
     if (previousAnimation !== animations.activeName) onAnimationChange();
     wasMoving = moving || animations.isTransitioning;
@@ -325,6 +353,7 @@ export function createCharacterController(
   return {
     attack,
     dodge: startDodge,
+    useSpell,
     clearHeldInput(): void { input.clearInput(); },
     interruptForZoneChange(): void {
       if (action) finishAction();
@@ -388,6 +417,16 @@ export function createCharacterController(
     },
     get isActing() { return !!action || animations.activeName === DEATH_ANIMATION; },
     get isAttacking() { return action?.kind === "attack"; },
+    get canUseFollowUp() {
+      const combo = settings[ATTACK_ANIMATION].combo;
+      if (!combo?.enabled || comboCount !== 1 || comboCount >= combo.maxChain) return false;
+      if (action?.kind === "attack" && action.clip === ATTACK_ANIMATION) {
+        return canBufferComboInput(
+          animations.actionProgress, animations.duration(action.clip) ?? 0, combo, comboCount,
+        );
+      }
+      return !action && comboResetRemaining > 0;
+    },
     get isInvulnerable() { return isInvulnerable(); },
   };
 }

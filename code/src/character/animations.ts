@@ -8,6 +8,7 @@ export const IDLE_ANIMATION = HERO_ANIMATIONS.idle.id;
 const COMBAT_STANCE_ANIMATION = HERO_ANIMATIONS.combatStance.id;
 const COMBAT_LEGS_ANIMATION = HERO_TUNING.blending.combatLegsClip;
 export const ATTACK_ANIMATION = HERO_ANIMATIONS.attack.id;
+export const ATTACK_FOLLOW_UP_ANIMATION = HERO_ANIMATIONS.attackFollowUp.id;
 export const DODGE_ANIMATION = HERO_ANIMATIONS.dodge.id;
 export const DEATH_ANIMATION = HERO_ANIMATIONS.dying.id;
 
@@ -46,10 +47,7 @@ export class AnimationPlayer {
   private readonly bodyLayers = new Map<string, BodyLayers>();
   private readonly combatWalk: BodyLayers;
   private readonly combatLegsPlaybackRate: number;
-  private readonly attackUpper: AnimationGroup;
-  private readonly attackLower: AnimationGroup;
-  private readonly comboUpper: AnimationGroup;
-  private readonly comboLower: AnimationGroup;
+  private readonly attackLayers = new Map<string, [BodyLayers, BodyLayers]>();
   private attackFadeInSeconds = HERO_TUNING.blending.attackFadeSeconds;
   private locomotion = new Map<BodyLayers, number>();
   private primary: BodyLayers | null = null;
@@ -76,7 +74,7 @@ export class AnimationPlayer {
   constructor(animations: AnimationGroup[], scene: Scene) {
     this.animations = animations;
     const available = new Set(animations.map(({ name }) => name));
-    for (const clip of [IDLE_ANIMATION, COMBAT_STANCE_ANIMATION, HERO_ANIMATIONS.walk.id, HERO_ANIMATIONS.run.id, HERO_ANIMATIONS.stop.id, ATTACK_ANIMATION, DODGE_ANIMATION, DEATH_ANIMATION]) {
+    for (const clip of [IDLE_ANIMATION, COMBAT_STANCE_ANIMATION, HERO_ANIMATIONS.walk.id, HERO_ANIMATIONS.run.id, HERO_ANIMATIONS.stop.id, ATTACK_ANIMATION, ATTACK_FOLLOW_UP_ANIMATION, DODGE_ANIMATION, DEATH_ANIMATION]) {
       if (!available.has(clip)) throw new Error("Clip du héros requis : " + clip);
     }
     for (const source of animations) {
@@ -106,26 +104,36 @@ export class AnimationPlayer {
       upper: this.bodyLayers.get(COMBAT_STANCE_ANIMATION)!.upper,
     };
 
-    const attack = this.requireClip(ATTACK_ANIMATION);
-    this.attackUpper = createBodyLayer(scene, attack, true);
-    this.attackLower = createBodyLayer(scene, attack, false);
-    // Two independent instances allow a follow-up to blend without resetting the outgoing pose.
-    this.comboUpper = createBodyLayer(scene, attack, true, "attack-upper-combo");
-    this.comboLower = createBodyLayer(scene, attack, false, "attack-lower-combo");
-    if (!this.attackUpper.targetedAnimations.length) {
-      throw new Error("Le clip " + ATTACK_ANIMATION + " n'anime aucun os du haut du corps.");
-    }
-    for (const upper of [this.attackUpper, this.comboUpper]) {
-      upper.onAnimationGroupEndObservable.add(() => {
-        if (this.action === upper) this.actionCompleted = true;
-      });
+    for (const name of [ATTACK_ANIMATION, ATTACK_FOLLOW_UP_ANIMATION]) {
+      const source = this.requireClip(name);
+      const first: BodyLayers = {
+        name,
+        upper: createBodyLayer(scene, source, true),
+        lower: createBodyLayer(scene, source, false),
+      };
+      const alternate: BodyLayers = {
+        name,
+        upper: createBodyLayer(scene, source, true, name + "-upper-combo"),
+        lower: createBodyLayer(scene, source, false, name + "-lower-combo"),
+      };
+      if (!first.upper.targetedAnimations.length) {
+        throw new Error("Le clip " + name + " n'anime aucun os du haut du corps.");
+      }
+      for (const pair of [first, alternate]) {
+        pair.upper.onAnimationGroupEndObservable.add(() => {
+          if (this.action === pair.upper) this.actionCompleted = true;
+        });
+      }
+      this.attackLayers.set(name, [first, alternate]);
     }
     scene.onBeforeRenderObservable.add(() => this.updateFades(scene.getEngine().getDeltaTime() / 1000));
     scene.onDisposeObservable.addOnce(() => {
-      this.attackUpper.dispose();
-      this.attackLower.dispose();
-      this.comboUpper.dispose();
-      this.comboLower.dispose();
+      for (const pairs of this.attackLayers.values()) {
+        for (const pair of pairs) {
+          pair.upper.dispose();
+          pair.lower.dispose();
+        }
+      }
       this.combatWalk.lower.dispose();
       for (const { lower, upper } of this.bodyLayers.values()) {
         lower.dispose();
@@ -226,8 +234,9 @@ export class AnimationPlayer {
   }
 
   private attackLowerFor(upper: AnimationGroup | null): AnimationGroup | null {
-    if (upper === this.attackUpper) return this.attackLower;
-    if (upper === this.comboUpper) return this.comboLower;
+    for (const pairs of this.attackLayers.values()) {
+      for (const pair of pairs) if (pair.upper === upper) return pair.lower;
+    }
     return null;
   }
 
@@ -251,8 +260,11 @@ export class AnimationPlayer {
     if (this.fullBody) this.fadeGroup(this.fullBody, fadeSeconds);
     this.fullBody = null;
     this.stopActionPlayback();
-    const nextUpper = this.finishingAttack?.upper === this.attackUpper ? this.comboUpper : this.attackUpper;
-    const nextLower = this.attackLowerFor(nextUpper)!;
+    const pairs = this.attackLayers.get(source.name);
+    if (!pairs) throw new Error("Animation d’attaque sans couches : " + source.name);
+    const next = pairs.find((pair) => this.finishingAttack?.upper !== pair.upper) ?? pairs[0];
+    const nextUpper = next.upper;
+    const nextLower = next.lower;
     this.fadingGroups = this.fadingGroups.filter((fade) => {
       if (fade.group !== nextUpper && fade.group !== nextLower) return true;
       fade.group.stop(true);
@@ -282,7 +294,7 @@ export class AnimationPlayer {
     startProgress = 0, comboFadeSeconds?: number,
   ): void {
     const selected = this.requireClip(name);
-    if (name === ATTACK_ANIMATION && controlled && layered) {
+    if ((name === ATTACK_ANIMATION || name === ATTACK_FOLLOW_UP_ANIMATION) && controlled && layered) {
       this.startLayeredAttack(selected, startProgress, comboFadeSeconds);
       return;
     }
@@ -291,8 +303,9 @@ export class AnimationPlayer {
       this.fadingGroups = [];
       this.finishingAttack = null;
       this.fadeIn = null;
-      this.stopAttackPair(this.attackUpper, this.attackLower);
-      this.stopAttackPair(this.comboUpper, this.comboLower);
+      for (const pairs of this.attackLayers.values()) {
+        for (const pair of pairs) this.stopAttackPair(pair.upper, pair.lower);
+      }
     }
     let fadeSeconds = this.fadingGroups.reduce((duration, fade) => Math.max(duration, fade.duration - fade.elapsed), 0);
     if (this.finishingAttack) {
@@ -391,7 +404,7 @@ export class AnimationPlayer {
       return;
     }
     this.overlayElapsed += delta;
-    const remaining = (1 - this.actionProgress) * (this.duration(ATTACK_ANIMATION) ?? 0);
+    const remaining = (1 - this.actionProgress) * (this.duration(this.actionSource?.name ?? ATTACK_ANIMATION) ?? 0);
     this.applyLayerWeights(attackLayerWeight(this.overlayElapsed, remaining, this.attackFadeInSeconds));
   }
 
