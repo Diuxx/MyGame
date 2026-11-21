@@ -270,7 +270,7 @@ export function bindPlaygroundWorkspace(
         tabs.append(button);
       }
     }
-    for (const button of tabs.querySelectorAll<HTMLButtonElement>("[data-workspace-module]")) {
+    for (const button of Array.from(tabs.querySelectorAll<HTMLButtonElement>("[data-workspace-module]"))) {
       const selected = navigation.module === button.dataset.workspaceModule;
       button.classList.toggle("is-active", selected);
       button.setAttribute("aria-pressed", String(selected));
