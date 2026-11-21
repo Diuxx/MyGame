@@ -149,8 +149,8 @@
           </details>
           <section class="ws-persistence-group" aria-label="Export et import de la configuration des textes flottants">
             <h3>Fichier de configuration · FLOATING_TEXT.json</h3>
-            <p class="animation-note">Les réglages s'appliquent immédiatement et utilisent un stockage local. Télécharger le fichier puis remplacer code/FLOATING_TEXT.json pour les versionner.</p>
-          <button type="button" id="floatingTextExport" class="secondary wide">Exporter FLOATING_TEXT.json</button>
+            <p class="animation-note">Les réglages s'appliquent immédiatement et tentent un stockage local ; si celui-ci est indisponible, ils restent limités à cette session. Télécharger le fichier puis remplacer code/FLOATING_TEXT.json pour les versionner.</p>
+          <button type="button" id="floatingTextExport" class="secondary wide">Télécharger FLOATING_TEXT.json</button>
           <button type="button" id="floatingTextCopy" class="secondary wide">Copier le JSON complet</button>
           <button type="button" id="floatingTextImport" class="secondary wide">Importer FLOATING_TEXT.json</button>
           <input id="floatingTextImportFile" type="file" accept=".json,application/json" hidden />
@@ -431,7 +431,7 @@
               <button id="worldEditorAddLayer" class="secondary" type="button">Ajouter le layer</button>
             </details>
             <details class="ws-form-section"><summary>Brouillon local · ce navigateur</summary>
-              <p class="animation-note">Le brouillon est enregistré automatiquement après les modifications. Il reste dans ce navigateur, par map ; il ne remplace pas le fichier du projet.</p>
+              <p class="animation-note">Les opérations de construction enregistrent automatiquement un brouillon local. Pour inclure les autres réglages de la map (comme l'éclairage), utilise « Enregistrer le brouillon ». Ce stockage reste dans ce navigateur et ne remplace pas le fichier du projet.</p>
               <p id="worldEditorDraftState" class="animation-note" role="status">Aucune modification.</p>
               <div class="enemy-fields">
                 <button id="worldEditorSaveDraft" class="secondary" type="button">Enregistrer le brouillon</button>
@@ -562,7 +562,7 @@
             <h2 id="lightingHeading">Éclairage de la map</h2>
             <button class="module-close" type="button" aria-label="Fermer l’éclairage">×</button>
           </header>
-          <p class="animation-note">Les modifications s'appliquent immédiatement à la map active et sont incluses dans « Exporter map JSON ».</p>
+          <p class="animation-note">L'éclairage est appliqué immédiatement à la map en session. Utilise « Télécharger la map JSON » dans la barre d'outils pour conserver un fichier ; les réglages ne sont pas écrits dans le dépôt.</p>
           <fieldset class="lighting-section">
             <legend>WorldLighting</legend>
             <label class="grid-toggle"><input id="lightingWorldEnabled" type="checkbox" /> Activer l'éclairage global</label>
