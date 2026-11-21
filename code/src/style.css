@@ -418,6 +418,55 @@ button.ws-scene-entry:hover { background: #2c4235; }
   #ws-inspector-toggle { font-size: 20px; }
 }
 
+/* Global tools are an independent overlay beside the persistent selection inspector.
+   Keeping the existing canvas column avoids changing camera framing or controls. */
+.ws-tools {
+  position: absolute;
+  z-index: 9;
+  top: 106px;
+  bottom: 29px;
+  left: calc(66px + var(--ws-left-width));
+  width: min(352px, calc(100vw - 66px - var(--ws-left-width) - var(--ws-right-width) - 48px));
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #1c2924;
+  border: 1px solid #49644f;
+  border-top: 0;
+  box-shadow: 10px 5px 28px #0006;
+}
+.ws-tools[hidden] { display: none !important; }
+.ws-tools .ws-side-head { background: #213329; }
+.ws-tools #ws-tools-close { cursor: pointer; }
+.workspace-app .ws-inspector-body {
+  flex: 1;
+  max-height: none;
+}
+.workspace-app[data-workspace-mode="test"] .ws-tools,
+.workspace-app[data-workspace-mode="test"] #ws-tools-toggle { display: none !important; }
+@media (max-width: 1250px) {
+  .ws-tools {
+    left: calc(66px + var(--ws-left-width));
+    width: min(330px, calc(100vw - 66px - var(--ws-left-width) - var(--ws-right-width) - 38px));
+  }
+}
+@media (max-width: 1020px) {
+  .ws-tools {
+    left: 60px;
+    width: min(340px, calc(100vw - 60px - var(--ws-right-width) - 40px));
+  }
+}
+@media (max-width: 760px) {
+  .ws-tools {
+    left: 60px;
+    right: auto;
+    width: min(340px, calc(100vw - 68px));
+    z-index: 12;
+    box-shadow: 10px 4px 24px #0008;
+  }
+}
+
 /* Independent object inspector; existing editor controls retain their DOM identity. */
 .ws-inspector-body { min-height: 0; flex: 0 1 auto; max-height: 45%; overflow-y: auto; padding: 0 12px; scrollbar-width: thin; }
 .ws-inspector-empty { margin: 0; padding: 20px 2px; color: #aac2b0; line-height: 1.5; }
