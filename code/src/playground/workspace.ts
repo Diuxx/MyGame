@@ -86,9 +86,8 @@ export function bindPlaygroundWorkspace(
   const stage: HTMLElement = stageCandidate;
 
   const top = surface("header", "ws-top", "ws-top",
-    '<div class="ws-logo" aria-hidden="true">◈</div>' +
+    '<div class="ws-logo" aria-hidden="true"></div>' +
     '<div class="ws-identity"><strong>IDLE RPG</strong><small>PLAYGROUND</small></div>' +
-    '<button class="ws-header-control ws-explorer-toggle" id="ws-explorer-toggle" type="button" aria-label="Afficher l’explorateur" aria-expanded="false">☰</button>' +
     '<div class="ws-breadcrumb"><span class="ws-muted">Projet / Monde /</span> <strong id="ws-active-name">Playground</strong></div>' +
     '<div class="ws-top-space"></div>' +
     '<div class="ws-map-picker"><label for="mapSelect">Map</label><div id="ws-map-select-host"></div><div id="ws-map-load-host"></div></div>' +
@@ -109,7 +108,9 @@ export function bindPlaygroundWorkspace(
     '<div class="ws-toolbar-separator"></div><div id="ws-history-tools" class="ws-history-tools"></div>' +
     '<div class="ws-toolbar-end"></div><div id="ws-export-tools"></div>' +
     '<div id="ws-preserved-controls" hidden></div>');
-  const rail = surface("nav", "ws-rail", "ws-rail", "");
+  const rail = surface("nav", "ws-rail", "ws-rail",
+    '<button class="ws-area-button ws-explorer-toggle" id="ws-explorer-toggle" type="button" ' +
+    'aria-label="Afficher l’explorateur" aria-controls="ws-left" aria-expanded="false" title="Explorateur de scène"></button>');
   rail.setAttribute("aria-label", "Espaces de travail");
   const left = surface("aside", "ws-left", "ws-left",
     '<div class="ws-side-head"><strong>EXPLORATEUR</strong><span id="ws-map-heading" class="ws-muted">Map active</span></div>' +
@@ -156,10 +157,12 @@ export function bindPlaygroundWorkspace(
   stage.append(debugDrawer);
   app.append(top, toolbar, rail, left, right, toolsDock, footer);
   app.classList.add("workspace-app");
+  // The shared shield icon serves as the project mark across the workspace.
+  requireElement("ws-logo").append(createNicolabzIcon("shield"));
   // Keep native buttons, labels and event handlers. The Babylon transform tools
   // retain their specialized glyphs until the design system offers equivalents.
   for (const [id, icon, label] of [
-    ["ws-explorer-toggle", "menu"],
+    ["ws-explorer-toggle", "folder", "Scène"],
     ["ws-tools-toggle", "settings", "Outils"],
     ["ws-debug-toggle", "bug", "Debug"],
     ["ws-inspector-open", "square-pen", "Inspecteur"],
