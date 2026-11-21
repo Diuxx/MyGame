@@ -84,3 +84,14 @@ test("the redundant header menu is removed and mobile explorer remains accessibl
   assert.ok(skin.includes("max-width: 1020px"));
   assert.ok(skin.includes(".workspace-app .ws-rail .ws-explorer-toggle"));
 });
+
+test("workspace startup references existing static DOM IDs", () => {
+  const declaredIds = new Set(
+    [...html.matchAll(/\bid="([^"]+)"/g), ...workspace.matchAll(/\bid="([^"]+)"/g)]
+      .map((match) => match[1]),
+  );
+  const referencedIds = [...workspace.matchAll(/requireElement(?:<[^>]+>)?\("([^"]+)"\)/g)]
+    .map((match) => match[1]);
+  const missingIds = referencedIds.filter((id) => !declaredIds.has(id));
+  assert.deepEqual(missingIds, [], "Every statically requested workspace element must exist");
+});
