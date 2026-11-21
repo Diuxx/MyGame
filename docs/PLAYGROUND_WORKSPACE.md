@@ -46,6 +46,14 @@ En mode test, le bouton **Debug** ouvre un petit panneau flottant contenant les 
 - L'outil Éclairage conserve sa sélection de lumière locale ; la sélection de Prefab/ennemi/interactions demeure gérée par le World Editor. Les ennemis temporaires de test sont toujours gérés par leurs propres contrôles.
 - Les panneaux d'édition disparaissent en mode **Tester le jeu**. Au retour en édition, l'outil global et l'état des panneaux sont restaurés. Le World Editor continue d'effacer sa sélection lors du changement de mode, conformément au comportement existant.
 
+## Lot 4 — Nicolabz Light / Soft Spectrum
+
+Le thème clair du Playground repose sur le design system **Nicolabz** (`theme.css`, `components.css`, `icons.css`). Sa version est épinglée dans `code/package.json`. Le mode Gameplay conserve son habillage dédié ; aucun choix de thème n'est proposé pour l'instant.
+
+Les contrôles existants conservent leurs IDs, valeurs, gestionnaires et comportements. Les classes `nz-` apportent des fondations visuelles partagées, tandis que les classes `ws-` continuent de piloter la disposition des panneaux.
+
+Pour l'installation, les tokens, les responsabilités de styles et la liste des vérifications, voir **[PLAYGROUND_DESIGN_SYSTEM.md](PLAYGROUND_DESIGN_SYSTEM.md)**.
+
 ## Lot 3 — Formulaires et persistance explicite
 
 Les panneaux gardent leurs contrôles et listeners d'origine. Les paramètres fréquents restent directement accessibles tandis que les réglages avancés sont regroupés dans des sections HTML `details` (l'état du champ n'est pas effacé lorsqu'on replie la section).
