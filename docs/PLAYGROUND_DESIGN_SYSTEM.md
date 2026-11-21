@@ -47,7 +47,7 @@ Le symbole générique du Playground a été remplacé par l'icône `shield` du 
 
 Le bouton hamburger de l'en-tête a été retiré. L'**Explorateur** dispose désormais de son entrée dédiée dans la barre d'icônes de gauche, sur desktop comme sur mobile. Il est **fermé par défaut** ; cliquer sur son icône l'ouvre ou le ferme, et le bouton de fermeture dans son en-tête permet également de le refermer. L'entrée indique l'état courant via `aria-pressed`, `aria-expanded` et `.is-active`.
 
-Sur desktop, fermer l'explorateur supprime la largeur de sa colonne dans la grille, ce qui rend l'espace au viewport Babylon. Sous 1020 px, l'explorateur fonctionne comme un panneau superposé sans réserver de colonne. Les onglets **Scène / Catalogue**, leur contenu, la recherche et les sélections ne sont pas recréés lors des ouvertures successives. L'état d'ouverture reste indépendant des modules Monde/Héros/Combat et de l'inspecteur.
+Sur desktop, fermer l'explorateur supprime la largeur de sa colonne dans la grille, ce qui rend l'espace au viewport Babylon. Sous 1020 px, l'explorateur fonctionne comme un panneau superposé sans réserver de colonne. Les onglets **Scène / Catalogue**, leur contenu, la recherche et les sélections ne sont pas recréés lors des ouvertures successives. L'explorateur partage désormais le même panneau gauche que Monde, Héros, Combat, Ennemis, Effets et Debug. Un seul menu peut être visible à la fois ; un nouveau clic sur le menu actif le ferme. L'inspecteur droit reste indépendant sur desktop. La géométrie du panneau, notamment sa largeur ouverte et fermée, est exclusivement définie dans `style.css` : le thème Nicolabz ne doit pas redéfinir ces variables.
 
 ## Risque de collision CSS et limites
 
@@ -58,7 +58,7 @@ Les anciens styles de `style.css` sont maintenus tant qu'ils peuvent servir au g
 ## Vérifications
 
 - `cd code && npm ci && npm test && npm run build`.
-- Playground desktop : l'explorateur démarre fermé, s'ouvre depuis le rail, se ferme par un second clic ou par sa croix et rend sa largeur au canvas ; les outils et l'inspecteur restent indépendants.
+- Playground desktop : l'explorateur démarre fermé, s'ouvre depuis le rail, se ferme par un second clic ou par sa croix et rend sa largeur au canvas ; ouvrir un autre menu remplace le contenu du panneau gauche et l'inspecteur droit reste indépendant.
 - Sections avancées : plier/déplier et éditer des valeurs ; gérer les champs invalides ; sauvegarder brouillons et importer/exporter des JSON sans modification de formats.
 - Clavier : parcourir les boutons avec Tab, vérifier le focus visible, F2 pour tester et revenir en édition.
 - Mobile et petit écran : docks non superposés et cibles tactiles utilisables.
