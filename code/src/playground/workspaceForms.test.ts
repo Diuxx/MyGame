@@ -34,13 +34,13 @@ test("required enemy advanced inputs stay inside the original form", () => {
 test("inspector transforms remain prominent and technical fields are collapsible", () => {
   const inspector = between('<div id="worldEditorFields" hidden>', '<button id="worldEditorExport"');
   assert.ok(inspector.indexOf("Position et rotation") < inspector.indexOf("worldEditorAdvancedFields"));
-  assert.match(inspector, /<details class="ws-form-section" id="worldEditorAdvancedFields">/);
+  assert.match(inspector, /<details class="ws-form-section nz-accordion" id="worldEditorAdvancedFields">/);
   assert.match(inspector, /id="worldEditorObjectFields"/);
   assert.match(inspector, /id="worldEditorEnemyFields"/);
 });
 
 test("local drafts, map downloads and configuration files are separate", () => {
-  const local = between('<details class="ws-form-section"><summary>Brouillon local', "</details>");
+  const local = between('<details class="ws-form-section nz-accordion"><summary>Brouillon local', "</details>");
   assert.match(local, /id="worldEditorSaveDraft"/);
   assert.match(local, /id="worldEditorRestoreDraft"/);
   assert.match(html, /id="worldEditorExport"[^>]*>Télécharger la map JSON/);

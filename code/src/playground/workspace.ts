@@ -3,12 +3,18 @@ import type { Scene } from "@babylonjs/core";
 import type { createMapSystem } from "../world/maps/mapSystem";
 import type { MapDefinition } from "../world/maps/types";
 import { requireElement } from "../ui/dom";
+import { createNicolabzIcon, setNicolabzButtonIcon, type NicolabzIconName } from "./nicolabzIcons";
 import type { bindWorldEditor } from "./worldEditor";
-import { WORKSPACE_AREAS, allWorkspaceModuleIds, createWorkspaceNavigation, createWorkspacePanelState, modulesForArea, setWorkspaceEditingState, type WorkspaceArea, type WorkspaceModuleId } from "./workspaceModules";
+import { WORKSPACE_AREAS, allWorkspaceModuleIds, createWorkspaceNavigation, createWorkspacePanelState, modulesForArea, setWorkspaceEditingState, type WorkspaceArea, type WorkspaceLeftMenu, type WorkspaceModuleId } from "./workspaceModules";
 
 type WorldEditor = ReturnType<typeof bindWorldEditor>;
 type MapSystem = ReturnType<typeof createMapSystem>;
 type SelectionKind = "prefab" | "object" | "enemy" | "interaction";
+
+const AREA_ICONS: Record<WorkspaceArea, NicolabzIconName> = {
+  world: "boxes", hero: "user", combat: "shield",
+  enemies: "users-round", effects: "bell", debug: "bug",
+};
 
 const DEBUG_CONTROLS = [
   "heroHitboxVisible", "enemyHitboxesVisible", "enemyCollidersVisible",
@@ -80,9 +86,8 @@ export function bindPlaygroundWorkspace(
   const stage: HTMLElement = stageCandidate;
 
   const top = surface("header", "ws-top", "ws-top",
-    '<div class="ws-logo" aria-hidden="true">◈</div>' +
+    '<div id="ws-logo" class="ws-logo" aria-hidden="true"></div>' +
     '<div class="ws-identity"><strong>IDLE RPG</strong><small>PLAYGROUND</small></div>' +
-    '<button class="ws-header-control ws-explorer-toggle" id="ws-explorer-toggle" type="button" aria-label="Afficher l’explorateur" aria-expanded="false">☰</button>' +
     '<div class="ws-breadcrumb"><span class="ws-muted">Projet / Monde /</span> <strong id="ws-active-name">Playground</strong></div>' +
     '<div class="ws-top-space"></div>' +
     '<div class="ws-map-picker"><label for="mapSelect">Map</label><div id="ws-map-select-host"></div><div id="ws-map-load-host"></div></div>' +
@@ -103,10 +108,13 @@ export function bindPlaygroundWorkspace(
     '<div class="ws-toolbar-separator"></div><div id="ws-history-tools" class="ws-history-tools"></div>' +
     '<div class="ws-toolbar-end"></div><div id="ws-export-tools"></div>' +
     '<div id="ws-preserved-controls" hidden></div>');
-  const rail = surface("nav", "ws-rail", "ws-rail", "");
+  const rail = surface("nav", "ws-rail", "ws-rail",
+    '<button class="ws-area-button ws-explorer-toggle" id="ws-explorer-toggle" type="button" ' +
+    'aria-label="Afficher l’explorateur" aria-controls="ws-left" aria-expanded="false" aria-pressed="false" title="Explorateur de scène"></button>');
   rail.setAttribute("aria-label", "Espaces de travail");
-  const left = surface("aside", "ws-left", "ws-left",
-    '<div class="ws-side-head"><strong>EXPLORATEUR</strong><span id="ws-map-heading" class="ws-muted">Map active</span></div>' +
+  const left = surface("section", "ws-left", "ws-left",
+    '<div class="ws-side-head"><strong>EXPLORATEUR</strong><span id="ws-map-heading" class="ws-muted">Map active</span>' +
+    '<button id="ws-explorer-close" type="button" aria-label="Fermer l’explorateur" title="Fermer l’explorateur">×</button></div>' +
     '<div class="ws-left-tabs" role="group" aria-label="Exploration de la scène">' +
     '<button id="ws-scene-tab" class="is-active" type="button" aria-pressed="true">Scène</button>' +
     '<button id="ws-catalog-tab" type="button" aria-pressed="false">Catalogue</button></div>' +
@@ -117,12 +125,13 @@ export function bindPlaygroundWorkspace(
     '<button id="ws-open-whitebox" type="button">▣ Blocs réutilisables (whitebox)</button>' +
     '<button id="ws-open-maps" type="button">▦ Gestion des maps</button></div>');
   left.setAttribute("aria-label", "Explorateur de scène et catalogue");
+  left.hidden = true; // Do not flash the panel before its initial state is rendered.
   const right = surface("aside", "ws-right", "ws-right",
     '<div class="ws-side-head"><strong id="ws-inspector-title">INSPECTEUR</strong><button id="ws-inspector-toggle" type="button" title="Masquer l’inspecteur" aria-label="Masquer l’inspecteur">◧</button></div>' +
     '<div id="ws-inspector-body" class="ws-inspector-body">' +
     '<p id="ws-inspector-empty" class="ws-inspector-empty">Sélectionne un objet dans la scène ou dans l’explorateur pour afficher ses propriétés.</p></div>');
   right.setAttribute("aria-label", "Propriétés de la sélection");
-  const toolsDock = surface("aside", "ws-tools", "ws-tools",
+  const toolsDock = surface("section", "ws-tools", "ws-tools",
     '<div class="ws-side-head"><strong id="ws-tools-title">OUTILS · MONDE</strong>' +
     '<button id="ws-tools-close" type="button" aria-label="Fermer les outils">×</button></div>' +
     '<nav id="ws-module-tabs" class="ws-module-tabs" aria-label="Outils de la catégorie"></nav>' +
@@ -134,6 +143,10 @@ export function bindPlaygroundWorkspace(
     '<button id="ws-open-map-debug" type="button">État de la map</button></div></section>');
   toolsDock.hidden = true;
   toolsDock.setAttribute("aria-label", "Outils et paramètres globaux du Playground");
+  const leftDock = surface("aside", "ws-left-dock", "ws-left-dock", "");
+  leftDock.setAttribute("aria-label", "Panneau latéral du workspace");
+  leftDock.hidden = true;
+  leftDock.append(left, toolsDock);
   const footer = surface("footer", "ws-statusbar", "ws-statusbar",
     '<span id="ws-status-map">Aucune map</span><span class="ws-status-separator">·</span>' +
     '<span id="ws-status-selection">Aucune sélection</span>' +
@@ -148,8 +161,43 @@ export function bindPlaygroundWorkspace(
     '<div id="ws-debug-test-host"></div>');
   debugDrawer.hidden = true;
   stage.append(debugDrawer);
-  app.append(top, toolbar, rail, left, right, toolsDock, footer);
+  app.append(top, toolbar, rail, leftDock, right, footer);
   app.classList.add("workspace-app");
+  // The shared shield icon serves as the project mark across the workspace.
+  requireElement("ws-logo").append(createNicolabzIcon("shield"));
+  // Keep native buttons, labels and event handlers. The Babylon transform tools
+  // retain their specialized glyphs until the design system offers equivalents.
+  for (const [id, icon, label] of [
+    ["ws-explorer-toggle", "folder", "Explorateur"],
+    ["ws-explorer-close", "x"],
+    ["ws-tools-toggle", "settings", "Outils"],
+    ["ws-debug-toggle", "bug", "Debug"],
+    ["ws-inspector-open", "square-pen", "Inspecteur"],
+    ["ws-inspector-toggle", "square-pen"],
+    ["ws-tools-close", "x"],
+    ["ws-debug-close", "x"],
+    ["ws-edit-mode", "pencil", "Édition"],
+    ["ws-test-mode", "rocket", "Tester le jeu"],
+    ["ws-open-whitebox", "boxes", "Blocs réutilisables (whitebox)"],
+    ["ws-open-maps", "folder", "Gestion des maps"],
+  ] as const) {
+    setNicolabzButtonIcon(requireElement<HTMLButtonElement>(id), icon, label);
+  }
+  for (const id of [
+    "ws-explorer-toggle", "ws-tools-toggle", "ws-debug-toggle",
+    "ws-inspector-open", "ws-edit-mode", "ws-test-mode",
+    "ws-scene-tab", "ws-catalog-tab", "ws-open-maps",
+  ]) {
+    requireElement<HTMLButtonElement>(id).classList.add("nz-button", "nz-button-secondary");
+  }
+  requireElement<HTMLButtonElement>("ws-open-whitebox")
+    .classList.add("nz-button", "nz-button-primary");
+  for (const id of ["ws-tools-close", "ws-debug-close", "ws-inspector-toggle", "ws-explorer-close"]) {
+    requireElement<HTMLButtonElement>(id).classList.add("nz-icon-button");
+  }
+  for (const id of ["ws-open-collisions", "ws-open-attacks", "ws-open-map-debug"]) {
+    requireElement<HTMLButtonElement>(id).classList.add("nz-button", "nz-button-secondary");
+  }
   app.dataset.workspaceMode = "edit";
   // Both legacy launchers and floating windows remain as single DOM instances.
   const legacySidebar = requireElement<HTMLElement>("playgroundPanel");
@@ -159,13 +207,16 @@ export function bindPlaygroundWorkspace(
 
   const navigation = createWorkspaceNavigation();
   const panelState = createWorkspacePanelState();
+  const explorerToggle = requireElement<HTMLButtonElement>("ws-explorer-toggle");
   const modules = new Map<WorkspaceModuleId, HTMLElement>();
   const moduleHost = requireElement<HTMLElement>("ws-module-host");
   for (const id of allWorkspaceModuleIds()) {
     const panel = requireElement<HTMLElement>(id);
     modules.set(id, panel);
     moduleHost.append(panel);
-    panel.classList.add("ws-existing-module");
+    panel.classList.add("ws-existing-module", "nz-form-panel");
+    const closeIconButton = panel.querySelector<HTMLButtonElement>(".module-close");
+    if (closeIconButton) setNicolabzButtonIcon(closeIconButton, "x");
     panel.hidden = true;
     const closeModule = () => {
       // Closing an editor tool does not forget the last module for this area.
@@ -211,17 +262,19 @@ export function bindPlaygroundWorkspace(
   snapSource?.classList.add("ws-relocated-source");
   const historySource = requireElement("worldEditorUndo").closest(".enemy-fields");
   const historyHost = requireElement<HTMLElement>("ws-history-tools");
-  for (const [id, name, symbol] of [
-    ["worldEditorUndo", "Annuler (Ctrl+Z)", "↶"],
-    ["worldEditorRedo", "Rétablir (Ctrl+Y)", "↷"],
-    ["worldEditorCopy", "Copier (Ctrl+C)", "⧉"],
-    ["worldEditorPaste", "Coller (Ctrl+V)", "▤"],
-    ["worldEditorCut", "Couper (Ctrl+X)", "✂"],
-    ["worldEditorDelete", "Supprimer (Suppr)", "⌫"],
-  ]) {
+  for (const [id, name, symbol, icon] of [
+    ["worldEditorUndo", "Annuler (Ctrl+Z)", "↶", "arrow-left"],
+    ["worldEditorRedo", "Rétablir (Ctrl+Y)", "↷", "arrow-right"],
+    ["worldEditorCopy", "Copier (Ctrl+C)", "⧉", "copy"],
+    ["worldEditorPaste", "Coller (Ctrl+V)", "▤", "clipboard"],
+    ["worldEditorCut", "Couper (Ctrl+X)", "✂", undefined],
+    ["worldEditorDelete", "Supprimer (Suppr)", "⌫", "trash-2"],
+  ] as const) {
     const button = moveControl(id, historyHost, name);
-    button.textContent = symbol;
-    button.classList.add("ws-action-button");
+    if (icon) setNicolabzButtonIcon(button as HTMLButtonElement, icon);
+    else button.textContent = symbol;
+    button.classList.add("ws-action-button", "nz-icon-button");
+    if (id === "worldEditorDelete") button.classList.add("ws-danger-action");
   }
   historySource?.classList.add("ws-relocated-source");
 
@@ -255,13 +308,14 @@ export function bindPlaygroundWorkspace(
   const areaButtons = new Map<WorkspaceArea, HTMLButtonElement>();
   for (const area of WORKSPACE_AREAS) {
     const button = document.createElement("button");
-    button.className = "ws-area-button";
+    button.className = "ws-area-button nz-button nz-button-secondary";
     button.type = "button";
     button.dataset.area = area.id;
     button.innerHTML = '<span class="ws-area-icon" aria-hidden="true"></span><span class="ws-area-label"></span>';
-    button.querySelector<HTMLElement>(".ws-area-icon")!.textContent = area.symbol;
+    button.querySelector<HTMLElement>(".ws-area-icon")!.append(createNicolabzIcon(AREA_ICONS[area.id]));
     button.querySelector<HTMLElement>(".ws-area-label")!.textContent = area.label;
     button.title = area.label;
+    button.setAttribute("aria-controls", "ws-tools");
     button.addEventListener("click", () => changeArea(area.id), { signal });
     areaButtons.set(area.id, button);
     rail.append(button);
@@ -279,6 +333,7 @@ export function bindPlaygroundWorkspace(
         const button = document.createElement("button");
         button.type = "button";
         button.dataset.workspaceModule = item.id;
+        button.classList.add("nz-button", "nz-button-secondary");
         button.textContent = item.label;
         button.setAttribute("aria-controls", item.id);
         button.addEventListener("click", () => showModule(item.id), { signal });
@@ -300,9 +355,11 @@ export function bindPlaygroundWorkspace(
     const activeModule = navigation.module;
 
     for (const [name, button] of areaButtons) {
-      const selected = name === activeArea;
+      const selected = panelState.toolsOpen && name === activeArea;
       button.classList.toggle("is-active", selected);
       button.setAttribute("aria-current", selected ? "page" : "false");
+      button.setAttribute("aria-expanded", String(selected));
+      button.setAttribute("aria-pressed", String(selected));
     }
     requireElement("ws-tools-title").textContent = "OUTILS · " +
       (WORKSPACE_AREAS.find((item) => item.id === activeArea)?.label.toUpperCase() ?? "MONDE");
@@ -325,7 +382,14 @@ export function bindPlaygroundWorkspace(
   }
 
   function reflectPanelVisibility(): void {
+    leftDock.hidden = !panelState.leftMenu;
+    left.hidden = !panelState.explorerOpen;
     toolsDock.hidden = !panelState.toolsOpen;
+    app.classList.toggle("ws-left-dock-open", !!panelState.leftMenu);
+    explorerToggle.classList.toggle("is-active", panelState.explorerOpen);
+    explorerToggle.setAttribute("aria-expanded", String(panelState.explorerOpen));
+    explorerToggle.setAttribute("aria-pressed", String(panelState.explorerOpen));
+    explorerToggle.setAttribute("aria-label", panelState.explorerOpen ? "Masquer l’explorateur" : "Afficher l’explorateur");
     app.classList.toggle("ws-inspector-collapsed", !panelState.inspectorOpen(false));
     app.classList.toggle("ws-mobile-inspector-open", panelState.inspectorOpen(true));
     requireElement<HTMLButtonElement>("ws-inspector-open")
@@ -334,30 +398,32 @@ export function bindPlaygroundWorkspace(
       .setAttribute("aria-expanded", String(panelState.toolsOpen && editInput.checked));
   }
 
-  function setToolsOpen(open: boolean): void {
-    panelState.setToolsOpen(open, isNarrowViewport());
+  function setLeftMenu(menu: WorkspaceLeftMenu | undefined): void {
+    panelState.setLeftMenu(menu, isNarrowViewport());
     renderNavigation();
   }
 
   function closeTools(): void {
-    setToolsOpen(false);
-    requireElement<HTMLButtonElement>("ws-tools-toggle").focus();
+    if (!panelState.toolsOpen) return;
+    setLeftMenu(undefined);
+    areaButtons.get(navigation.area)?.focus();
   }
 
   function showModule(id: WorkspaceModuleId): void {
     navigation.showModule(id);
-    setToolsOpen(true);
+    setLeftMenu("tools");
   }
 
   function changeArea(area: WorkspaceArea): void {
+    const alreadyOpen = panelState.toolsOpen && navigation.area === area;
     navigation.changeArea(area);
-    setToolsOpen(true);
+    setLeftMenu(alreadyOpen ? undefined : "tools");
   }
 
   function openModuleInArea(area: WorkspaceArea, module: WorkspaceModuleId): void {
     navigation.changeArea(area);
     navigation.showModule(module);
-    setToolsOpen(true);
+    setLeftMenu("tools");
   }
 
   function setLeftTab(tab: "scene" | "catalog"): void {
@@ -484,7 +550,7 @@ export function bindPlaygroundWorkspace(
   requireElement("ws-debug-close").addEventListener("click", closeDebugDrawer, { signal });
   requireElement("ws-tools-toggle").addEventListener("click", () => {
     if (panelState.toolsOpen) closeTools();
-    else setToolsOpen(true);
+    else setLeftMenu("tools");
   }, { signal });
   requireElement("ws-tools-close").addEventListener("click", closeTools, { signal });
 
@@ -501,7 +567,6 @@ export function bindPlaygroundWorkspace(
     openModuleInArea("world", "mapsModule");
   }, { signal });
   requireElement("ws-open-whitebox").addEventListener("click", () => {
-    openModuleInArea("world", "worldEditorModule");
     setLeftTab("catalog");
     prefabGroup?.scrollIntoView({ block: "nearest" });
   }, { signal });
@@ -523,10 +588,13 @@ export function bindPlaygroundWorkspace(
   }
   inspectorToggle.addEventListener("click", toggleInspector, { signal });
   inspectorOpen.addEventListener("click", toggleInspector, { signal });
-  requireElement("ws-explorer-toggle").addEventListener("click", () => {
-    app.classList.toggle("ws-explorer-open");
-    requireElement<HTMLButtonElement>("ws-explorer-toggle").setAttribute("aria-expanded",
-      String(app.classList.contains("ws-explorer-open")));
+  explorerToggle.addEventListener("click", () => {
+    panelState.toggleLeftMenu("explorer", isNarrowViewport());
+    renderNavigation();
+  }, { signal });
+  requireElement<HTMLButtonElement>("ws-explorer-close").addEventListener("click", () => {
+    setLeftMenu(undefined);
+    explorerToggle.focus();
   }, { signal });
 
   const toolButtons = Array.from(toolbar.querySelectorAll<HTMLButtonElement>("[data-workspace-tool]"));

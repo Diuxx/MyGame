@@ -8,7 +8,7 @@ L'interface propose :
 
 - **Barre supérieure** : map active, sélection de map, chargement, FPS, debug et commutateur **Édition / Tester le jeu**.
 - **Barre d'outils** : sélection, déplacement, rotation, échelle, snapping, rotation par incréments, annuler/rétablir, copier/coller/couper/supprimer et export JSON.
-- **Explorateur gauche** : onglets **Scène** (hiérarchie et recherche) et **Catalogue** (Prefabs, décors, tuiles, ennemis/cibles).
+- **Explorateur gauche** : entrée dédiée dans la barre d'icônes, **fermée par défaut**, activable par clic et refermable par un second clic ou par la croix du panneau. À l'ouverture, on retrouve les onglets **Scène** (hiérarchie et recherche) et **Catalogue** (Prefabs, décors, tuiles, ennemis/cibles). Fermé, il libère sa colonne et agrandit le viewport ; sous 1020 px, il s'affiche en panneau flottant.
 - **Inspecteur droit** : propriétés de l'objet sélectionné, indépendantes de la navigation entre modules.
 - **Panneau Outils global** : modules classés par domaine, accessible depuis la barre supérieure ou la navigation latérale. Il peut être fermé sans effacer son contexte.
 - **Barre d'état** : map, nombre d'éléments sélectionnés et mode actif.
@@ -40,11 +40,19 @@ En mode test, le bouton **Debug** ouvre un petit panneau flottant contenant les 
 
 - L'inspecteur de droite contient les nœuds d'origine `worldEditorSelection`, `worldEditorFields` et les contrôles de hauteur. Les événements de l'éditeur, la sélection multiple et les gizmos Babylon restent inchangés.
 - Sans objet sélectionné, l'inspecteur présente un état vide. Après une suppression ou un changement de map, le World Editor invalide la sélection et l'inspecteur se synchronise.
-- Le panneau flottant **Outils** est indépendant et n'occupe pas une colonne permanente du viewport. Les sections Éditeur, Éclairage, Maps, Caméra, Héros, Combat, Ennemis, Effets et Debug y conservent leurs contrôles et leurs listeners.
-- Sur desktop, les propriétés et le panneau Outils peuvent être ouverts simultanément. Sur largeur inférieure à 760 px, les deux panneaux superposés sont mutuellement exclusifs, mais leurs états restent indépendants.
+- Le panneau latéral gauche est partagé entre **Explorateur** et **Outils** : un seul menu peut être ouvert à la fois. Cliquer sur un autre domaine remplace son contenu ; recliquer sur le domaine actif ou utiliser sa croix le ferme. Sa largeur est réservée uniquement lorsqu'il est visible sur desktop. Les sections Éditeur, Éclairage, Maps, Caméra, Héros, Combat, Ennemis, Effets et Debug y conservent leurs contrôles et leurs listeners.
+- Sur desktop, le panneau gauche et l'inspecteur droit peuvent être ouverts simultanément. À 760 px ou moins, le panneau gauche et l'inspecteur mobile sont mutuellement exclusifs.
 - Fermer les outils n'efface pas le dernier module affiché. Le bouton **Outils** ou la navigation latérale le rouvre.
 - L'outil Éclairage conserve sa sélection de lumière locale ; la sélection de Prefab/ennemi/interactions demeure gérée par le World Editor. Les ennemis temporaires de test sont toujours gérés par leurs propres contrôles.
 - Les panneaux d'édition disparaissent en mode **Tester le jeu**. Au retour en édition, l'outil global et l'état des panneaux sont restaurés. Le World Editor continue d'effacer sa sélection lors du changement de mode, conformément au comportement existant.
+
+## Lot 4 — Nicolabz Light / Soft Spectrum
+
+Le thème clair du Playground repose sur le design system **Nicolabz** (`theme.css`, `components.css`, `icons.css`). Sa version est épinglée dans `code/package.json`. Le mode Gameplay conserve son habillage dédié ; aucun choix de thème n'est proposé pour l'instant.
+
+Les contrôles existants conservent leurs IDs, valeurs, gestionnaires et comportements. Les classes `nz-` apportent des fondations visuelles partagées, tandis que les classes `ws-` continuent de piloter la disposition des panneaux.
+
+Pour l'installation, les tokens, les responsabilités de styles et la liste des vérifications, voir **[PLAYGROUND_DESIGN_SYSTEM.md](PLAYGROUND_DESIGN_SYSTEM.md)**.
 
 ## Lot 3 — Formulaires et persistance explicite
 
@@ -90,7 +98,7 @@ La recherche de l'explorateur filtre les noms et identifiants. L'onglet Catalogu
 
 | Fichier | Responsabilité |
 | --- | --- |
-| `code/src/playground/workspaceModules.ts` | Déclaration des domaines, 13 modules, navigation, visibilité indépendante des panneaux et commutateur de mode |
+| `code/src/playground/workspaceModules.ts` | Déclaration des domaines, 13 modules, navigation, visibilité exclusive des menus de gauche et gestion de l'inspecteur et commutateur de mode |
 | `code/src/playground/workspace.ts` | Construction de la disposition et déplacement des nœuds DOM existants |
 | `code/src/playground/worldEditor.ts` | Exposition minimale de la sélection à l'explorateur |
 | `code/src/playground.ts` | Assemblage au démarrage, sans modifier les règles de gameplay |
@@ -119,7 +127,7 @@ Le registre des modules est vérifié par les tests. Le changement de mode est t
 7. Activer **Debug** en mode test : vérifier la hitbox du héros, les zones d'attaque et les colliders.
 8. Revenir en édition et vérifier le déplacement libre de la caméra avec les flèches.
 9. Vérifier les imports/exports JSON des modules d'animation, de ciblage et de Floating Text. Replier/déplier les sections Avancé et confirmer la conservation des valeurs et événements.
-10. Vérifier la navigation sur écran étroit : explorateur, inspecteur et panneau Outils repliables, sans superposition simultanée de ces deux derniers.
+10. Vérifier le menu Explorateur dans la barre d'icônes : fermé au démarrage, ouverture par clic, fermeture par second clic ou croix, restauration des onglets Scène/Catalogue et récupération de la largeur par le canvas. Sur écran étroit, vérifier son ouverture en overlay et l'exclusivité entre tous les menus de gauche et l'inspecteur mobile.
 11. Supprimer l'objet sélectionné, changer de map et vérifier que l'inspecteur présente l'état vide sans affichage d'ancienne donnée.
 12. Fermer le panneau Outils, revenir en édition depuis **Tester le jeu**, puis restaurer le dernier domaine et module utilisés.
 13. Modifier un objet et une lumière, enregistrer un brouillon local, exporter la map et confirmer les messages distincts dans le navigateur.

@@ -95,31 +95,40 @@ export function createWorkspaceNavigation(initialArea: WorkspaceArea = "world") 
   };
 }
 
+export type WorkspaceLeftMenu = "explorer" | "tools";
+
 /**
- * Panel visibility is independent of the selected world entity and of the
- * active tool. On narrow viewports, the two overlays are mutually exclusive.
+ * The left dock has exactly one active view. The desktop inspector is
+ * independent; on narrow viewports it shares the available overlay space.
  */
 export function createWorkspacePanelState() {
-  let toolsOpen = false;
+  let leftMenu: WorkspaceLeftMenu | undefined;
   let desktopInspectorOpen = true;
   let mobileInspectorOpen = false;
 
+  function setLeftMenu(menu: WorkspaceLeftMenu | undefined, narrow: boolean): void {
+    leftMenu = menu;
+    if (menu && narrow) mobileInspectorOpen = false;
+  }
+
   return {
-    get toolsOpen(): boolean { return toolsOpen; },
+    get leftMenu(): WorkspaceLeftMenu | undefined { return leftMenu; },
+    get toolsOpen(): boolean { return leftMenu === "tools"; },
+    get explorerOpen(): boolean { return leftMenu === "explorer"; },
+    setLeftMenu,
+
+    toggleLeftMenu(menu: WorkspaceLeftMenu, narrow: boolean): void {
+      setLeftMenu(leftMenu === menu ? undefined : menu, narrow);
+    },
 
     inspectorOpen(narrow: boolean): boolean {
       return narrow ? mobileInspectorOpen : desktopInspectorOpen;
     },
 
-    setToolsOpen(open: boolean, narrow: boolean): void {
-      toolsOpen = open;
-      if (open && narrow) mobileInspectorOpen = false;
-    },
-
     setInspectorOpen(open: boolean, narrow: boolean): void {
       if (narrow) {
         mobileInspectorOpen = open;
-        if (open) toolsOpen = false;
+        if (open) leftMenu = undefined;
       } else {
         desktopInspectorOpen = open;
       }

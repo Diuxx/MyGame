@@ -36,10 +36,19 @@ async function start(): Promise<void> {
 
     const app = requireElement<HTMLElement>("app");
     app.dataset.mode = mode;
+    document.documentElement.dataset.theme = mode === "playground" ? "light" : "dark";
     document.title = mode === "playground" ? "Idle RPG — Playground 3D" : "Idle RPG — Gameplay";
     requireElement("modeLabel").textContent = `/ ${mode.toUpperCase()}`;
 
+    // Only the Playground loads Nicolabz. Never import its theme manager:
+    // the editor intentionally ignores OS and stored theme preferences.
+    if (mode === "playground") {
+      await import("@nicolabz/design-system/theme.css");
+      await import("@nicolabz/design-system/components.css");
+      await import("@nicolabz/design-system/icons.css");
+    }
     await import("./style.css");
+    if (mode === "playground") await import("./playground/nicolabzWorkspace.css");
     const canvas = requireElement<HTMLCanvasElement>("renderCanvas");
     engine = new Engine(canvas, true, { stencil: true });
     const scene = new Scene(engine);

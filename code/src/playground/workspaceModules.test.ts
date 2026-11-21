@@ -108,17 +108,17 @@ test("global tools can be opened without hiding desktop selection properties", (
 
   navigation.changeArea("world");
   navigation.showModule("lightingModule");
-  panels.setToolsOpen(true, false);
+  panels.setLeftMenu("tools", false);
 
   assert.equal(panels.toolsOpen, true);
   assert.equal(panels.inspectorOpen(false), true);
   assert.equal(navigation.module, "lightingModule");
 
-  panels.setToolsOpen(false, false);
+  panels.setLeftMenu(undefined, false);
   assert.equal(panels.inspectorOpen(false), true);
   assert.equal(navigation.module, "lightingModule");
   panels.setInspectorOpen(false, false);
-  panels.setToolsOpen(true, false);
+  panels.setLeftMenu("tools", false);
   assert.equal(panels.inspectorOpen(false), false);
   assert.equal(panels.toolsOpen, true);
 });
@@ -127,7 +127,7 @@ test("mobile tools and inspector overlays cannot be open simultaneously", () => 
   const panels = createWorkspacePanelState();
   assert.equal(panels.inspectorOpen(true), false);
 
-  panels.setToolsOpen(true, true);
+  panels.setLeftMenu("tools", true);
   assert.equal(panels.toolsOpen, true);
   assert.equal(panels.inspectorOpen(true), false);
 
@@ -135,10 +135,10 @@ test("mobile tools and inspector overlays cannot be open simultaneously", () => 
   assert.equal(panels.inspectorOpen(true), true);
   assert.equal(panels.toolsOpen, false);
 
-  panels.setToolsOpen(true, true);
+  panels.setLeftMenu("tools", true);
   assert.equal(panels.inspectorOpen(true), false);
   assert.equal(panels.inspectorOpen(false), true);
-  panels.setToolsOpen(false, true);
+  panels.setLeftMenu(undefined, true);
   assert.equal(panels.inspectorOpen(true), false);
 });
 
@@ -149,7 +149,7 @@ test("opening contextual properties does not change active tools or selection", 
 
   navigation.changeArea("combat");
   navigation.showModule("collisionsModule");
-  panels.setToolsOpen(true, false);
+  panels.setLeftMenu("tools", false);
   panels.setInspectorOpen(true, false);
 
   assert.deepEqual(selection, [{ kind: "prefab", id: "wall-01" }]);
@@ -161,11 +161,67 @@ test("opening contextual properties does not change active tools or selection", 
 
 test("edit/test mode switching keeps independent panel states untouched", () => {
   const panels = createWorkspacePanelState();
-  panels.setToolsOpen(true, false);
+  panels.setLeftMenu("tools", false);
   const input = { checked: true, dispatchEvent: (_event: Event) => true };
 
   setWorkspaceEditingState(input, false);
   setWorkspaceEditingState(input, true);
   assert.equal(panels.toolsOpen, true);
   assert.equal(panels.inspectorOpen(false), true);
+});
+
+test("left dock starts closed", () => {
+  const panels = createWorkspacePanelState();
+  assert.equal(panels.leftMenu, undefined);
+  assert.equal(panels.explorerOpen, false);
+  assert.equal(panels.toolsOpen, false);
+});
+
+test("opening tools replaces explorer and opening explorer replaces tools", () => {
+  const panels = createWorkspacePanelState();
+  panels.toggleLeftMenu("explorer", false);
+  assert.equal(panels.explorerOpen, true);
+  assert.equal(panels.toolsOpen, false);
+  panels.setLeftMenu("tools", false);
+  assert.equal(panels.explorerOpen, false);
+  assert.equal(panels.toolsOpen, true);
+  panels.toggleLeftMenu("explorer", false);
+  assert.equal(panels.explorerOpen, true);
+  assert.equal(panels.toolsOpen, false);
+});
+
+test("active explorer toggle and explicit close release the left dock", () => {
+  const panels = createWorkspacePanelState();
+  panels.toggleLeftMenu("explorer", false);
+  panels.toggleLeftMenu("explorer", false);
+  assert.equal(panels.leftMenu, undefined);
+  panels.setLeftMenu("tools", false);
+  panels.setLeftMenu(undefined, false);
+  assert.equal(panels.leftMenu, undefined);
+  assert.equal(panels.inspectorOpen(false), true);
+});
+
+test("switching left views preserves current tool area and module", () => {
+  const panels = createWorkspacePanelState();
+  const navigation = createWorkspaceNavigation();
+  navigation.changeArea("combat");
+  navigation.showModule("collisionsModule");
+  panels.setLeftMenu("tools", false);
+  panels.setLeftMenu("explorer", false);
+  panels.setLeftMenu("tools", false);
+  assert.equal(navigation.area, "combat");
+  assert.equal(navigation.module, "collisionsModule");
+});
+
+test("mobile inspector and either left view are mutually exclusive", () => {
+  const panels = createWorkspacePanelState();
+  for (const menu of ["explorer", "tools"] as const) {
+    panels.setInspectorOpen(true, true);
+    panels.setLeftMenu(menu, true);
+    assert.equal(panels.leftMenu, menu);
+    assert.equal(panels.inspectorOpen(true), false);
+    panels.setInspectorOpen(true, true);
+    assert.equal(panels.leftMenu, undefined);
+    assert.equal(panels.inspectorOpen(true), true);
+  }
 });
