@@ -13,7 +13,9 @@ const MAPS = {
   "prototype-inn": "/assets/maps/prototype-inn.json",
 } as const;
 export type MapId = keyof typeof MAPS;
-export const AVAILABLE_MAPS: readonly MapId[] = Object.keys(MAPS) as MapId[];
+export const AVAILABLE_MAPS: readonly MapId[] = [
+  "dojo", "forest", "prototype-forest", "prototype-inn",
+];
 
 async function fetchJson(url: string): Promise<unknown> {
   let response: Response;

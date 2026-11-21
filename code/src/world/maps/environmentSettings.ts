@@ -16,7 +16,7 @@ export const DEFAULT_ENVIRONMENT: EnvironmentSettings = {
     color: "#FFF0D6", intensity: 0.8, direction: [-0.7, -1.4, 0.5],
     shadows: { enabled: true, darkness: 0.28, resolution: 1024 },
   },
-  fog: { enabled: false, color: "#B9C9C5", density: 0.005 },
+  fog: { enabled: true, color: "#B9C9C5", density: 0.005 },
 };
 
 function object(value: unknown, name: string): Record<string, unknown> {

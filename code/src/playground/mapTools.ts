@@ -26,25 +26,22 @@ export function bindMapTools(
   let pending = false;
 
   const labels: Record<string, string> = {
-    playground: "Arène blockout",
     dojo: "Cour du dojo", forest: "Clairière",
     "prototype-forest": "Prototype — Forêt",
-    "prototype-arena": "Prototype — Arène",
     "prototype-inn": "Playground — Auberge blanche",
-    "nature-showcase": "Nature — Forêt stylisée",
   };
   for (const id of AVAILABLE_MAPS) selection.add(new Option(labels[id] ?? id, id));
-  selection.value = maps.active?.definition.id ?? "playground";
+  selection.value = maps.active?.definition.id ?? "prototype-inn";
 
   function syncButtons(): void {
     load.disabled = pending || transitions.isBusy;
     selection.disabled = pending || transitions.isBusy;
     unload.disabled = pending || transitions.isBusy || !maps.active ||
-      maps.active.definition.id === "playground";
+      maps.active.definition.id === "prototype-inn";
     placeHero.disabled = pending || transitions.isBusy ||
       !maps.active?.definition.spawnPoints.some((point) => point.type === "player");
     resetProgress.disabled = pending || transitions.isBusy || !maps.active;
-    activeId.textContent = maps.active?.definition.id ?? "playground";
+    activeId.textContent = maps.active?.definition.id ?? "prototype-inn";
   }
 
   function teleportToSpawn(): void {
@@ -84,13 +81,13 @@ export function bindMapTools(
   }, { signal });
 
   unload.addEventListener("click", async () => {
-    if (pending || transitions.isBusy || maps.active?.definition.id === "playground") return;
+    if (pending || transitions.isBusy || maps.active?.definition.id === "prototype-inn") return;
     pending = true;
     syncButtons();
     try {
-      const loaded = await transitions.loadManual("playground");
+      const loaded = await transitions.loadManual("prototype-inn");
       status.textContent = loaded
-        ? "Arène blockout restaurée."
+        ? "Map de départ restaurée."
         : "Retour impossible. Vérifier le message dans le HUD.";
     } finally {
       pending = false;

@@ -41,7 +41,7 @@ Une ambiance réussie ne doit pas sacrifier ces repères au profit du contraste 
 - `environment` règle séparément le fond et le brouillard; ces réglages ne remplacent pas les sources lumineuses.
 - Les lumières locales peuvent renforcer un luminaire ou un point d’intérêt. Le matériau émissif du décor reste une indication visuelle distincte.
 - Les ombres des lumières locales sont désactivées par défaut. N’en activer que si elles améliorent réellement la lecture, puis mesurer leur coût, en particulier sur les appareils mobiles.
-- Le Playground démarre sur l’auberge `prototype-inn`; l’arène blockout `playground` reste disponible comme scène de test. Vérifier les deux avec la caméra top-down et le zoom réellement utilisés en jeu.
+- Le Playground démarre sur l’auberge `prototype-inn`; l’arène blockout `playground` est conservée comme définition interne, mais n’est plus disponible dans le sélecteur de maps.
 
 ## Petite procédure d’itération
 

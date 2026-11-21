@@ -20,6 +20,11 @@
       "name": "Eau",
       "model": "/assets/models/tiles/water.glb",
       "walkable": false
+    },
+    "fantasy_stone_paving": {
+      "name": "Pavage de pierre facettée",
+      "model": "/assets/models/tiles/fantasy-stone-paving-tile.glb",
+      "walkable": true
     }
   },
   "objects": {
@@ -337,6 +342,72 @@
       "model": "/assets/models/nature-megakit/Pebble_Round_1.gltf",
       "blocksNavigation": false,
       "colliders": []
+    },
+    "fog_bank": {
+      "name": "Nappe de brume ambrée",
+      "model": "/assets/models/effects/fog-bank.glb",
+      "blocksNavigation": false,
+      "colliders": []
+    },
+    "fantasy_amber_lamp": {
+      "name": "Lampadaire fantastique bronze et ambre",
+      "model": "/assets/models/objects/fantasy-amber-street-lamp.glb",
+      "blocksNavigation": true,
+      "colliders": [
+        {
+          "type": "cylinder",
+          "position": [0, 0.65, 0],
+          "radius": 0.42,
+          "height": 1.3
+        }
+      ],
+      "spotLight": {
+        "position": [1.08, 2.92, 0],
+        "direction": [0, -1, 0],
+        "color": "#FFB36B",
+        "intensity": 1.6,
+        "range": 6,
+        "angle": 72,
+        "exponent": 1.5
+      }
+    },
+    "fantasy_tree_blockout": {
+      "name": "Arbre fantastique — Blockout",
+      "model": "/assets/models/nature/fantasy-faceted-tree-blockout.glb",
+      "blocksNavigation": true,
+      "colliders": [
+        {
+          "type": "cylinder",
+          "position": [0, 1.35, 0],
+          "radius": 0.75,
+          "height": 2.7
+        }
+      ]
+    },
+    "fantasy_wooden_stool": {
+      "name": "Tabouret en bois facetté",
+      "model": "/assets/models/objects/fantasy-wooden-stool.glb",
+      "blocksNavigation": true,
+      "colliders": [
+        {
+          "type": "cylinder",
+          "position": [0, 0.375, 0],
+          "radius": 0.32,
+          "height": 0.75
+        }
+      ]
+    },
+    "fantasy_stone_wall_lowpoly": {
+      "name": "Mur de pierre low-poly",
+      "model": "/assets/models/architecture/lowpoly-stone-wall-segment.glb",
+      "blocksNavigation": true,
+      "colliders": [
+        {
+          "type": "box",
+          "position": [0, 1.5, 0],
+          "size": [4, 3, 0.66]
+        }
+      ]
     }
   },
   "enemies": [

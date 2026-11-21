@@ -113,6 +113,38 @@ test("composite collider dimensions and coordinates must be valid", () => {
   assert.throws(() => validateMapAssets(mutated), /position/);
 });
 
+test("object spotlights validate their local position, direction and photometric values", () => {
+  const raw = load("definitions/assets.json") as Record<string, any>;
+  const lamp = raw.objects.fantasy_amber_lamp;
+  assert.deepEqual(assets.objects.fantasy_amber_lamp.spotLight?.direction, [0, -1, 0]);
+
+  const invalid = structuredClone(raw);
+  invalid.objects.fantasy_amber_lamp.spotLight = { ...lamp.spotLight, direction: [0, 0, 0] };
+  assert.throws(() => validateMapAssets(invalid), /direction non nulle/);
+  invalid.objects.fantasy_amber_lamp.spotLight = { ...lamp.spotLight, intensity: 21 };
+  assert.throws(() => validateMapAssets(invalid), /intensity/);
+  invalid.objects.fantasy_amber_lamp.spotLight = { ...lamp.spotLight, color: "amber" };
+  assert.throws(() => validateMapAssets(invalid), /couleur/);
+});
+
+test("map object spotlights override defaults only on assets that define a light", () => {
+  const source = load("maps/dojo.json") as Record<string, any>;
+  const defaultSpotLight = assets.objects.fantasy_amber_lamp.spotLight;
+  assert.ok(defaultSpotLight);
+  source.objects[0].asset = "fantasy_amber_lamp";
+  source.objects[0].spotLight = { ...defaultSpotLight, position: [1.08, 2.92, 0], angle: 72 };
+  const result = validateMapDefinition(source, assets);
+  assert.deepEqual(result.objects[0].spotLight?.position, [1.08, 2.92, 0]);
+  assert.equal(result.objects[0].spotLight?.angle, 72);
+
+  const invalid = structuredClone(source);
+  invalid.objects[0].asset = "wall";
+  assert.throws(() => validateMapDefinition(invalid, assets), /asset ne définit pas de lumière locale/);
+  invalid.objects[0].asset = "fantasy_amber_lamp";
+  invalid.objects[0].spotLight = { ...defaultSpotLight, exponent: 33 };
+  assert.throws(() => validateMapDefinition(invalid, assets), /exponent/);
+});
+
 test("map instances validate and retain visual/collider overrides and interactions", () => {
   const source = load("maps/dojo.json") as Record<string, any>;
   source.objects[0].visual = {
@@ -153,7 +185,12 @@ test("Playground is an enclosed modular blockout with five editable lights and t
   assert.equal(map.terrain.primitiveGround?.pattern, undefined);
   assert.equal(map.terrain.visual?.style, "platform");
   assert.ok(map.terrain.tiles.every((row) => row.every((tile) => tile === null)));
-  assert.equal(map.objects.length, 0);
+  assert.deepEqual(map.objects.map(({ id, asset, position, rotationY }) =>
+    ({ id, asset, position, rotationY })), [{
+    id: "fog-bank-center", asset: "fog_bank", position: [0, 0, 0], rotationY: 0,
+  }, {
+    id: "fantasy-wooden-stool-test", asset: "fantasy_wooden_stool", position: [6, 0, -8], rotationY: 0,
+  }]);
   assert.equal(map.prefabs?.length, 45);
   const walls = map.prefabs?.filter((part) =>
     part.prefab === "wall-dark" || part.prefab === "wall-dark-low") ?? [];

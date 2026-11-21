@@ -181,6 +181,7 @@ export function createMapSystem(scene: Scene, options: MapSystemOptions) {
             else enemies.rotateEnemy(id, degrees);
           },
           setObjectCollider: level.setObjectCollider,
+          setObjectSpotLight: level.setObjectSpotLight,
           addPrefab: level.addPrefab,
           addObject: level.addObject,
           removeObject: level.removeObject,

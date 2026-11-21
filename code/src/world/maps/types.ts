@@ -12,6 +12,16 @@ export type MapCollider =
   | { type: "box"; position: MapPosition; size: MapPosition }
   | { type: "cylinder"; position: MapPosition; radius: number; height: number };
 
+export interface ObjectSpotLight {
+  position: MapPosition;
+  direction: MapPosition;
+  color: string;
+  intensity: number;
+  range: number;
+  angle: number;
+  exponent: number;
+}
+
 export interface TileAsset {
   name?: string;
   model: string;
@@ -23,6 +33,7 @@ export interface ObjectAsset {
   model: string;
   blocksNavigation: boolean;
   colliders: MapCollider[];
+  spotLight?: ObjectSpotLight;
 }
 
 export interface MapAssets {
@@ -38,6 +49,7 @@ export interface MapObject {
   position: MapPosition;
   rotationY: number;
   colliders?: MapCollider[];
+  spotLight?: ObjectSpotLight;
   visual?: VisualOverride;
   layer?: string;
 }

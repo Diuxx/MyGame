@@ -135,7 +135,7 @@ input[type=range] { accent-color:#a4c49e; display:block; width:100%; margin:0 0 
 .world-editor-catalog button[aria-pressed=true] { background:#c4d7ba; color:#25342a; }
 #worldEditorCancelPlacement[hidden] { display:none; }
 #worldEditorFields[hidden] { display:none; }
-#worldEditorObjectFields[hidden], #worldEditorEnemyFields[hidden],
+#worldEditorObjectFields[hidden], #worldEditorObjectSpotLightFields[hidden], #worldEditorEnemyFields[hidden],
 #worldEditorRotationField[hidden], #worldEditorVisualFields[hidden] { display:none; }
 
 
