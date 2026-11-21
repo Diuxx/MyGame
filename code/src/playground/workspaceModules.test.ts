@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { WORKSPACE_AREAS, allWorkspaceModuleIds, createWorkspaceNavigation, createWorkspacePanelState, modulesForArea, setWorkspaceEditingState } from "./workspaceModules.ts";
+import { WORKSPACE_AREAS, allWorkspaceModuleIds, createWorkspaceNavigation, createWorkspacePanelState, createWorkspaceExplorerState, modulesForArea, setWorkspaceEditingState } from "./workspaceModules.ts";
 
 test("every existing Playground module belongs to exactly one workspace", () => {
   const ids = allWorkspaceModuleIds();
@@ -168,4 +168,54 @@ test("edit/test mode switching keeps independent panel states untouched", () => 
   setWorkspaceEditingState(input, true);
   assert.equal(panels.toolsOpen, true);
   assert.equal(panels.inspectorOpen(false), true);
+});
+
+test("explorer is closed by default", () => {
+  const explorer = createWorkspaceExplorerState();
+  assert.equal(explorer.open, false);
+});
+
+test("the explorer rail action opens the explorer without changing the active workspace area", () => {
+  const explorer = createWorkspaceExplorerState();
+  const navigation = createWorkspaceNavigation();
+  navigation.changeArea("combat");
+  navigation.showModule("collisionsModule");
+
+  assert.equal(explorer.toggle(), true);
+  assert.equal(explorer.open, true);
+  assert.equal(navigation.area, "combat");
+  assert.equal(navigation.module, "collisionsModule");
+});
+
+test("clicking the active explorer rail action closes it", () => {
+  const explorer = createWorkspaceExplorerState();
+  explorer.toggle();
+  assert.equal(explorer.toggle(), false);
+  assert.equal(explorer.open, false);
+});
+
+test("the explorer close action closes the panel without resetting workspace tools", () => {
+  const explorer = createWorkspaceExplorerState();
+  const panels = createWorkspacePanelState();
+  panels.setToolsOpen(true, false);
+  explorer.toggle();
+  explorer.close();
+
+  assert.equal(explorer.open, false);
+  assert.equal(panels.toolsOpen, true);
+  assert.equal(panels.inspectorOpen(false), true);
+});
+
+test("closing and reopening explorer retains its independent scene/catalogue tab state", () => {
+  const explorer = createWorkspaceExplorerState();
+  // Toggling panel visibility must not own or reset the tab selection.
+  let activeTab: "scene" | "catalog" = "catalog";
+  explorer.toggle();
+  explorer.close();
+  explorer.toggle();
+
+  assert.equal(explorer.open, true);
+  assert.equal(activeTab, "catalog");
+  activeTab = "scene";
+  assert.equal(activeTab, "scene");
 });
