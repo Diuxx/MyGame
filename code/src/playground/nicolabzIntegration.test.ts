@@ -14,6 +14,7 @@ const entry = read("../main.ts");
 const workspace = read("./workspace.ts");
 const iconAdapter = read("./nicolabzIcons.ts");
 const skin = read("./nicolabzWorkspace.css");
+const favicon = read("../../public/favicon.svg");
 
 test("Nicolabz is pinned to an immutable GitHub commit in both npm manifests", () => {
   const dependency = packageJson.dependencies["@nicolabz/design-system"];
@@ -60,4 +61,24 @@ test("Light workspace uses semantic tokens without restyling the Babylon viewpor
   assert.ok(!skin.includes(".hero-hud"));
   assert.ok(!skin.includes("#renderCanvas"));
   assert.ok(!skin.includes("localStorage"));
+});
+
+test("project branding uses the Nicolabz shield and the browser favicon", () => {
+  assert.ok(workspace.includes('requireElement("ws-logo").append(createNicolabzIcon("shield"))'));
+  assert.match(html, /rel="icon" type="image\\/svg\\+xml" href="\\/favicon\\.svg"/);
+  assert.match(favicon, /<svg[^>]*viewBox="0 0 48 48"/);
+  assert.ok(favicon.includes("<title>MyGame — bouclier</title>"));
+  assert.ok(skin.includes(".workspace-app .ws-logo .nz-icon"));
+});
+
+test("the redundant header menu is removed and mobile explorer remains accessible", () => {
+  const top = workspace.slice(workspace.indexOf('const top = surface('), workspace.indexOf('const toolbar = surface('));
+  const rail = workspace.slice(workspace.indexOf('const rail = surface('), workspace.indexOf('const left = surface('));
+  assert.ok(!top.includes('ws-explorer-toggle'));
+  assert.ok(rail.includes('id="ws-explorer-toggle"'));
+  assert.ok(rail.includes('aria-controls="ws-left"'));
+  assert.ok(workspace.includes('setNicolabzButtonIcon(requireElement<HTMLButtonElement>(id), icon, label)'));
+  assert.ok(workspace.includes('app.classList.toggle("ws-explorer-open")'));
+  assert.ok(skin.includes("max-width: 1020px"));
+  assert.ok(skin.includes(".workspace-app .ws-rail .ws-explorer-toggle"));
 });
