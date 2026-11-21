@@ -22,18 +22,21 @@ export function bindTargetLockTools(system: TargetLockSystem, signal: AbortSigna
       : "Source : code/TARGETING.json (versionné).";
   }
 
-  function apply(): void {
+  function apply(): boolean {
     settings = createTargetingSettings(settings);
     system.setSettings(settings);
+    setSource(true);
+    let savedLocally = true;
     try {
       localStorage.setItem(TARGETING_SETTINGS_KEY, JSON.stringify(settings));
-      setSource(true);
-      status.textContent = "Réglages appliqués et sauvegardés localement.";
+      status.textContent = "Réglages appliqués et enregistrés dans ce navigateur ; TARGETING.json n'a pas été modifié.";
     } catch (error) {
-      status.textContent = "Réglages appliqués, mais stockage local indisponible.";
+      savedLocally = false;
+      status.textContent = "Réglages appliqués pour cette session uniquement : stockage local indisponible.";
       console.warn("Target-lock settings could not be saved:", error);
     }
     refresh();
+    return savedLocally;
   }
 
   function checkbox(id: string, key: "enabled" | "showTargetRing" | "showDebugRadius"): void {
@@ -105,8 +108,10 @@ export function bindTargetLockTools(system: TargetLockSystem, signal: AbortSigna
     try {
       if (file.size > 32 * 1024) throw new Error("Fichier JSON trop volumineux.");
       settings = parseTargetingManifest(JSON.parse(await file.text()));
-      apply();
-      status.textContent = "Configuration importée et appliquée au Playground. Stockage local tenté ; télécharger TARGETING.json pour la versionner.";
+      const savedLocally = apply();
+      status.textContent = savedLocally
+        ? "Configuration importée et enregistrée dans ce navigateur. Télécharger TARGETING.json pour la versionner."
+        : "Configuration importée pour cette session seulement : stockage local indisponible. Télécharger TARGETING.json pour la versionner.";
     } catch (error) {
       status.textContent = "Import refusé : " + (error instanceof Error ? error.message : String(error));
     } finally {
