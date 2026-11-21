@@ -3,7 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#161b1b" />
+    <meta name="theme-color" content="#FAFAF8" />
+    <script>
+      // Apply before the first paint. Never read OS or localStorage preferences.
+      const runtimeMode = "%MODE%";
+      document.documentElement.dataset.theme = runtimeMode === "gameplay" ? "dark" : "light";
+      if (runtimeMode === "gameplay") {
+        document.querySelector('meta[name="theme-color"]').content = "#161b1b";
+      }
+    </script>
     <title>Idle RPG — Playground 3D</title>
     <style>
       body { margin: 0; background: #161c1c; }
@@ -22,6 +30,11 @@
       }
       #loadingOverlay[hidden] { display: none; }
       #loadingOverlay.error { color: #ffb4b4; }
+      :root[data-theme="light"] { color-scheme: light; }
+      :root[data-theme="light"] body,
+      :root[data-theme="light"] #loadingOverlay { background: #FAFAF8; }
+      :root[data-theme="light"] #loadingOverlay { color: #17191C; }
+      :root[data-theme="light"] #loadingOverlay.error { color: #A43E44; }
     </style>
   </head>
   <body>
