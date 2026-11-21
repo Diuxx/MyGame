@@ -8,6 +8,8 @@ import { findTerrainCell, tileCenter } from "../world/maps/validation";
 import type { createMapSystem } from "../world/maps/mapSystem";
 import { downloadJson, requireElement } from "../ui/dom";
 import { describeJsonExport } from "./workspacePersistence";
+import { buildCatalogEntries } from "./catalogEntries";
+import { bindVisualCatalog } from "./visualCatalog";
 import { bindWorldEditorV2, type EditorSelectionRef } from "./editorInteractionV2";
 import { snapWallEndpoint } from "./editorSnapping";
 import { fitWallToTerrain, isNearTerrain, isWallPrefab } from "../world/maps/wallPlacement";
@@ -51,6 +53,8 @@ export function bindWorldEditor(
   const snapToGrid = requireElement<HTMLInputElement>("worldEditorSnap");
   const catalog = requireElement<HTMLElement>("worldEditorCatalog");
   const cancelPlacement = requireElement<HTMLButtonElement>("worldEditorCancelPlacement");
+  const catalogPlacement = requireElement("worldEditorCatalogPlacement");
+  const visualCatalog = bindVisualCatalog(signal);
   const modelFile = requireElement<HTMLInputElement>("worldEditorModelFile");
   const textureFile = requireElement<HTMLInputElement>("worldEditorTextureFile");
   const applyVisual = requireElement<HTMLButtonElement>("worldEditorApplyVisual");
@@ -77,6 +81,8 @@ export function bindWorldEditor(
   function syncPlacement(): void {
     canvas.classList.toggle("map-editor-placing", !!pendingPlacement);
     cancelPlacement.hidden = !pendingPlacement;
+    catalogPlacement.hidden = !pendingPlacement;
+    catalogPlacement.textContent = pendingPlacement ? "Sélection : " + pendingPlacement.label + " · Clique sur le terrain pour placer." : "";
     catalog.querySelectorAll<HTMLButtonElement>("button[data-kind]").forEach((button) => {
       button.setAttribute("aria-pressed", String(
         button.dataset.kind === pendingPlacement?.kind && button.dataset.id === pendingPlacement?.id));
@@ -86,29 +92,12 @@ export function bindWorldEditor(
 
   function buildCatalog(): void {
     const source = maps.world;
-    if (!source) return;
-    const groups = [
-      { kind: "object", field: "worldEditorCatalogObjects", entries: Object.entries(source.assets.objects).map(([id, asset]) => ({ id, name: asset.name ?? id })) },
-      { kind: "tile", field: "worldEditorCatalogTiles", entries: Object.entries(source.assets.tiles).map(([id, asset]) => ({ id, name: asset.name ?? id })) },
-      { kind: "enemy", field: "worldEditorCatalogEnemies", entries: source.enemyCatalog },
-      { kind: "prefab", field: "worldEditorCatalogPrefabs",
-        entries: Object.entries(source.assets.prefabs ?? {}).map(([id, item]) =>
-          ({ id, name: item.name })) },
-    ] as const;
-    for (const { kind, field, entries } of groups) {
-      const buttons = entries.map(({ id, name }) => {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "secondary";
-        button.textContent = name;
-        button.dataset.kind = kind;
-        button.dataset.id = id;
-        return button;
-      });
-      requireElement(field).replaceChildren(...buttons);
+    const entries = source ? buildCatalogEntries(source.assets, source.enemyCatalog) : [];
+    visualCatalog.render(entries);
+    if (pendingPlacement && !entries.some(entry =>
+      entry.kind === pendingPlacement?.kind && entry.id === pendingPlacement?.id)) {
+      pendingPlacement = undefined;
     }
-    if (pendingPlacement && !groups.some(({ kind, entries }) => kind === pendingPlacement?.kind &&
-        entries.some(({ id }) => id === pendingPlacement?.id))) pendingPlacement = undefined;
     syncPlacement();
   }
 
@@ -425,7 +414,7 @@ export function bindWorldEditor(
       enabled.dispatchEvent(new Event("change"));
     }
     clearSelection();
-    const label = button.textContent ?? id;
+    const label = button.dataset.label ?? id;
     pendingPlacement = { id, kind, label };
     syncPlacement();
     status.textContent = "Cliquer sur le terrain pour placer " + label + ".";
