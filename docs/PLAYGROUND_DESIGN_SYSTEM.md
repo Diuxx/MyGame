@@ -45,7 +45,9 @@ Les icônes utilisent le sprite existant `@nicolabz/design-system/icons.svg?url`
 
 Le symbole générique du Playground a été remplacé par l'icône `shield` du sprite Nicolabz, déjà utilisée par l'interface. Un favicon SVG autonome `code/public/favicon.svg` reproduit le contour Lucide (licence ISC) pour les onglets de navigateur, qui ne prennent pas tous en charge les fragments de sprites SVG en favicon.
 
-Le bouton hamburger de l'en-tête a été retiré : sur les écrans de 1020 px ou moins, le bouton **Scène** du rail latéral donne accès à l'explorateur et conserve le même ID `ws-explorer-toggle` et son `aria-expanded`. Sur grand écran, l'explorateur reste affiché en permanence. La navigation conserve donc les fonctionnalités antérieures sans occuper inutilement la barre de titre.
+Le bouton hamburger de l'en-tête a été retiré. L'**Explorateur** dispose désormais de son entrée dédiée dans la barre d'icônes de gauche, sur desktop comme sur mobile. Il est **fermé par défaut** ; cliquer sur son icône l'ouvre ou le ferme, et le bouton de fermeture dans son en-tête permet également de le refermer. L'entrée indique l'état courant via `aria-pressed`, `aria-expanded` et `.is-active`.
+
+Sur desktop, fermer l'explorateur supprime la largeur de sa colonne dans la grille, ce qui rend l'espace au viewport Babylon. Sous 1020 px, l'explorateur fonctionne comme un panneau superposé sans réserver de colonne. Les onglets **Scène / Catalogue**, leur contenu, la recherche et les sélections ne sont pas recréés lors des ouvertures successives. L'état d'ouverture reste indépendant des modules Monde/Héros/Combat et de l'inspecteur.
 
 ## Risque de collision CSS et limites
 
@@ -56,7 +58,7 @@ Les anciens styles de `style.css` sont maintenus tant qu'ils peuvent servir au g
 ## Vérifications
 
 - `cd code && npm ci && npm test && npm run build`.
-- Playground desktop : explorer, inspecteur et panneau Outils ouverts simultanément ; changer de module sans perdre l'objet sélectionné.
+- Playground desktop : l'explorateur démarre fermé, s'ouvre depuis le rail, se ferme par un second clic ou par sa croix et rend sa largeur au canvas ; les outils et l'inspecteur restent indépendants.
 - Sections avancées : plier/déplier et éditer des valeurs ; gérer les champs invalides ; sauvegarder brouillons et importer/exporter des JSON sans modification de formats.
 - Clavier : parcourir les boutons avec Tab, vérifier le focus visible, F2 pour tester et revenir en édition.
 - Mobile et petit écran : docks non superposés et cibles tactiles utilisables.
