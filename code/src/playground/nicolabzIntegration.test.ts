@@ -142,3 +142,38 @@ test("map export fits the toolbar and keeps horizontal overflow only", () => {
   assert.match(exportButton, /width:\s*auto/);
   assert.match(themedExport, /min-height:\s*30px/);
 });
+
+test("hero model metadata and all grouped hero modules are relocated rather than recreated", () => {
+  assert.ok(workspace.includes('requireElement("ws-hero-summary").append(summary)'));
+  assert.ok(workspace.includes("for (const id of tab.modules)"));
+  assert.ok(workspace.includes("panel.append(module)"));
+  assert.ok(workspace.includes("if (panel.parentElement === moduleHost)"));
+  assert.ok(workspace.includes("heroState.setSelection(selectionCount)"));
+  assert.ok(workspace.includes("contextInspector.hidden = heroState.showHero"));
+  assert.ok(workspace.includes("heroInspector.hidden = !heroState.showHero"));
+  for (const id of ["modelStatus", "animationStatus", "movementModule", "actionsModule",
+    "controlsModule", "targetLockModule", "collisionsModule", "attackHitboxModule"]) {
+    assert.ok(html.includes('id="' + id + '"'));
+  }
+});
+
+test("shared tabs use real tab semantics and the panel owns its close action", () => {
+  assert.ok(workspace.includes('role="tablist"'));
+  assert.ok(workspace.includes('button.setAttribute("role", "tab")'));
+  assert.ok(workspace.includes('button.setAttribute("aria-selected", String(active))'));
+  assert.ok(workspace.includes("button.tabIndex = active ? 0 : -1"));
+  assert.ok(workspace.includes('case "ArrowRight"'));
+  assert.ok(workspace.includes('case "Home"'));
+  assert.ok(workspace.includes("closeIconButton.hidden = true"));
+  assert.ok(layout.includes(".ws-existing-module .module-close[hidden]"));
+  assert.ok(skin.includes('.nz-tab[aria-selected="true"]'));
+  assert.ok(layout.includes("flex-wrap: wrap; gap: 0;"));
+});
+
+test("debug shortcuts open combat in the inspector through explicit deselection", () => {
+  const editor = read("./worldEditor.ts");
+  assert.ok(workspace.includes("editor.clearSelection()"));
+  assert.ok(workspace.includes('heroState.selectTab("combat")'));
+  assert.ok(editor.includes("    clearSelection,"));
+  assert.ok(!workspace.includes('openModuleInArea("combat"'));
+});
