@@ -184,7 +184,17 @@ export function bindPlaygroundWorkspace(
   moveControl("mapSelect", requireElement("ws-map-select-host"));
   moveControl("mapLoad", requireElement("ws-map-load-host"), "Charger la map sélectionnée");
   moveControl("renderFps", requireElement("ws-top-fps"));
-  moveControl("worldEditorExport", requireElement("ws-export-tools"), "Exporter la map en JSON");
+  const mapExportButton = moveControl("worldEditorExport",
+    requireElement("ws-export-tools"), "Télécharger le JSON de la map (ne sauvegarde pas dans Git)");
+  const exportFeedback = document.createElement("span");
+  exportFeedback.id = "ws-export-feedback";
+  exportFeedback.setAttribute("role", "status");
+  exportFeedback.setAttribute("aria-live", "polite");
+  requireElement("ws-export-tools").append(exportFeedback);
+  mapExportButton.addEventListener("click", () => {
+    // The existing World Editor listener writes the result synchronously first.
+    exportFeedback.textContent = requireElement("worldEditorStatus").textContent ?? "";
+  }, { signal });
 
   const toolSelector = requireElement<HTMLSelectElement>("worldEditorTool");
   const oldToolRow = toolSelector.closest(".enemy-fields");
