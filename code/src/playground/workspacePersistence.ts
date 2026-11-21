@@ -13,10 +13,8 @@ export function describeLocalSave(
   subject: "Brouillon de map" | "Instances d'entraînement",
   action: "saved" | "restored" | "removed",
 ): string {
-  const verbs = {
-    saved: "enregistré(es)",
-    restored: "restauré(es)",
-    removed: "supprimé(es)",
-  } as const;
+  const verbs = subject === "Brouillon de map"
+    ? { saved: "enregistré", restored: "restauré", removed: "supprimé" }
+    : { saved: "enregistrées", restored: "restaurées", removed: "supprimées" };
   return `${subject} ${verbs[action]} dans ce navigateur. Aucun fichier du projet n'a été modifié.`;
 }
