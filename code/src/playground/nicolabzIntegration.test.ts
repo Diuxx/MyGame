@@ -64,6 +64,8 @@ test("Light workspace uses semantic tokens without restyling the Babylon viewpor
 });
 
 test("project branding uses the Nicolabz shield and the browser favicon", () => {
+  // A missing DOM id previously prevented the entire Playground from starting.
+  assert.ok(workspace.includes('<div id="ws-logo" class="ws-logo" aria-hidden="true"></div>'));
   assert.ok(workspace.includes('requireElement("ws-logo").append(createNicolabzIcon("shield"))'));
   assert.ok(html.includes('<link rel="icon" type="image/svg+xml" href="/favicon.svg" />'));
   assert.match(favicon, /<svg[^>]*viewBox="0 0 48 48"/);
