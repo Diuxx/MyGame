@@ -206,17 +206,26 @@
 .workspace-app .ws-tools .ws-side-head { background: var(--color-surface); border-color: var(--ws-border); }
 .workspace-app .ws-side-head button { color: var(--color-text-secondary); }
 .workspace-app .ws-side-head .ws-muted { color: var(--ws-text-muted); }
-.workspace-app .ws-left-tabs button,
-.workspace-app .ws-module-tabs button {
+.workspace-app .ws-left-tabs .nz-tab,
+.workspace-app .ws-module-tabs .nz-tab {
+  background: transparent;
+  color: var(--color-text-secondary);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  min-height: 32px;
+}
+.workspace-app .ws-left-tabs .nz-tab:hover,
+.workspace-app .ws-module-tabs .nz-tab:hover {
   background: var(--color-surface-muted);
   color: var(--color-text);
-  border-color: var(--ws-border);
 }
-.workspace-app .ws-left-tabs button.is-active,
-.workspace-app .ws-module-tabs button.is-active {
-  background: var(--color-button);
-  color: var(--color-button-text);
-  border-color: var(--color-button);
+.workspace-app .ws-left-tabs .nz-tab[aria-selected="true"],
+.workspace-app .ws-module-tabs .nz-tab[aria-selected="true"] {
+  color: var(--color-text);
+  border-bottom-color: var(--color-accent);
+  background: transparent;
+  font-weight: 650;
 }
 .workspace-app .ws-left-pane input[type=search] {
   background: var(--color-background);
