@@ -122,7 +122,7 @@ export function bindPlaygroundWorkspace(
     '<div id="ws-scene-tree"></div></div>' +
     '<div id="ws-catalog-pane" class="ws-left-pane" hidden></div>' +
     '<div class="ws-left-footer"><div id="ws-left-footer-map"></div>' +
-    '<button id="ws-open-whitebox" type="button">▣ Blocs réutilisables (whitebox)</button>' +
+    '<button id="ws-open-whitebox" type="button">▣ Blocs modulaires</button>' +
     '<button id="ws-open-maps" type="button">▦ Gestion des maps</button></div>');
   left.setAttribute("aria-label", "Explorateur de scène et catalogue");
   left.hidden = true; // Do not flash the panel before its initial state is rendered.
@@ -178,7 +178,7 @@ export function bindPlaygroundWorkspace(
     ["ws-debug-close", "x"],
     ["ws-edit-mode", "pencil", "Édition"],
     ["ws-test-mode", "rocket", "Tester le jeu"],
-    ["ws-open-whitebox", "boxes", "Blocs réutilisables (whitebox)"],
+    ["ws-open-whitebox", "boxes", "Blocs modulaires"],
     ["ws-open-maps", "folder", "Gestion des maps"],
   ] as const) {
     setNicolabzButtonIcon(requireElement<HTMLButtonElement>(id), icon, label);
@@ -288,13 +288,6 @@ export function bindPlaygroundWorkspace(
   if (heightControls) contextInspector.append(heightControls);
   requireElement("ws-inspector-body").append(contextInspector);
   requireElement("ws-catalog-pane").append(catalog);
-  // Make the reusable whitebox blocks discoverable immediately without
-  // changing their original buttons, listeners or catalogue data.
-  const prefabGroup = requireElement("worldEditorCatalogPrefabs").closest("details");
-  if (prefabGroup) {
-    catalog.prepend(prefabGroup);
-    prefabGroup.open = true;
-  }
   const debugControls = requireElement("ws-debug-controls");
   for (const id of DEBUG_CONTROLS) {
     const input = requireElement<HTMLInputElement>(id);
@@ -568,7 +561,11 @@ export function bindPlaygroundWorkspace(
   }, { signal });
   requireElement("ws-open-whitebox").addEventListener("click", () => {
     setLeftTab("catalog");
-    prefabGroup?.scrollIntoView({ block: "nearest" });
+    const filter = requireElement<HTMLSelectElement>("worldEditorCatalogFilter");
+    filter.value = "prefabs";
+    requireElement<HTMLInputElement>("worldEditorCatalogSearch").value = "";
+    filter.dispatchEvent(new Event("change"));
+    filter.focus();
   }, { signal });
   for (const [id, area, module] of [
     ["ws-open-collisions", "combat", "collisionsModule"],
