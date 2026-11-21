@@ -55,6 +55,47 @@ export function allWorkspaceModuleIds(): WorkspaceModuleId[] {
 }
 
 /**
+ * Keep the last visited module for each area during this Playground session.
+ * Closing a panel does not forget it, and reopening the current area does not
+ * unexpectedly select another module.
+ */
+export function createWorkspaceNavigation(initialArea: WorkspaceArea = "world") {
+  const lastModules = new Map<WorkspaceArea, WorkspaceModuleId>();
+  let area = initialArea;
+  let module: WorkspaceModuleId | undefined = modulesForArea(area)[0]?.id;
+  if (module) lastModules.set(area, module);
+
+  return {
+    get area(): WorkspaceArea { return area; },
+    get module(): WorkspaceModuleId | undefined { return module; },
+
+    changeArea(nextArea: WorkspaceArea): boolean {
+      if (nextArea === area) return false;
+      area = nextArea;
+      module = lastModules.get(area) ?? modulesForArea(area)[0]?.id;
+      if (module) lastModules.set(area, module);
+      return true;
+    },
+
+    showModule(nextModule: WorkspaceModuleId): boolean {
+      if (!modulesForArea(area).some((entry) => entry.id === nextModule)) {
+        throw new Error(`Le module ${nextModule} n'appartient pas à l'espace ${area}.`);
+      }
+      if (module === nextModule) return false;
+      module = nextModule;
+      lastModules.set(area, nextModule);
+      return true;
+    },
+
+    closeModule(expectedModule: WorkspaceModuleId): boolean {
+      if (module !== expectedModule) return false;
+      module = undefined;
+      return true;
+    },
+  };
+}
+
+/**
  * The existing editor checkbox is the single authority for editing state.
  * Dispatching change goes through the original camera, combat and input hooks.
  */
