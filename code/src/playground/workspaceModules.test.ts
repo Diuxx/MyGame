@@ -206,16 +206,17 @@ test("the explorer close action closes the panel without resetting workspace too
   assert.equal(panels.inspectorOpen(false), true);
 });
 
-test("closing and reopening explorer retains its independent scene/catalogue tab state", () => {
+test("explorer close is idempotent and reopening preserves the selected workspace module", () => {
   const explorer = createWorkspaceExplorerState();
-  // Toggling panel visibility must not own or reset the tab selection.
-  let activeTab: "scene" | "catalog" = "catalog";
+  const navigation = createWorkspaceNavigation();
+  navigation.changeArea("world");
+  navigation.showModule("lightingModule");
   explorer.toggle();
   explorer.close();
-  explorer.toggle();
+  explorer.close();
+  assert.equal(explorer.open, false);
 
+  explorer.toggle();
   assert.equal(explorer.open, true);
-  assert.equal(activeTab, "catalog");
-  activeTab = "scene";
-  assert.equal(activeTab, "scene");
+  assert.equal(navigation.module, "lightingModule");
 });
