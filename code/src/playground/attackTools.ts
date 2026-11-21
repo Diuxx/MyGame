@@ -141,10 +141,10 @@ export function bindAttackTools(
       settings = { visible: visible.checked, alwaysVisible: alwaysVisible.checked, swing, forceDamage: forceDamage.checked };
       syncControls();
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 2, ...settings }));
-      status.textContent = "";
+      status.textContent = "Attaque appliquée et enregistrée dans ce navigateur. Le projet n'a pas été modifié.";
     } catch (error) {
       syncControls();
-      status.textContent = error instanceof Error ? error.message : String(error);
+      status.textContent = "Attaque appliquée à la session, mais stockage local impossible : " + (error instanceof Error ? error.message : String(error));
     }
   }
 
