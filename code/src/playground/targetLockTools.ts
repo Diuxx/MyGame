@@ -4,6 +4,7 @@ import {
   serializeTargetingManifest,
 } from "../character/targetingSettings.ts";
 import { downloadJson, requireElement } from "../ui/dom.ts";
+import { describeJsonExport } from "./workspacePersistence.ts";
 
 type TargetLockSystem = ReturnType<typeof createTargetLockSystem>;
 
@@ -93,7 +94,7 @@ export function bindTargetLockTools(system: TargetLockSystem, signal: AbortSigna
 
   requireElement<HTMLButtonElement>("targetLockExport").addEventListener("click", () => {
     downloadJson("TARGETING.json", serializeTargetingManifest(settings));
-    status.textContent = "JSON exporté : remplacer code/TARGETING.json pour versionner ce mode.";
+    status.textContent = describeJsonExport("TARGETING.json", "code/TARGETING.json");
   }, { signal });
 
   const importFile = requireElement<HTMLInputElement>("targetLockImportFile");
@@ -105,7 +106,7 @@ export function bindTargetLockTools(system: TargetLockSystem, signal: AbortSigna
       if (file.size > 32 * 1024) throw new Error("Fichier JSON trop volumineux.");
       settings = parseTargetingManifest(JSON.parse(await file.text()));
       apply();
-      status.textContent = "Configuration importée et appliquée au Playground.";
+      status.textContent = "Configuration importée et appliquée au Playground. Stockage local tenté ; télécharger TARGETING.json pour la versionner.";
     } catch (error) {
       status.textContent = "Import refusé : " + (error instanceof Error ? error.message : String(error));
     } finally {
