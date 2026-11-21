@@ -181,7 +181,9 @@
 }
 .workspace-app .ws-toolbar-separator { background: var(--ws-border); }
 .workspace-app .ws-snap-tools label { color: var(--color-text); }
+/* Compact editor toolbar: override the standard form-button minimum height. */
 .workspace-app #ws-export-tools button {
+  min-height: 30px;
   background: var(--color-button);
   color: var(--color-button-text);
   border-color: var(--color-button);
