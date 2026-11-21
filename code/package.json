@@ -13,7 +13,8 @@
   },
   "dependencies": {
     "@babylonjs/core": "^8.0.0",
-    "@babylonjs/loaders": "^8.0.0"
+    "@babylonjs/loaders": "^8.0.0",
+    "@nicolabz/design-system": "git+https://github.com/Diuxx/nicolabz-design-system.git#3a27a6a1060f934d876184d62853893f6f8b82e2"
   },
   "devDependencies": {
     "typescript": "^5.8.0",
