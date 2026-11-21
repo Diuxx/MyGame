@@ -22,7 +22,7 @@ L'interface propose :
 
 La seule source de vérité est le contrôle historique `worldEditorEnabled`. Le nouveau commutateur déclenche son événement `change` standard : `maps.setEditing`, le contrôleur humain, la caméra et l'IA de ciblage utilisent donc toujours la même logique qu'avant. L'ancienne option « Mode édition de la map » n'est plus affichée une seconde fois.
 
-## Où sont les 12 modules ?
+## Où sont les 13 modules ?
 
 | Espace | Modules déjà existants |
 | --- | --- |
@@ -49,7 +49,7 @@ Les contrôles rapides historiques restent dans le DOM, masqués, pour conserver
 
 Le sélecteur de map et le bouton **Charger** de la barre supérieure sont les contrôles `mapSelect` et `mapLoad` d'origine. Les autres actions de map (retour Playground, respawn du héros, progression et affichages de zone) restent dans **Monde → Maps et zones** et **Debug**.
 
-L'explorateur de scène reflète les données de la map active. Pour les éléments déjà éditables (Prefabs, décors, ennemis persistants et interactions), cliquer sur une ligne sélectionne l'objet via `worldEditor.selectObject` ; Shift+Clic utilise la sélection multiple. Les primitives de zone, les sorties et les points d'apparition sont listés à titre informatif lorsqu'ils ne disposent pas encore d'outil de sélection directe. Les layers verrouillés ou invisibles restent protégés par la même règle que les clics dans la scène.
+L'explorateur de scène reflète les données de la map active. Pour les éléments déjà éditables (Prefabs, décors, ennemis persistants et interactions), cliquer sur une ligne sélectionne l'objet via `worldEditor.selectObject` sans changer automatiquement de module ; Shift+Clic utilise la sélection multiple. Les primitives de zone, les sorties et les points d'apparition sont listés à titre informatif lorsqu'ils ne disposent pas encore d'outil de sélection directe. Les layers verrouillés ou invisibles restent protégés par la même règle que les clics dans la scène.
 
 La recherche de l'explorateur filtre les noms et identifiants. L'onglet Catalogue conserve **les mêmes boutons de création** que l'ancien éditeur.
 
@@ -57,11 +57,19 @@ La recherche de l'explorateur filtre les noms et identifiants. L'onglet Catalogu
 
 | Fichier | Responsabilité |
 | --- | --- |
-| `code/src/playground/workspaceModules.ts` | Déclaration unique des domaines, 12 modules et commutateur de mode |
+| `code/src/playground/workspaceModules.ts` | Déclaration unique des domaines, 13 modules, historique de navigation et commutateur de mode |
 | `code/src/playground/workspace.ts` | Construction de la disposition et déplacement des nœuds DOM existants |
 | `code/src/playground/worldEditor.ts` | Exposition minimale de la sélection à l'explorateur |
 | `code/src/playground.ts` | Assemblage au démarrage, sans modifier les règles de gameplay |
 | `code/src/style.css` | Workspace desktop, panneaux adaptés aux écrans plus petits et scène élargie en test |
+
+## Navigation et conservation du contexte
+
+- Chaque espace conserve son dernier module ouvert durant la session du Playground. Cliquer à nouveau sur l'espace actif ne change pas de module.
+- Fermer un panneau ne réinitialise pas son dernier choix. Le même onglet peut le rouvrir, y compris dans les espaces à module unique.
+- Sélectionner un objet dans la scène ou dans l'explorateur n'ouvre plus automatiquement Monde → Éditeur. Le bouton **Propriétés** de la barre d'état permet d'y accéder explicitement.
+- Le mode **Tester le jeu** masque les outils d'édition sans réinitialiser la navigation. Le retour en édition restaure l'espace et le module précédents.
+- Les raccourcis d'accès aux maps, aux blocs réutilisables et au debug continuent d'ouvrir explicitement leurs outils respectifs.
 
 **Ne pas recopier les inputs dans une nouvelle interface** : les écouteurs, valeurs et états sont conservés parce que les nœuds d'origine changent uniquement de parent.
 
@@ -70,7 +78,7 @@ Le registre des modules est vérifié par les tests. Le changement de mode est t
 ## Vérification manuelle recommandée
 
 1. Démarrer `cd code && npm run dev-playground`.
-2. Vérifier que les six espaces de travail ouvrent les 12 modules existants.
+2. Vérifier que les six espaces de travail ouvrent les 13 modules existants.
 3. Sélectionner une map, la charger et revenir à la map Playground.
 4. Dans **Monde**, sélectionner un mur depuis la scène et vérifier ses dimensions dans l'inspecteur.
 5. Dans **Catalogue**, créer un Prefab, le déplacer, effectuer Undo/Redo et exporter le JSON.
@@ -86,7 +94,7 @@ Ces tests visuels doivent être exécutés dans un navigateur pour être déclar
 
 - L'interface d'administration est optimisée pour le desktop ; sur un écran étroit, l'explorateur et l'inspecteur deviennent des panneaux superposés, sans nouvelle UI tactile de manipulation 3D.
 - Le navigateur de scène ne rend sélectionnables que les types déjà pris en charge par le World Editor ; il n'introduit pas un nouvel éditeur de primitives, spawns ou sorties.
-- Les dispositions et tailles des panneaux ne sont pas encore personnalisables et persistées.
+- Les dispositions et tailles des panneaux ne sont pas encore personnalisables et persistées. L'historique de navigation des modules reste limité à la session courante.
 - Les contrôles de debug de la scène sont regroupés, sans fusionner leurs règles métier distinctes.
 
 Le présent document est modifiable. Les références `AGENTS.md`, `docs/PROJECT.md` et `docs/PROJETCT.md` sont immuables et n'ont pas été modifiées.
