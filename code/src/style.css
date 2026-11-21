@@ -353,6 +353,13 @@ button.ws-scene-entry:hover { background: #2c4235; }
 .ws-status-grow { flex: 1; }
 .ws-status-separator { opacity: .5; }
 .ws-statusbar span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ws-statusbar #ws-selection-properties {
+  flex: 0 0 auto; padding: 3px 7px;
+  border: 1px solid #47634f; border-radius: 5px;
+  background: #273e30; color: #dcebdc; font-size: 10px;
+}
+.ws-statusbar #ws-selection-properties:hover { background: #345640; }
+.ws-statusbar #ws-selection-properties[hidden] { display: none; }
 .ws-debug-drawer {
   position: absolute; z-index: 8; right: 16px; top: 16px;
   width: min(310px, calc(100% - 32px)); padding: 14px;
