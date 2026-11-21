@@ -444,7 +444,6 @@ button.ws-scene-entry:hover { background: #2c4235; }
   box-shadow: 10px 5px 28px #0006;
 }
 .ws-tools[hidden] { display: none !important; }
-.ws-tools .ws-side-head { background: #213329; }
 .ws-tools #ws-tools-close { cursor: pointer; }
 .workspace-app .ws-inspector-body {
   flex: 1;
@@ -478,8 +477,8 @@ button.ws-scene-entry:hover { background: #2c4235; }
 }
 
 /* Independent object inspector; existing editor controls retain their DOM identity. */
-.ws-inspector-body { min-height: 0; flex: 0 1 auto; max-height: 45%; overflow-y: auto; padding: 0 12px; scrollbar-width: thin; }
-.ws-inspector-empty { margin: 0; padding: 20px 2px; color: #aac2b0; line-height: 1.5; }
+.ws-inspector-body { min-height: 0; overflow-y: auto; padding: 0 12px; scrollbar-width: thin; }
+.ws-inspector-empty { margin: 0; padding: 20px 2px; line-height: 1.5; }
 .ws-inspector-body [hidden] { display: none !important; }
 
 /* Keep the contextual properties above terrain and other secondary settings. */
