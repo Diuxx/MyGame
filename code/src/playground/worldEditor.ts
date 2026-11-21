@@ -7,6 +7,7 @@ import type { MapEditorKind, MapPlacementKind, VisualOverride } from "../world/m
 import { findTerrainCell, tileCenter } from "../world/maps/validation";
 import type { createMapSystem } from "../world/maps/mapSystem";
 import { downloadJson, requireElement } from "../ui/dom";
+import { describeJsonExport } from "./workspacePersistence";
 import { bindWorldEditorV2, type EditorSelectionRef } from "./editorInteractionV2";
 import { snapWallEndpoint } from "./editorSnapping";
 import { fitWallToTerrain, isNearTerrain, isWallPrefab } from "../world/maps/wallPlacement";
@@ -792,8 +793,14 @@ export function bindWorldEditor(
   exportButton.addEventListener("click", () => {
     const map = maps.world;
     if (!map) return report("Charger une map avant d'exporter.");
-    downloadJson(map.definition.id + "-edited.json", map.exportJson());
-    status.textContent = "JSON exporté. Les fichiers GLB et textures locaux restent à copier dans public/assets.";
+    const filename = map.definition.id + "-edited.json";
+    try {
+      downloadJson(filename, map.exportJson());
+      status.textContent = describeJsonExport(filename) +
+        " Les fichiers GLB et les textures prévisualisés doivent être copiés séparément dans public/assets.";
+    } catch (error) {
+      report(error);
+    }
   }, { signal });
 
   const observer = scene.onBeforeRenderObservable.add(() => {
