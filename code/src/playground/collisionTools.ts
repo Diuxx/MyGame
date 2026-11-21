@@ -79,9 +79,9 @@ export function bindCollisionTools(
       settings = readInputs();
       showSettings();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-      status.textContent = "";
+      status.textContent = "Collisions appliquées et enregistrées dans ce navigateur. Le projet n'a pas été modifié.";
     } catch (error) {
-      status.textContent = error instanceof Error ? error.message : String(error);
+      status.textContent = "Paramètres appliqués à la session, mais stockage local impossible : " + (error instanceof Error ? error.message : String(error));
       showSettings();
     }
   }
