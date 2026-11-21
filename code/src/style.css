@@ -267,6 +267,13 @@ input[type=range] { accent-color:#a4c49e; display:block; width:100%; margin:0 0 
   padding: 7px 11px; white-space: nowrap; border: 1px solid #587c5e;
   border-radius: 7px; background: #304536; color: #e6f1e5;
 }
+#ws-export-tools { display: flex; align-items: center; gap: 8px; }
+#ws-export-feedback {
+  display: block; max-width: 230px; overflow: hidden;
+  white-space: nowrap; text-overflow: ellipsis; color: #c9dfc3;
+  font-size: 10px;
+}
+#ws-export-feedback:empty { display: none; }
 .ws-rail {
   grid-column: 1; grid-row: 3; z-index: 4;
   display: flex; flex-direction: column; gap: 5px; padding: 10px 6px;
@@ -586,6 +593,49 @@ button.ws-scene-entry:hover { background: #2c4235; }
   white-space: nowrap;
   clip-path: inset(50%);
   border: 0;
+}
+
+/* Workspace forms: frequent values stay visible; technical controls remain available on demand. */
+.workspace-app .ws-form-section {
+  min-width: 0;
+  margin: 12px 0;
+  padding: 10px 12px;
+  border: 1px solid #415747;
+  border-radius: 8px;
+  background: #203129;
+}
+.workspace-app .ws-form-section > summary {
+  cursor: pointer;
+  color: #dce9dd;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+.workspace-app .ws-form-section[open] > summary { margin-bottom: 11px; }
+.workspace-app .ws-form-section .enemy-fields { min-width: 0; }
+.workspace-app .ws-form-section label,
+.workspace-app .ws-form-section input,
+.workspace-app .ws-form-section select { max-width: 100%; }
+.workspace-app .ws-form-subheading { margin: 8px 0 4px; font-size: 12px; color: #dce8d7; }
+.workspace-app .ws-persistence-group {
+  min-width: 0;
+  margin: 14px 0;
+  padding: 13px;
+  border: 1px solid #4a6452;
+  border-radius: 9px;
+  background: #25372c;
+}
+.workspace-app .ws-persistence-group h3 {
+  margin: 0 0 7px;
+  font-size: 12px;
+  color: #e5f0e2;
+}
+.workspace-app .ws-persistence-group p { margin: 0 0 10px; line-height: 1.5; }
+.workspace-app .ws-persistence-group button { min-width: 0; }
+.workspace-app .ws-persistence-group .enemy-fields { flex-wrap: wrap; }
+.workspace-app .ws-persistence-group [role="status"] { margin-top: 9px; }
+@media (max-width: 760px) {
+  .workspace-app .ws-persistence-group { padding: 10px; }
 }
 
 /* Lighting editor keeps map-wide and per-light controls readable in the workspace inspector. */

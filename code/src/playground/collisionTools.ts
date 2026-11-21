@@ -75,13 +75,17 @@ export function bindCollisionTools(
   }
 
   function updateSettings(): void {
+    let applied = false;
     try {
       settings = readInputs();
       showSettings();
+      applied = true;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-      status.textContent = "";
+      status.textContent = "Collisions appliquées et enregistrées dans ce navigateur. Le projet n'a pas été modifié.";
     } catch (error) {
-      status.textContent = error instanceof Error ? error.message : String(error);
+      status.textContent = (applied
+        ? "Paramètres appliqués à la session, mais stockage local impossible : "
+        : "Paramètres de collision invalides : ") + (error instanceof Error ? error.message : String(error));
       showSettings();
     }
   }

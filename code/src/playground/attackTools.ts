@@ -131,6 +131,7 @@ export function bindAttackTools(
   }
 
   function applyControls(): void {
+    let applied = false;
     try {
       const swing = parseSwordSwing({
         damage: damage.valueAsNumber,
@@ -140,11 +141,14 @@ export function bindAttackTools(
       });
       settings = { visible: visible.checked, alwaysVisible: alwaysVisible.checked, swing, forceDamage: forceDamage.checked };
       syncControls();
+      applied = true;
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 2, ...settings }));
-      status.textContent = "";
+      status.textContent = "Attaque appliquée et enregistrée dans ce navigateur. Le projet n'a pas été modifié.";
     } catch (error) {
       syncControls();
-      status.textContent = error instanceof Error ? error.message : String(error);
+      status.textContent = (applied
+        ? "Attaque appliquée à la session, mais stockage local impossible : "
+        : "Paramètres d'attaque invalides : ") + (error instanceof Error ? error.message : String(error));
     }
   }
 

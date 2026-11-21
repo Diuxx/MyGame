@@ -174,7 +174,7 @@ export function bindLightingTools(
       change(lighting);
       map.editor.setLighting(lighting);
       sync();
-      status.textContent = "Éclairage mis à jour. Exporter la map JSON pour conserver les changements.";
+      status.textContent = "Éclairage appliqué à la map en session. Télécharger le JSON de la map pour créer un fichier ; le dépôt Git n'est pas modifié.";
     } catch (error) {
       status.textContent = error instanceof Error ? error.message : String(error);
     }

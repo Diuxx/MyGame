@@ -6,6 +6,7 @@ import {
   serializeFloatingTextManifest,
 } from '../ui/floatingTextConfig.ts';
 import { downloadJson, requireElement } from '../ui/dom.ts';
+import { describeJsonExport } from './workspacePersistence.ts';
 
 type FloatingText = ReturnType<typeof createFloatingTextSystem>;
 
@@ -131,7 +132,7 @@ export function bindFloatingTextTools(
 
   test('floatingTextExport', () => {
     downloadJson('FLOATING_TEXT.json', serializeFloatingTextManifest(config));
-    status.textContent = 'Fichier exporté : remplacer code/FLOATING_TEXT.json pour versionner les changements.';
+    status.textContent = describeJsonExport('FLOATING_TEXT.json', 'code/FLOATING_TEXT.json');
   });
 
   requireElement<HTMLButtonElement>('floatingTextCopy').addEventListener('click', async () => {

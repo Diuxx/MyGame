@@ -5,6 +5,7 @@ import type { createEnemyScene } from "../enemies/enemyScene";
 import { configureEnemy, getEnemyCollision, resetEnemy, type Enemy } from "../enemies/enemyState";
 import { ENEMY_STORAGE_KEY, parseEnemyInstances, serializeEnemyInstances } from "../enemies/enemyPersistence";
 import { requireElement } from "../ui/dom";
+import { describeJsonExport, describeLocalSave } from "./workspacePersistence";
 
 export async function startEnemyTools(
   enemies: ReturnType<typeof createEnemyScene>,
@@ -87,6 +88,13 @@ export async function startEnemyTools(
   }
 
   // Map encounters come from the active map; this editor adds practice targets on demand.
+  // Browsers cannot focus an invalid control inside a closed <details>.
+  form.addEventListener("invalid", (event) => {
+    const advanced = requireElement<HTMLDetailsElement>("enemyAdvancedSettings");
+    if (event.target instanceof HTMLElement && advanced.contains(event.target)) {
+      advanced.open = true;
+    }
+  }, { capture: true, signal });
   syncSelection();
   list.addEventListener("change", syncSelection, options);
   type.addEventListener("change", syncSelection, options);
@@ -114,7 +122,7 @@ export async function startEnemyTools(
         add(spawned);
         list.value = spawned.id;
       }
-      status.textContent = "";
+      status.textContent = "Ennemi mis à jour dans la session. Utilise « Sauver localement » ou « Télécharger JSON » pour le conserver.";
       syncSelection();
     } catch (error) {
       status.textContent = error instanceof Error ? error.message : String(error);
@@ -153,7 +161,7 @@ export async function startEnemyTools(
     return serializeEnemyInstances([...instances.values()]);
   }
 
-  async function restoreSnapshot(json: string): Promise<void> {
+  async function restoreSnapshot(json: string, origin: "local" | "file"): Promise<void> {
     if (pending) return;
     const presets = parseEnemyInstances(json, definitions);
     const staged: Enemy[] = [];
@@ -170,7 +178,10 @@ export async function startEnemyTools(
       list.length = 1;
       for (const enemy of staged) add(enemy);
       list.value = "";
-      status.textContent = `${staged.length} ennemi(s) chargés.`;
+      status.textContent = origin === "local"
+        ? describeLocalSave("Instances d'entraînement", "restored") +
+          ` ${staged.length} ennemi(s) chargé(s).`
+        : `Fichier JSON importé dans la session : ${staged.length} ennemi(s) chargé(s). Sauver localement pour les retrouver dans ce navigateur.`;
     } catch (error) {
       for (const enemy of staged) enemies.remove(enemy.id);
       throw error;
@@ -184,7 +195,7 @@ export async function startEnemyTools(
     if (pending) return;
     try {
       localStorage.setItem(ENEMY_STORAGE_KEY, currentSnapshot());
-      status.textContent = "Configuration sauvegardée dans ce navigateur.";
+      status.textContent = describeLocalSave("Instances d'entraînement", "saved");
     } catch (error) {
       status.textContent = `Sauvegarde impossible : ${error instanceof Error ? error.message : String(error)}`;
     }
@@ -198,7 +209,7 @@ export async function startEnemyTools(
         status.textContent = "Aucune configuration locale enregistrée.";
         return;
       }
-      await restoreSnapshot(data);
+      await restoreSnapshot(data, "local");
     } catch (error) {
       status.textContent = `Chargement impossible : ${error instanceof Error ? error.message : String(error)}`;
     }
@@ -214,6 +225,7 @@ export async function startEnemyTools(
       link.download = "mygame-enemies.json";
       link.click();
       setTimeout(() => URL.revokeObjectURL(url), 0);
+      status.textContent = describeJsonExport("mygame-enemies.json");
     } catch (error) {
       status.textContent = `Export impossible : ${error instanceof Error ? error.message : String(error)}`;
     }
@@ -226,7 +238,7 @@ export async function startEnemyTools(
     const file = importFile.files?.[0];
     if (!file || pending) return;
     try {
-      await restoreSnapshot(await file.text());
+      await restoreSnapshot(await file.text(), "file");
     } catch (error) {
       status.textContent = `Import impossible : ${error instanceof Error ? error.message : String(error)}`;
     } finally {

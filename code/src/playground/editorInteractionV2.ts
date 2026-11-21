@@ -16,6 +16,7 @@ import { gridSnap } from "./editorSnapping.ts";
 import { prefabDimensions } from "./editorGeometry.ts";
 import { createEditorGizmos, type EditorGizmoTool } from "./editorGizmos.ts";
 import { requireElement } from "../ui/dom.ts";
+import { describeLocalSave } from "./workspacePersistence.ts";
 
 type Active = NonNullable<ReturnType<typeof createMapSystem>["world"]>;
 export type EditorSelectionRef = { kind: "prefab" | "object" | "enemy" | "interaction" | "practice"; id: string };
@@ -136,13 +137,18 @@ export function bindWorldEditorV2(context: EditorContext) {
 
   function noteChange(): void {
     if (current !== maps.world) return;
-    draftState.textContent = "Modifications non exportées — brouillon local automatique.";
+    draftState.textContent = "Modifications en cours : brouillon local automatique en préparation. La map n'est pas exportée.";
     if (saveTimer !== undefined) window.clearTimeout(saveTimer);
     saveTimer = window.setTimeout(() => {
       saveTimer = undefined;
       if (maps.world !== current || !current) return;
-      try { drafts.save(current.definition, originalFingerprint); }
-      catch (error) { status.textContent = "Brouillon non enregistré : " + String(error); }
+      try {
+        drafts.save(current.definition, originalFingerprint);
+        draftState.textContent = "Brouillon automatique à jour dans ce navigateur. Exporter la map JSON pour conserver un fichier.";
+      } catch (error) {
+        draftState.textContent = "Brouillon automatique non enregistré : stockage local indisponible.";
+        status.textContent = "Brouillon non enregistré : " + String(error);
+      }
     }, 750);
     refreshControls();
   }
@@ -748,7 +754,8 @@ export function bindWorldEditorV2(context: EditorContext) {
   const saveDraft = () => {
     const world = active();
     drafts.save(world.definition, originalFingerprint);
-    draftState.textContent = "Brouillon local enregistré.";
+    draftState.textContent = describeLocalSave("Brouillon de map", "saved") +
+      " Exporter la map JSON pour créer un fichier.";
   };
   original("worldEditorSaveDraft").addEventListener("click", () => {
     try { saveDraft(); } catch (error) { status.textContent = String(error); }
@@ -768,11 +775,15 @@ export function bindWorldEditorV2(context: EditorContext) {
         throw error;
       }
       // The world editor detects the new active session on its next render update.
-      draftState.textContent = "Brouillon restauré. Exporter le JSON pour le conserver.";
+      draftState.textContent = describeLocalSave("Brouillon de map", "restored") +
+        " Exporter la map JSON pour créer un fichier.";
     })());
   }, { signal });
   original("worldEditorRemoveDraft").addEventListener("click", () => {
-    try { drafts.remove(active().definition.id); draftState.textContent = "Brouillon supprimé."; }
+    try {
+      drafts.remove(active().definition.id);
+      draftState.textContent = describeLocalSave("Brouillon de map", "removed");
+    }
     catch (error) { status.textContent = String(error); }
   }, { signal });
 
@@ -803,7 +814,7 @@ export function bindWorldEditorV2(context: EditorContext) {
       if (item.layer) layers.ensure(item.layer);
     }
     syncTerrainFields();
-    draftState.textContent = "Aucune modification locale.";
+    draftState.textContent = "Map chargée. Les modifications ultérieures alimenteront un brouillon local ; le JSON ne sera pas exporté automatiquement.";
     renderLayers();
     refreshControls();
     syncSize();
