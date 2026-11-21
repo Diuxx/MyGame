@@ -118,6 +118,8 @@ export function bindPlaygroundWorkspace(
   left.setAttribute("aria-label", "Explorateur de scène et catalogue");
   const right = surface("aside", "ws-right", "ws-right",
     '<div class="ws-side-head"><strong id="ws-inspector-title">INSPECTEUR</strong><button id="ws-inspector-toggle" type="button" title="Masquer l’inspecteur" aria-label="Masquer l’inspecteur">◧</button></div>' +
+    '<div id="ws-inspector-body" class="ws-inspector-body">' +
+    '<p id="ws-inspector-empty" class="ws-inspector-empty">Sélectionne un objet dans la scène ou dans l’explorateur pour afficher ses propriétés.</p></div>' +
     '<nav id="ws-module-tabs" class="ws-module-tabs" aria-label="Outils de la catégorie"></nav>' +
     '<div id="ws-module-host" class="ws-module-host"></div>' +
     '<section id="ws-debug-panel" class="ws-debug-panel" hidden><h3>Visualisation et diagnostic</h3>' +
@@ -218,7 +220,7 @@ export function bindPlaygroundWorkspace(
   contextInspector.className = "ws-context-inspector";
   contextInspector.append(selection, properties);
   if (heightControls) contextInspector.append(heightControls);
-  editorModule.querySelector(".module-header")?.after(contextInspector);
+  requireElement("ws-inspector-body").append(contextInspector);
   requireElement("ws-catalog-pane").append(catalog);
   // Make the reusable whitebox blocks discoverable immediately without
   // changing their original buttons, listeners or catalogue data.
@@ -289,8 +291,8 @@ export function bindPlaygroundWorkspace(
       button.classList.toggle("is-active", selected);
       button.setAttribute("aria-current", selected ? "page" : "false");
     }
-    requireElement("ws-inspector-title").textContent =
-      WORKSPACE_AREAS.find((item) => item.id === activeArea)?.label.toUpperCase() ?? "INSPECTEUR";
+    // The selection inspector title must remain stable when navigating tools.
+    requireElement("ws-inspector-title").textContent = "INSPECTEUR";
 
     const isDebug = activeArea === "debug";
     moduleHost.hidden = isDebug || !activeModule;
@@ -371,6 +373,8 @@ export function bindPlaygroundWorkspace(
     requireElement("ws-status-selection").textContent = selectionCount
       ? selectionCount + " sélection(s)" : "Aucune sélection";
     requireElement<HTMLButtonElement>("ws-selection-properties").hidden = selectionCount === 0;
+    contextInspector.hidden = selectionCount === 0;
+    requireElement("ws-inspector-empty").hidden = selectionCount > 0;
     if (!map) {
       tree.textContent = "Aucune map chargée.";
       return;
@@ -443,7 +447,7 @@ export function bindPlaygroundWorkspace(
   requireElement("ws-scene-search").addEventListener("input", renderSceneTree, { signal });
   requireElement("ws-selection-properties").addEventListener("click", () => {
     if (selectedEntries().length === 0) return;
-    openModuleInArea("world", "worldEditorModule");
+    // Opening object properties must not switch the global tool.
     if (window.matchMedia("(max-width: 760px)").matches) {
       app.classList.add("ws-mobile-inspector-open");
     } else {
