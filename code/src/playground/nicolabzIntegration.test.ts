@@ -129,3 +129,16 @@ test("workspace startup references existing static DOM IDs", () => {
   const missingIds = referencedIds.filter((id) => !declaredIds.has(id));
   assert.deepEqual(missingIds, [], "Every statically requested workspace element must exist");
 });
+
+test("map export fits the toolbar and keeps horizontal overflow only", () => {
+  const toolbar = layout.match(/\.ws-toolbar\s*\{([^}]+)\}/)?.[1] ?? "";
+  const exportButton = layout.match(/#ws-export-tools button\s*\{([^}]+)\}/)?.[1] ?? "";
+  const themedExport = skin.match(/\.workspace-app #ws-export-tools button\s*\{([^}]+)\}/)?.[1] ?? "";
+
+  assert.match(toolbar, /overflow-x:\s*auto/);
+  assert.match(toolbar, /overflow-y:\s*hidden/);
+  assert.match(exportButton, /height:\s*30px/);
+  assert.match(exportButton, /margin:\s*0;/);
+  assert.match(exportButton, /width:\s*auto/);
+  assert.match(themedExport, /min-height:\s*30px/);
+});
