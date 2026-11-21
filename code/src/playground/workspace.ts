@@ -212,7 +212,6 @@ export function bindPlaygroundWorkspace(
   historySource?.classList.add("ws-relocated-source");
 
   const catalog = requireElement("worldEditorCatalog");
-  const editorModule = requireElement("worldEditorModule");
   const selection = requireElement("worldEditorSelection");
   const properties = requireElement("worldEditorFields");
   const heightControls = requireElement("worldEditorHeightStep").closest(".enemy-fields");
