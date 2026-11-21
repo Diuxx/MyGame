@@ -73,16 +73,45 @@ test("project branding uses the Nicolabz shield and the browser favicon", () => 
   assert.ok(skin.includes(".workspace-app .ws-logo .nz-icon"));
 });
 
-test("the redundant header menu is removed and mobile explorer remains accessible", () => {
+test("explorer stays in the rail at every width, with an accessible close button", () => {
   const top = workspace.slice(workspace.indexOf('const top = surface('), workspace.indexOf('const toolbar = surface('));
   const rail = workspace.slice(workspace.indexOf('const rail = surface('), workspace.indexOf('const left = surface('));
+  const left = workspace.slice(workspace.indexOf('const left = surface('), workspace.indexOf('const right = surface('));
+
   assert.ok(!top.includes('ws-explorer-toggle'));
   assert.ok(rail.includes('id="ws-explorer-toggle"'));
   assert.ok(rail.includes('aria-controls="ws-left"'));
-  assert.ok(workspace.includes('setNicolabzButtonIcon(requireElement<HTMLButtonElement>(id), icon, label)'));
-  assert.ok(workspace.includes('app.classList.toggle("ws-explorer-open")'));
-  assert.ok(skin.includes("max-width: 1020px"));
+  assert.ok(rail.includes('aria-pressed="false"'));
+  assert.ok(left.includes('id="ws-explorer-close"'));
+  assert.ok(left.includes('id="ws-scene-tab"'));
+  assert.ok(left.includes('id="ws-catalog-tab"'));
+  assert.ok(left.includes('id="ws-scene-tree"'));
+  assert.ok(left.includes('id="ws-scene-search"'));
+  assert.ok(workspace.includes('["ws-explorer-toggle", "folder", "Explorateur"]'));
   assert.ok(skin.includes(".workspace-app .ws-rail .ws-explorer-toggle"));
+  assert.ok(skin.includes("display: flex;"));
+});
+
+test("explorer starts hidden, releases the canvas column and toggles without replacing tab nodes", () => {
+  assert.ok(workspace.includes("left.hidden = true;"));
+  assert.ok(workspace.includes("const explorerState = createWorkspaceExplorerState()"));
+  assert.ok(workspace.includes('app.classList.toggle("ws-explorer-open", open)'));
+  assert.ok(workspace.includes('left.hidden = !open'));
+  assert.ok(workspace.includes('explorerToggle.setAttribute("aria-pressed", String(open))'));
+  assert.ok(workspace.includes('explorerState.toggle()'));
+  assert.ok(workspace.includes('explorerState.close()'));
+  assert.ok(workspace.includes('explorerToggle.focus()'));
+  assert.ok(skin.includes("--ws-left-width: 0px"));
+  assert.ok(skin.includes(".ws-left[hidden] { display: none !important; }"));
+  assert.ok(skin.includes(".ws-explorer-open"));
+  assert.ok(skin.includes("max-width: 1020px"));
+
+  const leftTabs = workspace.slice(workspace.indexOf('function setLeftTab('), workspace.indexOf('function selectedEntries()'));
+  const explorerView = workspace.slice(workspace.indexOf('function reflectExplorerVisibility()'), workspace.indexOf('function setLeftTab('));
+  assert.ok(leftTabs.includes('ws-scene-pane'));
+  assert.ok(leftTabs.includes('ws-catalog-pane'));
+  assert.ok(!explorerView.includes('replaceChildren'));
+  assert.ok(!explorerView.includes('setLeftTab('));
 });
 
 test("workspace startup references existing static DOM IDs", () => {
