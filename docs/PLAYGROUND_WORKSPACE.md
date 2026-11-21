@@ -40,8 +40,8 @@ En mode test, le bouton **Debug** ouvre un petit panneau flottant contenant les 
 
 - L'inspecteur de droite contient les nœuds d'origine `worldEditorSelection`, `worldEditorFields` et les contrôles de hauteur. Les événements de l'éditeur, la sélection multiple et les gizmos Babylon restent inchangés.
 - Sans objet sélectionné, l'inspecteur présente un état vide. Après une suppression ou un changement de map, le World Editor invalide la sélection et l'inspecteur se synchronise.
-- Le panneau flottant **Outils** est indépendant et n'occupe pas une colonne permanente du viewport. Les sections Éditeur, Éclairage, Maps, Caméra, Héros, Combat, Ennemis, Effets et Debug y conservent leurs contrôles et leurs listeners.
-- Sur desktop, les propriétés et le panneau Outils peuvent être ouverts simultanément. Sur largeur inférieure à 760 px, les deux panneaux superposés sont mutuellement exclusifs, mais leurs états restent indépendants.
+- Le panneau latéral gauche est partagé entre **Explorateur** et **Outils** : un seul menu peut être ouvert à la fois. Cliquer sur un autre domaine remplace son contenu ; recliquer sur le domaine actif ou utiliser sa croix le ferme. Sa largeur est réservée uniquement lorsqu'il est visible sur desktop. Les sections Éditeur, Éclairage, Maps, Caméra, Héros, Combat, Ennemis, Effets et Debug y conservent leurs contrôles et leurs listeners.
+- Sur desktop, le panneau gauche et l'inspecteur droit peuvent être ouverts simultanément. À 760 px ou moins, le panneau gauche et l'inspecteur mobile sont mutuellement exclusifs.
 - Fermer les outils n'efface pas le dernier module affiché. Le bouton **Outils** ou la navigation latérale le rouvre.
 - L'outil Éclairage conserve sa sélection de lumière locale ; la sélection de Prefab/ennemi/interactions demeure gérée par le World Editor. Les ennemis temporaires de test sont toujours gérés par leurs propres contrôles.
 - Les panneaux d'édition disparaissent en mode **Tester le jeu**. Au retour en édition, l'outil global et l'état des panneaux sont restaurés. Le World Editor continue d'effacer sa sélection lors du changement de mode, conformément au comportement existant.
@@ -98,7 +98,7 @@ La recherche de l'explorateur filtre les noms et identifiants. L'onglet Catalogu
 
 | Fichier | Responsabilité |
 | --- | --- |
-| `code/src/playground/workspaceModules.ts` | Déclaration des domaines, 13 modules, navigation, visibilité indépendante des panneaux et commutateur de mode |
+| `code/src/playground/workspaceModules.ts` | Déclaration des domaines, 13 modules, navigation, visibilité exclusive des menus de gauche et gestion de l'inspecteur et commutateur de mode |
 | `code/src/playground/workspace.ts` | Construction de la disposition et déplacement des nœuds DOM existants |
 | `code/src/playground/worldEditor.ts` | Exposition minimale de la sélection à l'explorateur |
 | `code/src/playground.ts` | Assemblage au démarrage, sans modifier les règles de gameplay |
@@ -127,7 +127,7 @@ Le registre des modules est vérifié par les tests. Le changement de mode est t
 7. Activer **Debug** en mode test : vérifier la hitbox du héros, les zones d'attaque et les colliders.
 8. Revenir en édition et vérifier le déplacement libre de la caméra avec les flèches.
 9. Vérifier les imports/exports JSON des modules d'animation, de ciblage et de Floating Text. Replier/déplier les sections Avancé et confirmer la conservation des valeurs et événements.
-10. Vérifier le menu Explorateur dans la barre d'icônes : fermé au démarrage, ouverture par clic, fermeture par second clic ou croix, restauration des onglets Scène/Catalogue et récupération de la largeur par le canvas. Sur écran étroit, vérifier son ouverture en overlay et l'indépendance de l'inspecteur et des Outils.
+10. Vérifier le menu Explorateur dans la barre d'icônes : fermé au démarrage, ouverture par clic, fermeture par second clic ou croix, restauration des onglets Scène/Catalogue et récupération de la largeur par le canvas. Sur écran étroit, vérifier son ouverture en overlay et l'exclusivité entre tous les menus de gauche et l'inspecteur mobile.
 11. Supprimer l'objet sélectionné, changer de map et vérifier que l'inspecteur présente l'état vide sans affichage d'ancienne donnée.
 12. Fermer le panneau Outils, revenir en édition depuis **Tester le jeu**, puis restaurer le dernier domaine et module utilisés.
 13. Modifier un objet et une lumière, enregistrer un brouillon local, exporter la map et confirmer les messages distincts dans le navigateur.
