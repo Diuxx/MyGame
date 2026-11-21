@@ -3,7 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#161b1b" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" content="#FAFAF8" />
+    <script>
+      // Apply before the first paint. Never read OS or localStorage preferences.
+      const runtimeMode = "%MODE%";
+      document.documentElement.dataset.theme = runtimeMode === "gameplay" ? "dark" : "light";
+      if (runtimeMode === "gameplay") {
+        document.querySelector('meta[name="theme-color"]').content = "#161b1b";
+      }
+    </script>
     <title>Idle RPG — Playground 3D</title>
     <style>
       body { margin: 0; background: #161c1c; }
@@ -22,6 +31,11 @@
       }
       #loadingOverlay[hidden] { display: none; }
       #loadingOverlay.error { color: #ffb4b4; }
+      :root[data-theme="light"] { color-scheme: light; }
+      :root[data-theme="light"] body,
+      :root[data-theme="light"] #loadingOverlay { background: #FAFAF8; }
+      :root[data-theme="light"] #loadingOverlay { color: #17191C; }
+      :root[data-theme="light"] #loadingOverlay.error { color: #A43E44; }
     </style>
   </head>
   <body>
@@ -99,13 +113,13 @@
         <section id="floatingTextModule" class="module-window enemy-tools" aria-labelledby="floatingTextHeading" hidden>
           <header class="module-header">
             <h2 id="floatingTextHeading">Floating Text</h2>
-            <button class="module-close" type="button" aria-label="Fermer les textes flottants">×</button>
+            <button class="module-close nz-icon-button" type="button" aria-label="Fermer les textes flottants">×</button>
           </header>
           <p id="floatingTextConfigSource" class="animation-note"></p>
           <label class="grid-toggle"><input id="floatingTextEnabled" type="checkbox" /> Afficher les textes flottants</label>
           <label class="grid-toggle"><input id="floatingActionsEnabled" type="checkbox" /> Messages d'action</label>
           <label class="grid-toggle"><input id="floatingDamageEnabled" type="checkbox" /> Chiffres de dégâts</label>
-          <details class="ws-form-section" open><summary>Mouvements · WALK / SPRINT / DODGE</summary>
+          <details class="ws-form-section nz-accordion" open><summary>Mouvements · WALK / SPRINT / DODGE</summary>
           <div class="field-row"><label for="floatingMovementSize">Taille (px)</label><output id="floatingMovementSizeValue"></output></div>
           <input id="floatingMovementSize" type="range" min="8" max="36" step="1" />
           <div class="field-row"><label for="floatingMovementDuration">Durée de vie (ms)</label><output id="floatingMovementDurationValue"></output></div>
@@ -116,12 +130,12 @@
           <input id="floatingMovementScale" type="range" min="1" max="2.5" step="0.05" />
           <label>Couleur des mouvements<input id="floatingMovementColor" type="color" /></label>
           <div class="enemy-fields">
-            <button type="button" id="floatingTestWalk" class="secondary">Tester WALK</button>
-            <button type="button" id="floatingTestSprint" class="secondary">Tester SPRINT</button>
-            <button type="button" id="floatingTestDodge" class="secondary">Tester DODGE</button>
+            <button type="button" id="floatingTestWalk" class="secondary nz-button nz-button-secondary">Tester WALK</button>
+            <button type="button" id="floatingTestSprint" class="secondary nz-button nz-button-secondary">Tester SPRINT</button>
+            <button type="button" id="floatingTestDodge" class="secondary nz-button nz-button-secondary">Tester DODGE</button>
           </div>
           </details>
-          <details class="ws-form-section"><summary>Attaque · ATTACK</summary>
+          <details class="ws-form-section nz-accordion"><summary>Attaque · ATTACK</summary>
           <div class="field-row"><label for="floatingAttackSize">Taille (px)</label><output id="floatingAttackSizeValue"></output></div>
           <input id="floatingAttackSize" type="range" min="8" max="36" step="1" />
           <div class="field-row"><label for="floatingAttackDuration">Durée de vie (ms)</label><output id="floatingAttackDurationValue"></output></div>
@@ -131,9 +145,9 @@
           <div class="field-row"><label for="floatingAttackScale">Agrandissement</label><output id="floatingAttackScaleValue"></output></div>
           <input id="floatingAttackScale" type="range" min="1" max="2.5" step="0.05" />
           <label>Couleur de l'attaque<input id="floatingAttackColor" type="color" /></label>
-          <button type="button" id="floatingTestAttack" class="secondary wide">Tester ATTACK</button>
+          <button type="button" id="floatingTestAttack" class="secondary nz-button nz-button-secondary wide">Tester ATTACK</button>
           </details>
-          <details class="ws-form-section"><summary>Dégâts</summary>
+          <details class="ws-form-section nz-accordion"><summary>Dégâts</summary>
           <div class="field-row"><label for="floatingDamageSize">Taille normale (px)</label><output id="floatingDamageSizeValue"></output></div>
           <input id="floatingDamageSize" type="range" min="8" max="48" step="1" />
           <div class="field-row"><label for="floatingDamageDuration">Durée normale (ms)</label><output id="floatingDamageDurationValue"></output></div>
@@ -143,25 +157,25 @@
           <label>Couleur critique<input id="floatingCriticalColor" type="color" /></label>
           </div>
           <div class="enemy-fields">
-            <button type="button" id="floatingTestDamage" class="secondary">Tester 120</button>
-            <button type="button" id="floatingTestCritical" class="secondary">Tester critique</button>
+            <button type="button" id="floatingTestDamage" class="secondary nz-button nz-button-secondary">Tester 120</button>
+            <button type="button" id="floatingTestCritical" class="secondary nz-button nz-button-secondary">Tester critique</button>
           </div>
           </details>
           <section class="ws-persistence-group" aria-label="Export et import de la configuration des textes flottants">
             <h3>Fichier de configuration · FLOATING_TEXT.json</h3>
             <p class="animation-note">Les réglages s'appliquent immédiatement et tentent un stockage local ; si celui-ci est indisponible, ils restent limités à cette session. Télécharger le fichier puis remplacer code/FLOATING_TEXT.json pour les versionner.</p>
-          <button type="button" id="floatingTextExport" class="secondary wide">Télécharger FLOATING_TEXT.json</button>
-          <button type="button" id="floatingTextCopy" class="secondary wide">Copier le JSON complet</button>
-          <button type="button" id="floatingTextImport" class="secondary wide">Importer FLOATING_TEXT.json</button>
+          <button type="button" id="floatingTextExport" class="secondary nz-button nz-button-secondary wide">Télécharger FLOATING_TEXT.json</button>
+          <button type="button" id="floatingTextCopy" class="secondary nz-button nz-button-secondary wide">Copier le JSON complet</button>
+          <button type="button" id="floatingTextImport" class="secondary nz-button nz-button-secondary wide">Importer FLOATING_TEXT.json</button>
           <input id="floatingTextImportFile" type="file" accept=".json,application/json" hidden />
-          <button type="button" id="floatingTextReset" class="secondary wide">Rétablir le JSON versionné</button>
+          <button type="button" id="floatingTextReset" class="secondary nz-button nz-button-secondary wide">Rétablir le JSON versionné</button>
           <p id="floatingTextStatus" class="animation-note" role="status"></p>
           </section>
         </section>
         <section id="controlsModule" class="module-window enemy-tools" aria-labelledby="controlsHeading" hidden>
           <header class="module-header">
             <h2 id="controlsHeading">Commandes</h2>
-            <button class="module-close" type="button" aria-label="Fermer les commandes">×</button>
+            <button class="module-close nz-icon-button" type="button" aria-label="Fermer les commandes">×</button>
           </header>
           <div class="enemy-fields">
             <label>Avancer<select id="keyForward"></select></label>
@@ -178,17 +192,17 @@
           </div>
           <p class="micro">Compétence 1 : clic gauche.</p>
           <p class="micro">Sur la scène 3D, molette vers le haut pour zoomer et vers le bas pour dézoomer.</p>
-          <button id="resetBindings" class="secondary wide" type="button">Rétablir les touches par défaut</button>
+          <button id="resetBindings" class="secondary nz-button nz-button-secondary wide" type="button">Rétablir les touches par défaut</button>
           <p id="bindingsStatus" class="micro" role="status" hidden></p>
         </section>
         <section id="movementModule" class="module-window" aria-labelledby="movementHeading" hidden>
           <header class="module-header">
             <h2 id="movementHeading">Animations de déplacement</h2>
-            <button class="module-close" type="button" aria-label="Fermer les animations de déplacement">×</button>
+            <button class="module-close nz-icon-button" type="button" aria-label="Fermer les animations de déplacement">×</button>
           </header>
           <div id="animationButtons" class="animation-buttons"></div>
           <div id="movementAnimationSettings" class="animation-settings"></div>
-          <details class="ws-form-section">
+          <details class="ws-form-section nz-accordion">
             <summary>Avancé · Transitions entre animations (secondes)</summary>
             <div class="animation-settings">
             <div class="field-row"><label for="transitionMove">Déplacements</label><output id="transitionMoveValue"></output></div>
@@ -200,21 +214,21 @@
             <p id="transitionStatus" class="animation-note" role="status"></p>
             </div>
           </details>
-          <button id="pauseButton" type="button" class="secondary wide" disabled>Pause</button>
+          <button id="pauseButton" type="button" class="secondary nz-button nz-button-secondary wide" disabled>Pause</button>
           <section class="ws-persistence-group" aria-label="Configuration des animations">
             <h3>Fichier de configuration · ANIMATIONS.json</h3>
             <p class="animation-note">Les réglages locaux ne modifient pas le fichier du jeu. L'export télécharge une copie à intégrer dans code/ANIMATIONS.json.</p>
-          <button id="exportAnimationManifest" type="button" class="secondary wide">Télécharger ANIMATIONS.json</button>
-          <button id="importAnimationManifest" type="button" class="secondary wide">Importer ANIMATIONS.json</button>
+          <button id="exportAnimationManifest" type="button" class="secondary nz-button nz-button-secondary wide">Télécharger ANIMATIONS.json</button>
+          <button id="importAnimationManifest" type="button" class="secondary nz-button nz-button-secondary wide">Importer ANIMATIONS.json</button>
           <input id="importAnimationManifestFile" type="file" accept=".json,application/json" hidden />
-          <button id="resetAnimationManifest" type="button" class="secondary wide">Réinitialiser les animations</button>
+          <button id="resetAnimationManifest" type="button" class="secondary nz-button nz-button-secondary wide">Réinitialiser les animations</button>
           <p id="animationConfigSource" class="animation-note" role="status">Source : ANIMATIONS.json</p>
           </section>
         </section>
         <section id="actionsModule" class="module-window" aria-labelledby="actionsHeading" hidden>
           <header class="module-header">
             <h2 id="actionsHeading">Animations d’action</h2>
-            <button class="module-close" type="button" aria-label="Fermer les animations d’action">×</button>
+            <button class="module-close nz-icon-button" type="button" aria-label="Fermer les animations d’action">×</button>
           </header>
           <div id="actionButtons" class="animation-buttons"></div>
           <div id="actionAnimationSettings" class="animation-settings"></div>
@@ -222,7 +236,7 @@
         <section id="targetLockModule" class="module-window enemy-tools" aria-labelledby="targetLockHeading" hidden>
           <header class="module-header">
             <h2 id="targetLockHeading">Target Lock — déplacement ciblé</h2>
-            <button class="module-close" type="button" aria-label="Fermer le module Target Lock">×</button>
+            <button class="module-close nz-icon-button" type="button" aria-label="Fermer le module Target Lock">×</button>
           </header>
           <p id="targetLockSource" class="animation-note"></p>
           <label class="grid-toggle"><input id="targetLockEnabled" type="checkbox" /> Activer le ciblage au combat (attaque réussie / W)</label>
@@ -239,7 +253,7 @@
               <option value="target">Cible — Z/S avancer/reculer, Q/D tourner autour</option>
             </select>
           </label>
-          <details class="ws-form-section">
+          <details class="ws-form-section nz-accordion">
             <summary>Avancé · Visualisations de ciblage</summary>
             <label class="grid-toggle"><input id="targetLockShowRing" type="checkbox" /> Cercle rouge sous la cible</label>
             <label class="grid-toggle"><input id="targetLockShowRadius" type="checkbox" /> Cercle de détection (debug)</label>
@@ -248,17 +262,17 @@
           <section class="ws-persistence-group" aria-label="Configuration du ciblage">
             <h3>Fichier de configuration · TARGETING.json</h3>
             <p class="animation-note">Les ajustements du Playground sont locaux. Télécharger TARGETING.json puis l'intégrer au projet pour les versionner.</p>
-          <button id="targetLockExport" type="button" class="secondary wide">Télécharger TARGETING.json</button>
-          <button id="targetLockImport" type="button" class="secondary wide">Importer TARGETING.json</button>
+          <button id="targetLockExport" type="button" class="secondary nz-button nz-button-secondary wide">Télécharger TARGETING.json</button>
+          <button id="targetLockImport" type="button" class="secondary nz-button nz-button-secondary wide">Importer TARGETING.json</button>
           <input id="targetLockImportFile" type="file" accept=".json,application/json" hidden />
-          <button id="targetLockReset" type="button" class="secondary wide">Rétablir le JSON versionné</button>
+          <button id="targetLockReset" type="button" class="secondary nz-button nz-button-secondary wide">Rétablir le JSON versionné</button>
           <p id="targetLockStatus" class="animation-note" role="status"></p>
           </section>
         </section>
         <section id="enemiesModule" class="module-window enemy-tools" aria-labelledby="enemyHeading" hidden>
           <header class="module-header">
             <h2 id="enemyHeading">Gestion des ennemis</h2>
-            <button class="module-close" type="button" aria-label="Fermer la gestion des ennemis">×</button>
+            <button class="module-close nz-icon-button" type="button" aria-label="Fermer la gestion des ennemis">×</button>
           </header>
           <label>Instance<select id="enemyInstance"><option value="">Nouvel ennemi</option></select></label>
           <output id="enemyHealth"></output>
@@ -273,7 +287,7 @@
                 <label>Vitesse<input id="enemySpeed" type="number" min="0" step="any" required /></label>
               </div>
               <label class="grid-toggle"><input id="enemyImmortal" type="checkbox" /> Immortel</label>
-              <details id="enemyAdvancedSettings" class="ws-form-section">
+              <details id="enemyAdvancedSettings" class="ws-form-section nz-accordion">
                 <summary>Avancé · Collisions et régénération</summary>
                 <label class="grid-toggle"><input id="enemySolid" type="checkbox" /> Bloque les déplacements</label>
                 <label class="grid-toggle"><input id="enemyRegen" type="checkbox" /> Régénération</label>
@@ -284,42 +298,42 @@
                 </div>
               </details>
             </fieldset>
-            <button id="enemySubmit" class="secondary wide" type="submit">Créer un ennemi</button>
+            <button id="enemySubmit" class="secondary nz-button nz-button-primary wide" type="submit">Créer un ennemi</button>
           </form>
           <div class="enemy-fields">
-            <button id="enemyReset" class="secondary" type="button" disabled>Rétablir les PV</button>
-            <button id="enemyRemove" class="secondary" type="button" disabled>Retirer</button>
+            <button id="enemyReset" class="secondary nz-button nz-button-secondary" type="button" disabled>Rétablir les PV</button>
+            <button id="enemyRemove" class="secondary nz-button nz-button-secondary ws-danger-action" type="button" disabled>Retirer</button>
           </div>
-          <button id="enemyRemoveAll" class="secondary wide" type="button">Retirer tous les ennemis</button>
+          <button id="enemyRemoveAll" class="secondary nz-button nz-button-secondary ws-danger-action wide" type="button">Retirer tous les ennemis</button>
           <section class="ws-persistence-group" aria-label="Enregistrement local des ennemis de test">
             <h3>Enregistrement local · ce navigateur</h3>
             <p class="animation-note">Conserve les instances d'entraînement dans ce navigateur. Ne modifie ni la map ni le dépôt Git.</p>
             <div class="enemy-fields">
-              <button id="enemySave" class="secondary" type="button">Sauver localement</button>
-              <button id="enemyLoad" class="secondary" type="button">Restaurer localement</button>
+              <button id="enemySave" class="secondary nz-button nz-button-secondary" type="button">Sauver localement</button>
+              <button id="enemyLoad" class="secondary nz-button nz-button-secondary" type="button">Restaurer localement</button>
             </div>
           </section>
           <section class="ws-persistence-group" aria-label="Fichier de configuration des ennemis de test">
             <h3>Fichier JSON · ennemis de test</h3>
             <p class="animation-note">Télécharge ou importe uniquement les instances d'entraînement de ce module, pas le JSON de la map.</p>
             <div class="enemy-fields">
-              <button id="enemyExport" class="secondary" type="button">Télécharger JSON</button>
-              <button id="enemyImport" class="secondary" type="button">Importer un JSON</button>
+              <button id="enemyExport" class="secondary nz-button nz-button-secondary" type="button">Télécharger JSON</button>
+              <button id="enemyImport" class="secondary nz-button nz-button-secondary" type="button">Importer un JSON</button>
             </div>
             <input id="enemyImportFile" type="file" accept=".json,application/json" hidden />
           </section>
-          <button id="simulateHeroHit" class="secondary wide" type="button">Simuler un coup reçu</button>
-          <button id="simulateHeroDeath" class="secondary wide" type="button">Simuler la mort</button>
+          <button id="simulateHeroHit" class="secondary nz-button nz-button-secondary wide" type="button">Simuler un coup reçu</button>
+          <button id="simulateHeroDeath" class="secondary nz-button nz-button-secondary wide" type="button">Simuler la mort</button>
           <p id="enemyStatus" role="status"></p>
         </section>
         <section id="collisionsModule" class="module-window enemy-tools" aria-labelledby="collisionsHeading" hidden>
           <header class="module-header">
             <h2 id="collisionsHeading">Collisions et hitbox du héros</h2>
-            <button class="module-close" type="button" aria-label="Fermer les collisions">×</button>
+            <button class="module-close nz-icon-button" type="button" aria-label="Fermer les collisions">×</button>
           </header>
           <label class="grid-toggle"><input id="heroSolid" type="checkbox" checked /> Activer les collisions physiques</label>
           <label class="grid-toggle"><input id="heroHitboxVisible" type="checkbox" checked /> Hitbox du héros (rouge)</label>
-          <details class="ws-form-section">
+          <details class="ws-form-section nz-accordion">
             <summary>Avancé · Visualisations et volumes de collision</summary>
             <label class="grid-toggle"><input id="enemyHitboxesVisible" type="checkbox" /> Hurtboxes des ennemis (cyan)</label>
             <label class="grid-toggle"><input id="enemyCollidersVisible" type="checkbox" /> Colliders des ennemis (jaune)</label>
@@ -329,14 +343,14 @@
             <label>Décalage vertical (u)<input id="heroCollisionOffset" type="number" min="-1" max="4" step="0.05" value="0.9" /></label>
           </div>
           </details>
-          <button id="heroCollisionReset" class="secondary wide" type="button">Rétablir les valeurs par défaut</button>
+          <button id="heroCollisionReset" class="secondary nz-button nz-button-secondary wide" type="button">Rétablir les valeurs par défaut</button>
           <p class="animation-note">Le volume rouge suit le héros. La marche, la course et l’esquive partagent le même rayon de collision au sol.</p>
           <p id="heroCollisionStatus" class="animation-note" role="status"></p>
         </section>
         <section id="attackHitboxModule" class="module-window enemy-tools" aria-labelledby="attackHitboxHeading" hidden>
           <header class="module-header">
             <h2 id="attackHitboxHeading">Portée de l'attaque à l'épée</h2>
-            <button class="module-close" type="button" aria-label="Fermer la zone d'attaque">×</button>
+            <button class="module-close nz-icon-button" type="button" aria-label="Fermer la zone d'attaque">×</button>
           </header>
           <label class="grid-toggle"><input id="attackHitboxVisible" type="checkbox" checked /> Afficher la hitbox d'attaque (orange)</label>
           <label class="grid-toggle"><input id="attackHitboxAlwaysVisible" type="checkbox" /> Prévisualiser aussi hors des attaques</label>
@@ -345,32 +359,32 @@
             <label>Rayon de la zone (u)<input id="attackRadius" type="number" min="0.05" max="3" step="0.05" value="0.55" /></label>
             <label>Hauteur du coup (u)<input id="attackHeight" type="number" min="0" max="4" step="0.05" value="1" /></label>
           </div>
-          <details class="ws-form-section">
+          <details class="ws-form-section nz-accordion">
             <summary>Avancé · Override des dégâts de test</summary>
             <label class="grid-toggle"><input id="attackDamageOverrideEnabled" type="checkbox" /> Forcer les dégâts (test)</label>
             <label>Dégâts (calculés ou forcés)<input id="attackDamage" type="number" min="1" max="10000" step="1" value="25" disabled /></label>
           </details>
-          <button id="attackHitboxReset" class="secondary wide" type="button">Rétablir l'attaque par défaut</button>
+          <button id="attackHitboxReset" class="secondary nz-button nz-button-secondary wide" type="button">Rétablir l'attaque par défaut</button>
           <p class="animation-note">La zone orange suit la direction du héros et indique la portée utilisée pour calculer les coups pendant l’attaque.</p>
           <p id="attackHitboxStatus" class="animation-note" role="status"></p>
         </section>
         <section id="mapsModule" class="module-window enemy-tools" aria-labelledby="mapsHeading" hidden>
           <header class="module-header">
             <h2 id="mapsHeading">Maps 3D modulaires</h2>
-            <button class="module-close" type="button" aria-label="Fermer les maps">×</button>
+            <button class="module-close nz-icon-button" type="button" aria-label="Fermer les maps">×</button>
           </header>
           <label for="mapSelect">Niveau</label>
           <select id="mapSelect"></select>
           <div class="enemy-fields">
-            <button id="mapLoad" class="secondary" type="button">Charger / remplacer</button>
-            <button id="mapUnload" class="secondary" type="button">Retour à la map de départ</button>
+            <button id="mapLoad" class="secondary nz-button nz-button-primary" type="button">Charger / remplacer</button>
+            <button id="mapUnload" class="secondary nz-button nz-button-secondary" type="button">Retour à la map de départ</button>
           </div>
-          <button id="mapPlaceHero" class="secondary wide" type="button">Placer le héros au spawn</button>
+          <button id="mapPlaceHero" class="secondary nz-button nz-button-secondary wide" type="button">Placer le héros au spawn</button>
           <label class="grid-toggle"><input id="mapShowColliders" type="checkbox" /> Afficher les colliders de la map (jaune)</label>
           <label class="grid-toggle"><input id="mapShowAggro" type="checkbox" /> Afficher les zones d'aggro des ennemis</label>
            <label class="grid-toggle"><input id="mapShowZonePoints" type="checkbox" /> Afficher les spawns de zone</label>
            <p class="animation-note">Map active : <strong id="mapActiveId">prototype-inn</strong></p>
-          <button id="mapResetProgress" class="secondary wide" type="button">Réinitialiser les ennemis et boss</button>
+          <button id="mapResetProgress" class="secondary nz-button nz-button-secondary ws-danger-action wide" type="button">Réinitialiser les ennemis et boss</button>
           <p id="mapEnemyCount" class="animation-note"></p>
           <p class="animation-note">Les modèles GLB manquants sont remplacés par leur forme de collision avec leur nom. Les maps se trouvent dans public/assets/maps.</p>
           <p id="mapStatus" class="animation-note" role="status"></p>
@@ -378,7 +392,7 @@
         <section id="worldEditorModule" class="module-window enemy-tools" aria-labelledby="worldEditorHeading" hidden>
           <header class="module-header">
             <h2 id="worldEditorHeading">Éditeur de monde (POC)</h2>
-            <button class="module-close" type="button" aria-label="Fermer l’éditeur">×</button>
+            <button class="module-close nz-icon-button" type="button" aria-label="Fermer l’éditeur">×</button>
           </header>
           <label class="grid-toggle"><input id="worldEditorEnabled" type="checkbox" /> Activer la sélection et le déplacement</label>
           <div class="enemy-fields">
@@ -391,12 +405,12 @@
               </label>
             </div>
             <div class="enemy-fields">
-              <button id="worldEditorUndo" type="button" class="secondary">Annuler (Ctrl+Z)</button>
-              <button id="worldEditorRedo" type="button" class="secondary">Rétablir (Ctrl+Y)</button>
-              <button id="worldEditorCopy" type="button" class="secondary">Copier</button>
-              <button id="worldEditorPaste" type="button" class="secondary">Coller</button>
-              <button id="worldEditorCut" type="button" class="secondary">Couper</button>
-              <button id="worldEditorDelete" type="button" class="secondary">Supprimer</button>
+              <button id="worldEditorUndo" type="button" class="secondary nz-button nz-button-secondary">Annuler (Ctrl+Z)</button>
+              <button id="worldEditorRedo" type="button" class="secondary nz-button nz-button-secondary">Rétablir (Ctrl+Y)</button>
+              <button id="worldEditorCopy" type="button" class="secondary nz-button nz-button-secondary">Copier</button>
+              <button id="worldEditorPaste" type="button" class="secondary nz-button nz-button-secondary">Coller</button>
+              <button id="worldEditorCut" type="button" class="secondary nz-button nz-button-secondary">Couper</button>
+              <button id="worldEditorDelete" type="button" class="secondary nz-button nz-button-secondary">Supprimer</button>
             </div>
             <details><summary>Terrain</summary>
               <div class="enemy-fields">
@@ -409,7 +423,7 @@
                   <option value="origin">Origine (coin sud-ouest)</option>
                 </select>
               </label>
-              <button id="worldEditorResizeTerrain" type="button" class="secondary">Redimensionner le sol</button>
+              <button id="worldEditorResizeTerrain" type="button" class="secondary nz-button nz-button-secondary">Redimensionner le sol</button>
               <div class="enemy-fields">
                 <label>Apparence du terrain
                   <select id="worldEditorGroundStyle">
@@ -428,15 +442,15 @@
             <details><summary>Organisation / Layers</summary>
               <div id="worldEditorLayerList"></div>
               <label>Nouveau layer<input id="worldEditorNewLayer" type="text" maxlength="80" placeholder="ex : architecture_2" /></label>
-              <button id="worldEditorAddLayer" class="secondary" type="button">Ajouter le layer</button>
+              <button id="worldEditorAddLayer" class="secondary nz-button nz-button-secondary" type="button">Ajouter le layer</button>
             </details>
-            <details class="ws-form-section"><summary>Brouillon local · ce navigateur</summary>
+            <details class="ws-form-section nz-accordion"><summary>Brouillon local · ce navigateur</summary>
               <p class="animation-note">Les opérations de construction enregistrent automatiquement un brouillon local. Pour inclure les autres réglages de la map (comme l'éclairage), utilise « Enregistrer le brouillon ». Ce stockage reste dans ce navigateur et ne remplace pas le fichier du projet.</p>
               <p id="worldEditorDraftState" class="animation-note" role="status">Aucune modification.</p>
               <div class="enemy-fields">
-                <button id="worldEditorSaveDraft" class="secondary" type="button">Enregistrer le brouillon</button>
-                <button id="worldEditorRestoreDraft" class="secondary" type="button">Restaurer le brouillon</button>
-                <button id="worldEditorRemoveDraft" class="secondary" type="button">Effacer le brouillon</button>
+                <button id="worldEditorSaveDraft" class="secondary nz-button nz-button-secondary" type="button">Enregistrer le brouillon</button>
+                <button id="worldEditorRestoreDraft" class="secondary nz-button nz-button-secondary" type="button">Restaurer le brouillon</button>
+                <button id="worldEditorRemoveDraft" class="secondary nz-button nz-button-secondary ws-danger-action" type="button">Effacer le brouillon</button>
               </div>
             </details>
           <p class="animation-note">Choisis un élément du catalogue, puis clique sur le terrain pour le poser. Maintiens le clic sur un élément pour le déplacer. En mode édition, utilise les flèches ↑ ↓ ← → pour déplacer la caméra. Quitter le mode recentre sur le héros.</p>
@@ -445,7 +459,7 @@
             <details><summary>Blocs réutilisables (whitebox)</summary><div id="worldEditorCatalogPrefabs" class="world-editor-catalog"></div></details>
             <details><summary>Tuiles</summary><div id="worldEditorCatalogTiles" class="world-editor-catalog"></div></details>
             <details><summary>Ennemis et cibles</summary><div id="worldEditorCatalogEnemies" class="world-editor-catalog"></div></details>
-            <button id="worldEditorCancelPlacement" class="secondary wide" type="button" hidden>Annuler le placement</button>
+            <button id="worldEditorCancelPlacement" class="secondary nz-button nz-button-secondary wide" type="button" hidden>Annuler le placement</button>
           </div>
           <p id="worldEditorSelection" class="animation-note"></p>
            <p class="animation-note">Shift+Clic : sélection multiple · Ctrl+C/V/X · Suppr · Ctrl+Z/Y · PageUp/PageDown.</p>
@@ -458,8 +472,8 @@
                  <option value="1">1</option><option value="2">2</option>
                </select>
              </label>
-             <button id="worldEditorDown" type="button" class="secondary" aria-label="Descendre d'un palier" title="Descendre de 0,5 unité (PageDown)">↓</button>
-             <button id="worldEditorUp" type="button" class="secondary" aria-label="Monter d'un palier" title="Monter de 0,5 unité (PageUp)">↑</button>
+             <button id="worldEditorDown" type="button" class="secondary nz-button nz-button-secondary" aria-label="Descendre d'un palier" title="Descendre de 0,5 unité (PageDown)">↓</button>
+             <button id="worldEditorUp" type="button" class="secondary nz-button nz-button-secondary" aria-label="Monter d'un palier" title="Monter de 0,5 unité (PageUp)">↑</button>
            </div>
            <div class="enemy-fields">
              <label>Outil
@@ -497,11 +511,11 @@
                 </select>
               </label>
               <div class="enemy-fields">
-                <button id="worldEditorDuplicatePrefab" type="button" class="secondary">Dupliquer ce bloc</button>
-                <button id="worldEditorDeletePrefab" type="button" class="secondary">Supprimer ce bloc</button>
+                <button id="worldEditorDuplicatePrefab" type="button" class="secondary nz-button nz-button-secondary">Dupliquer ce bloc</button>
+                <button id="worldEditorDeletePrefab" type="button" class="secondary nz-button nz-button-secondary ws-danger-action">Supprimer ce bloc</button>
               </div>
             </fieldset>
-            <details class="ws-form-section" id="worldEditorAdvancedFields">
+            <details class="ws-form-section nz-accordion" id="worldEditorAdvancedFields">
               <summary>Avancé · Collisions et comportement</summary>
               <fieldset id="worldEditorObjectFields">
                 <legend>Collisions du décor</legend>
@@ -550,17 +564,17 @@
               </div>
               <label>GLB local<input id="worldEditorModelFile" type="file" accept=".glb,model/gltf-binary" /></label>
               <label>Texture locale<input id="worldEditorTextureFile" type="file" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" /></label>
-              <button id="worldEditorApplyVisual" class="secondary wide" type="button">Appliquer l'apparence</button>
+              <button id="worldEditorApplyVisual" class="secondary nz-button nz-button-secondary wide" type="button">Appliquer l'apparence</button>
             </div>
           </div>
-          <button id="worldEditorExport" class="secondary wide" type="button">Télécharger la map JSON</button>
+          <button id="worldEditorExport" class="secondary nz-button nz-button-primary wide" type="button">Télécharger la map JSON</button>
           <p class="animation-note">L'export télécharge une copie de la map : il ne l'enregistre pas automatiquement dans le dépôt. Les fichiers locaux sont seulement prévisualisés. Copier leurs octets dans public/assets/models/editor ou public/assets/textures/editor puis intégrer le JSON exporté au dépôt.</p>
           <p id="worldEditorStatus" class="animation-note" role="status"></p>
         </section>
         <section id="lightingModule" class="module-window enemy-tools" aria-labelledby="lightingHeading" hidden>
           <header class="module-header">
             <h2 id="lightingHeading">Éclairage de la map</h2>
-            <button class="module-close" type="button" aria-label="Fermer l’éclairage">×</button>
+            <button class="module-close nz-icon-button" type="button" aria-label="Fermer l’éclairage">×</button>
           </header>
           <p class="animation-note">L'éclairage est appliqué immédiatement à la map en session. Utilise « Télécharger la map JSON » dans la barre d'outils pour conserver un fichier ; les réglages ne sont pas écrits dans le dépôt.</p>
           <fieldset class="lighting-section">
@@ -574,7 +588,7 @@
               <label>Direction Y<input id="lightingSunY" type="number" min="-10000" max="10000" step="0.1" /></label>
               <label>Direction Z<input id="lightingSunZ" type="number" min="-10000" max="10000" step="0.1" /></label>
             </div>
-            <details class="ws-form-section">
+            <details class="ws-form-section nz-accordion">
               <summary>Avancé · Ombres du soleil</summary>
               <label class="grid-toggle"><input id="lightingSunShadows" type="checkbox" /> Ombres du soleil</label>
             <div class="lighting-grid">
@@ -604,14 +618,14 @@
                   <option value="hemispheric">Hémisphérique</option>
                 </select>
               </label>
-              <button id="lightingAdd" type="button" class="secondary">Ajouter une lumière</button>
+              <button id="lightingAdd" type="button" class="secondary nz-button nz-button-secondary">Ajouter une lumière</button>
             </div>
             <label>Lumières de la map
               <select id="lightingLightSelect" size="4" aria-label="Sélectionner une lumière locale"></select>
             </label>
             <div class="enemy-fields">
-              <button id="lightingDuplicate" type="button" class="secondary">Dupliquer</button>
-              <button id="lightingRemove" type="button" class="secondary">Supprimer</button>
+              <button id="lightingDuplicate" type="button" class="secondary nz-button nz-button-secondary">Dupliquer</button>
+              <button id="lightingRemove" type="button" class="secondary nz-button nz-button-secondary">Supprimer</button>
             </div>
             <label class="grid-toggle"><input id="lightingShowMarkers" type="checkbox" checked /> Afficher les marqueurs en édition</label>
             <div id="lightingLightFields" hidden>
@@ -637,7 +651,7 @@
                 <label id="lightingExponentField">Exponent<input id="lightingLightExponent" type="number" min="0" max="32" step="0.5" /></label>
                 <label id="lightingGroundField">Couleur du sol<input id="lightingLightGround" type="color" /></label>
               </div>
-              <details class="ws-form-section">
+              <details class="ws-form-section nz-accordion">
                 <summary>Avancé · Ombres de la lumière sélectionnée</summary>
                 <label class="grid-toggle"><input id="lightingLightShadows" type="checkbox" /> Ombres locales (coûteuses sur mobile)</label>
               <div id="lightingShadowFields" class="lighting-grid">
@@ -649,7 +663,7 @@
                 <label>Obscurité<input id="lightingLightDarkness" type="number" min="0" max="1" step="0.05" /></label>
               </div>
               </details>
-              <button id="lightingMoveToHero" type="button" class="secondary wide">Placer à la position du héros</button>
+              <button id="lightingMoveToHero" type="button" class="secondary nz-button nz-button-secondary wide">Placer à la position du héros</button>
             </div>
           </fieldset>
           <p id="lightingStatus" class="animation-note" role="status"></p>
@@ -657,7 +671,7 @@
         <section id="cameraModule" class="module-window" aria-labelledby="cameraHeading" hidden>
           <header class="module-header">
             <h2 id="cameraHeading">Caméra</h2>
-            <button class="module-close" type="button" aria-label="Fermer la caméra">×</button>
+            <button class="module-close nz-icon-button" type="button" aria-label="Fermer la caméra">×</button>
           </header>
           <div class="field-row"><label for="rotation">Rotation de la caméra</label><output id="rotationOutput" for="rotation">65°</output></div>
           <input id="rotation" type="range" min="-180" max="180" step="1" value="65" />
@@ -667,13 +681,13 @@
           <input id="zoom" type="range" min="5" max="40" step="any" value="25" />
           <div class="field-row"><label for="facing">Rotation du héros</label><output id="facingOutput" for="facing">0°</output></div>
           <input id="facing" type="range" min="-180" max="180" step="1" value="0" />
-          <button id="resetButton" type="button" class="secondary wide">Réinitialiser la vue</button>
+          <button id="resetButton" type="button" class="secondary nz-button nz-button-secondary wide">Réinitialiser la vue</button>
           <label class="grid-toggle"><input id="showGrid" type="checkbox" /> Afficher le quadrillage</label>
         </section>
         <section id="modelModule" class="module-window meta" aria-labelledby="modelHeading" hidden>
           <header class="module-header">
             <h2 id="modelHeading">Modèle chargé</h2>
-            <button class="module-close" type="button" aria-label="Fermer le modèle chargé">×</button>
+            <button class="module-close nz-icon-button" type="button" aria-label="Fermer le modèle chargé">×</button>
           </header>
           <p id="modelStatus">En attente du chargement…</p>
           <p id="animationStatus" class="micro"></p>
