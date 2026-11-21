@@ -313,26 +313,27 @@
     }
   },
   "objects": [],
+  "spawnPoints": [
+    {
+      "id": "entrance",
+      "type": "player",
+      "position": [
+        0,
+        0,
+        13
+      ],
+      "rotationY": 180
+    }
+  ],
   "primitives": [],
   "prefabs": [
-    {
-      "id": "wall-straight-001",
-      "prefab": "wall-straight",
-      "position": [
-        -12,
-        0,
-        -15
-      ],
-      "rotationY": 0,
-      "scale": 1
-    },
     {
       "id": "wall-straight-002",
       "prefab": "wall-straight",
       "position": [
-        -8,
+        -6.5,
         0,
-        -15
+        -15.5
       ],
       "rotationY": 0,
       "scale": 1
@@ -341,9 +342,9 @@
       "id": "wall-window-003",
       "prefab": "wall-window",
       "position": [
-        -4,
+        -2.5,
         0,
-        -15
+        -15.5
       ],
       "rotationY": 0,
       "scale": 1
@@ -352,9 +353,9 @@
       "id": "wall-straight-004",
       "prefab": "wall-straight",
       "position": [
+        1.5,
         0,
-        0,
-        -15
+        -15.5
       ],
       "rotationY": 0,
       "scale": 1
@@ -363,9 +364,9 @@
       "id": "wall-straight-005",
       "prefab": "wall-straight",
       "position": [
-        4,
+        5.5,
         0,
-        -15
+        -15.5
       ],
       "rotationY": 0,
       "scale": 1
@@ -374,9 +375,9 @@
       "id": "wall-window-006",
       "prefab": "wall-window",
       "position": [
-        8,
+        9.5,
         0,
-        -15
+        -15.5
       ],
       "rotationY": 0,
       "scale": 1
@@ -385,9 +386,9 @@
       "id": "wall-straight-007",
       "prefab": "wall-straight",
       "position": [
-        12,
+        13.5,
         0,
-        -15
+        -15.5
       ],
       "rotationY": 0,
       "scale": 1
@@ -396,9 +397,9 @@
       "id": "wall-straight-008",
       "prefab": "wall-straight",
       "position": [
-        -15,
+        -15.5,
         0,
-        -12
+        -6.5
       ],
       "rotationY": 90,
       "scale": 1
@@ -407,9 +408,9 @@
       "id": "wall-straight-009",
       "prefab": "wall-straight",
       "position": [
-        -15,
+        -15.5,
         0,
-        -8
+        -2.5
       ],
       "rotationY": 90,
       "scale": 1
@@ -418,9 +419,9 @@
       "id": "wall-window-010",
       "prefab": "wall-window",
       "position": [
-        -15,
+        -15.5,
         0,
-        -4
+        1.5
       ],
       "rotationY": 90,
       "scale": 1
@@ -429,9 +430,9 @@
       "id": "wall-straight-011",
       "prefab": "wall-straight",
       "position": [
-        -15,
+        -15.5,
         0,
-        0
+        5.5
       ],
       "rotationY": 90,
       "scale": 1
@@ -440,9 +441,9 @@
       "id": "wall-straight-012",
       "prefab": "wall-straight",
       "position": [
-        -15,
+        -15.5,
         0,
-        4
+        9.5
       ],
       "rotationY": 90,
       "scale": 1
@@ -451,9 +452,9 @@
       "id": "wall-straight-013",
       "prefab": "wall-straight",
       "position": [
-        -15,
+        -15.5,
         0,
-        8
+        13.5
       ],
       "rotationY": 90,
       "scale": 1
@@ -462,9 +463,9 @@
       "id": "wall-straight-014",
       "prefab": "wall-straight",
       "position": [
-        15,
+        15.5,
         0,
-        -12
+        -9
       ],
       "rotationY": 90,
       "scale": 1
@@ -473,20 +474,25 @@
       "id": "wall-straight-015",
       "prefab": "wall-straight",
       "position": [
-        15,
+        15.5,
         0,
-        -8
+        -5
       ],
       "rotationY": 90,
-      "scale": 1
+      "scale": 1,
+      "scaleAxes": [
+        2,
+        1,
+        1
+      ]
     },
     {
       "id": "wall-window-016",
       "prefab": "wall-window",
       "position": [
-        15,
+        15.5,
         0,
-        -4
+        1
       ],
       "rotationY": 90,
       "scale": 1
@@ -495,9 +501,9 @@
       "id": "wall-straight-017",
       "prefab": "wall-straight",
       "position": [
-        15,
+        15.5,
         0,
-        0
+        5
       ],
       "rotationY": 90,
       "scale": 1
@@ -506,9 +512,9 @@
       "id": "wall-straight-018",
       "prefab": "wall-straight",
       "position": [
-        15,
+        15.5,
         0,
-        4
+        9
       ],
       "rotationY": 90,
       "scale": 1
@@ -517,9 +523,9 @@
       "id": "wall-straight-019",
       "prefab": "wall-straight",
       "position": [
-        15,
+        15.5,
         0,
-        8
+        13
       ],
       "rotationY": 90,
       "scale": 1
@@ -528,9 +534,9 @@
       "id": "wall-half-020",
       "prefab": "wall-half",
       "position": [
-        -12,
+        -9.5,
         0,
-        15
+        15.5
       ],
       "rotationY": 0,
       "scale": 1
@@ -539,9 +545,9 @@
       "id": "wall-half-021",
       "prefab": "wall-half",
       "position": [
-        -8,
+        -5.5,
         0,
-        15
+        15.5
       ],
       "rotationY": 0,
       "scale": 1
@@ -550,9 +556,9 @@
       "id": "wall-half-022",
       "prefab": "wall-half",
       "position": [
-        -4,
+        -1.5,
         0,
-        15
+        15.5
       ],
       "rotationY": 0,
       "scale": 1
@@ -561,9 +567,9 @@
       "id": "wall-half-023",
       "prefab": "wall-half",
       "position": [
-        4,
+        5.5,
         0,
-        15
+        15.5
       ],
       "rotationY": 0,
       "scale": 1
@@ -572,9 +578,9 @@
       "id": "wall-half-024",
       "prefab": "wall-half",
       "position": [
-        8,
+        9.5,
         0,
-        15
+        15.5
       ],
       "rotationY": 0,
       "scale": 1
@@ -583,9 +589,9 @@
       "id": "wall-half-025",
       "prefab": "wall-half",
       "position": [
-        12,
+        13.5,
         0,
-        15
+        15.5
       ],
       "rotationY": 0,
       "scale": 1
@@ -594,9 +600,9 @@
       "id": "door-frame-026",
       "prefab": "door-frame",
       "position": [
+        2,
         0,
-        0,
-        15
+        15.5
       ],
       "rotationY": 0,
       "scale": 1
@@ -605,9 +611,9 @@
       "id": "pillar-square-027",
       "prefab": "pillar-square",
       "position": [
-        -14,
+        -15.5,
         0,
-        -14
+        -15.5
       ],
       "rotationY": 0,
       "scale": 1
@@ -616,9 +622,9 @@
       "id": "pillar-square-028",
       "prefab": "pillar-square",
       "position": [
-        14,
+        15.5,
         0,
-        -14
+        -15.5
       ],
       "rotationY": 0,
       "scale": 1
@@ -627,9 +633,9 @@
       "id": "pillar-square-029",
       "prefab": "pillar-square",
       "position": [
-        -14,
+        -15.5,
         0,
-        14
+        15.5
       ],
       "rotationY": 0,
       "scale": 1
@@ -638,31 +644,9 @@
       "id": "pillar-square-030",
       "prefab": "pillar-square",
       "position": [
-        14,
+        15.5,
         0,
-        14
-      ],
-      "rotationY": 0,
-      "scale": 1
-    },
-    {
-      "id": "pillar-square-031",
-      "prefab": "pillar-square",
-      "position": [
-        -14,
-        0,
-        0
-      ],
-      "rotationY": 0,
-      "scale": 1
-    },
-    {
-      "id": "pillar-square-032",
-      "prefab": "pillar-square",
-      "position": [
-        14,
-        0,
-        0
+        15.5
       ],
       "rotationY": 0,
       "scale": 1
@@ -671,42 +655,9 @@
       "id": "balcony-section-033",
       "prefab": "balcony-section",
       "position": [
-        -11,
+        -13.5,
         0,
-        -11
-      ],
-      "rotationY": 0,
-      "scale": 1
-    },
-    {
-      "id": "railing-034",
-      "prefab": "railing",
-      "position": [
-        -9,
-        0,
-        -11
-      ],
-      "rotationY": 0,
-      "scale": 1
-    },
-    {
-      "id": "balcony-section-035",
-      "prefab": "balcony-section",
-      "position": [
-        -11,
-        0,
-        -7
-      ],
-      "rotationY": 0,
-      "scale": 1
-    },
-    {
-      "id": "railing-036",
-      "prefab": "railing",
-      "position": [
-        -9,
-        0,
-        -7
+        -13.5
       ],
       "rotationY": 0,
       "scale": 1
@@ -715,31 +666,9 @@
       "id": "balcony-section-037",
       "prefab": "balcony-section",
       "position": [
-        -11,
+        -13.5,
         0,
-        -3
-      ],
-      "rotationY": 0,
-      "scale": 1
-    },
-    {
-      "id": "railing-038",
-      "prefab": "railing",
-      "position": [
-        -9,
-        0,
-        -3
-      ],
-      "rotationY": 0,
-      "scale": 1
-    },
-    {
-      "id": "staircase-039",
-      "prefab": "staircase",
-      "position": [
-        -11,
-        0,
-        5
+        -9.5
       ],
       "rotationY": 0,
       "scale": 1
@@ -748,119 +677,20 @@
       "id": "staircase-040",
       "prefab": "staircase",
       "position": [
-        -4,
+        -14,
         0,
-        -11
-      ],
-      "rotationY": 90,
-      "scale": 1
-    },
-    {
-      "id": "staircase-041",
-      "prefab": "staircase",
-      "position": [
-        11,
-        0,
-        10
+        -5
       ],
       "rotationY": 180,
-      "scale": 1
-    },
-    {
-      "id": "pillar-round-042",
-      "prefab": "pillar-round",
-      "position": [
-        -7,
-        0,
-        0
-      ],
-      "rotationY": 0,
-      "scale": 1
-    },
-    {
-      "id": "pillar-round-043",
-      "prefab": "pillar-round",
-      "position": [
-        8,
-        0,
-        -1
-      ],
-      "rotationY": 0,
-      "scale": 1
-    },
-    {
-      "id": "pillar-round-044",
-      "prefab": "pillar-round",
-      "position": [
-        0,
-        0,
-        -7
-      ],
-      "rotationY": 0,
-      "scale": 1
-    },
-    {
-      "id": "pillar-round-045",
-      "prefab": "pillar-round",
-      "position": [
-        0,
-        0,
-        7
-      ],
-      "rotationY": 0,
-      "scale": 1
-    },
-    {
-      "id": "table-round-046",
-      "prefab": "table-round",
-      "position": [
-        -4,
-        0,
-        1
-      ],
-      "rotationY": 0,
-      "scale": 1
-    },
-    {
-      "id": "bench-047",
-      "prefab": "bench",
-      "position": [
-        -5.6,
-        0,
-        1
-      ],
-      "rotationY": 90,
-      "scale": 1
-    },
-    {
-      "id": "bench-048",
-      "prefab": "bench",
-      "position": [
-        -2.4,
-        0,
-        1
-      ],
-      "rotationY": 90,
-      "scale": 1
-    },
-    {
-      "id": "stool-049",
-      "prefab": "stool",
-      "position": [
-        -4,
-        0,
-        -0.5
-      ],
-      "rotationY": 0,
       "scale": 1
     },
     {
       "id": "table-round-050",
       "prefab": "table-round",
       "position": [
-        2,
+        4.5,
         0,
-        0
+        4
       ],
       "rotationY": 0,
       "scale": 1
@@ -869,9 +699,9 @@
       "id": "bench-051",
       "prefab": "bench",
       "position": [
-        0.3999999999999999,
+        3,
         0,
-        0
+        4
       ],
       "rotationY": 90,
       "scale": 1
@@ -880,9 +710,9 @@
       "id": "bench-052",
       "prefab": "bench",
       "position": [
-        3.6,
+        6,
         0,
-        0
+        4
       ],
       "rotationY": 90,
       "scale": 1
@@ -891,9 +721,9 @@
       "id": "stool-053",
       "prefab": "stool",
       "position": [
-        2,
+        4.5,
         0,
-        -1.5
+        2.5
       ],
       "rotationY": 0,
       "scale": 1
@@ -902,9 +732,9 @@
       "id": "table-round-054",
       "prefab": "table-round",
       "position": [
-        5,
+        4.5,
         0,
-        7
+        8.5
       ],
       "rotationY": 0,
       "scale": 1
@@ -913,9 +743,9 @@
       "id": "bench-055",
       "prefab": "bench",
       "position": [
-        3.4,
+        3,
         0,
-        7
+        8.5
       ],
       "rotationY": 90,
       "scale": 1
@@ -924,9 +754,9 @@
       "id": "bench-056",
       "prefab": "bench",
       "position": [
-        6.6,
+        6,
         0,
-        7
+        8.5
       ],
       "rotationY": 90,
       "scale": 1
@@ -935,9 +765,9 @@
       "id": "stool-057",
       "prefab": "stool",
       "position": [
-        5,
+        4.5,
         0,
-        5.5
+        7
       ],
       "rotationY": 0,
       "scale": 1
@@ -946,9 +776,9 @@
       "id": "table-round-058",
       "prefab": "table-round",
       "position": [
-        -5,
+        -9.5,
         0,
-        8
+        4
       ],
       "rotationY": 0,
       "scale": 1
@@ -957,9 +787,9 @@
       "id": "bench-059",
       "prefab": "bench",
       "position": [
-        -6.6,
+        -11,
         0,
-        8
+        4
       ],
       "rotationY": 90,
       "scale": 1
@@ -968,9 +798,9 @@
       "id": "bench-060",
       "prefab": "bench",
       "position": [
-        -3.4,
+        -8,
         0,
-        8
+        4
       ],
       "rotationY": 90,
       "scale": 1
@@ -979,53 +809,9 @@
       "id": "stool-061",
       "prefab": "stool",
       "position": [
-        -5,
+        -9.5,
         0,
-        6.5
-      ],
-      "rotationY": 0,
-      "scale": 1
-    },
-    {
-      "id": "table-round-062",
-      "prefab": "table-round",
-      "position": [
-        0,
-        0,
-        -9
-      ],
-      "rotationY": 0,
-      "scale": 1
-    },
-    {
-      "id": "bench-063",
-      "prefab": "bench",
-      "position": [
-        -1.6,
-        0,
-        -9
-      ],
-      "rotationY": 90,
-      "scale": 1
-    },
-    {
-      "id": "bench-064",
-      "prefab": "bench",
-      "position": [
-        1.6,
-        0,
-        -9
-      ],
-      "rotationY": 90,
-      "scale": 1
-    },
-    {
-      "id": "stool-065",
-      "prefab": "stool",
-      "position": [
-        0,
-        0,
-        -10.5
+        2.5
       ],
       "rotationY": 0,
       "scale": 1
@@ -1034,31 +820,36 @@
       "id": "bar-counter-066",
       "prefab": "bar-counter",
       "position": [
-        11,
+        3,
         0,
-        -7
+        -12
       ],
-      "rotationY": 90,
-      "scale": 1
+      "rotationY": 0,
+      "scale": 1,
+      "scaleAxes": [
+        1,
+        1,
+        0.968
+      ]
     },
     {
       "id": "bar-counter-067",
       "prefab": "bar-counter",
       "position": [
-        11,
+        -2,
         0,
-        -2
+        -12
       ],
-      "rotationY": 90,
+      "rotationY": 0,
       "scale": 1
     },
     {
       "id": "stool-068",
       "prefab": "stool",
       "position": [
-        8.2,
+        4,
         0,
-        -9
+        -10
       ],
       "rotationY": 0,
       "scale": 1
@@ -1067,9 +858,9 @@
       "id": "stool-069",
       "prefab": "stool",
       "position": [
-        8.2,
+        2,
         0,
-        -7
+        -10
       ],
       "rotationY": 0,
       "scale": 1
@@ -1078,9 +869,9 @@
       "id": "stool-070",
       "prefab": "stool",
       "position": [
-        8.2,
+        -1.5,
         0,
-        -5
+        -10
       ],
       "rotationY": 0,
       "scale": 1
@@ -1089,9 +880,9 @@
       "id": "stool-071",
       "prefab": "stool",
       "position": [
-        8.2,
+        -3.5,
         0,
-        -3
+        -10
       ],
       "rotationY": 0,
       "scale": 1
@@ -1100,9 +891,9 @@
       "id": "barrel-072",
       "prefab": "barrel",
       "position": [
-        11,
+        6.5,
         0,
-        -12
+        -11
       ],
       "rotationY": 0,
       "scale": 1
@@ -1111,9 +902,9 @@
       "id": "barrel-073",
       "prefab": "barrel",
       "position": [
-        12.4,
+        7.5,
         0,
-        -11
+        -11.5
       ],
       "rotationY": 0,
       "scale": 1
@@ -1122,9 +913,9 @@
       "id": "barrel-074",
       "prefab": "barrel",
       "position": [
-        12,
+        6.5,
         0,
-        -10
+        -12.5
       ],
       "rotationY": 0,
       "scale": 1
@@ -1133,99 +924,11 @@
       "id": "shelf-075",
       "prefab": "shelf",
       "position": [
-        12,
+        0.5,
         0,
-        -1
-      ],
-      "rotationY": 90,
-      "scale": 1
-    },
-    {
-      "id": "crate-076",
-      "prefab": "crate",
-      "position": [
-        -12,
-        0,
-        10
+        -15
       ],
       "rotationY": 0,
-      "scale": 1
-    },
-    {
-      "id": "crate-077",
-      "prefab": "crate",
-      "position": [
-        -10.5,
-        0,
-        10.5
-      ],
-      "rotationY": 0,
-      "scale": 1
-    },
-    {
-      "id": "crate-078",
-      "prefab": "crate",
-      "position": [
-        -13,
-        0,
-        9
-      ],
-      "rotationY": 0,
-      "scale": 1
-    },
-    {
-      "id": "crate-079",
-      "prefab": "crate",
-      "position": [
-        -9.5,
-        0,
-        -12
-      ],
-      "rotationY": 0,
-      "scale": 1
-    },
-    {
-      "id": "crate-080",
-      "prefab": "crate",
-      "position": [
-        9,
-        0,
-        12
-      ],
-      "rotationY": 0,
-      "scale": 1
-    },
-    {
-      "id": "bed-simple-081",
-      "prefab": "bed-simple",
-      "position": [
-        -11,
-        2.78,
-        -11
-      ],
-      "rotationY": 90,
-      "scale": 1
-    },
-    {
-      "id": "bed-simple-082",
-      "prefab": "bed-simple",
-      "position": [
-        -11,
-        2.78,
-        -7
-      ],
-      "rotationY": 90,
-      "scale": 1
-    },
-    {
-      "id": "bed-simple-083",
-      "prefab": "bed-simple",
-      "position": [
-        -11,
-        2.78,
-        -3
-      ],
-      "rotationY": 90,
       "scale": 1
     },
     {
@@ -1249,20 +952,75 @@
       ],
       "rotationY": 0,
       "scale": 1
-    }
-  ],
-  "spawnPoints": [
+    },
     {
-      "id": "entrance",
-      "type": "player",
+      "id": "wall-straight-014-copy-1",
+      "prefab": "wall-straight",
       "position": [
+        15.5,
         0,
-        0,
-        13
+        -13
       ],
-      "rotationY": 180
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "wall-straight-008-copy-1",
+      "prefab": "wall-straight",
+      "position": [
+        -15.5,
+        0,
+        -10.5
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "wall-straight-008-copy-1-copy-1",
+      "prefab": "wall-straight",
+      "position": [
+        -15.5,
+        0,
+        -13
+      ],
+      "rotationY": 90,
+      "scale": 1
+    },
+    {
+      "id": "wall-straight-002-copy-1",
+      "prefab": "wall-straight",
+      "position": [
+        -10.5,
+        0,
+        -15.5
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "wall-straight-002-copy-1-copy-1",
+      "prefab": "wall-straight",
+      "position": [
+        -13.5,
+        0,
+        -15.5
+      ],
+      "rotationY": 0,
+      "scale": 1
+    },
+    {
+      "id": "wall-half-020-copy-1",
+      "prefab": "wall-half",
+      "position": [
+        -13.5,
+        0,
+        15.5
+      ],
+      "rotationY": 0,
+      "scale": 1
     }
   ],
+  "exits": [],
   "environment": {
     "background": "#4B4E52",
     "ambient": {
@@ -1288,5 +1046,66 @@
       "color": "#4B4E52",
       "density": 0.005
     }
-  }
+  },
+  "lighting": {
+    "world": {
+      "enabled": true,
+      "ambient": {
+        "enabled": false,
+        "color": "#ffffff",
+        "groundColor": "#000000",
+        "intensity": 0.1
+      },
+      "sun": {
+        "enabled": true,
+        "color": "#ffffff",
+        "intensity": 1,
+        "direction": [
+          0,
+          -2.1,
+          1
+        ],
+        "shadows": {
+          "enabled": true,
+          "darkness": 0.23,
+          "resolution": 1024
+        }
+      }
+    },
+    "map": {
+      "enabled": true,
+      "lights": [
+        {
+          "id": "light-1",
+          "type": "point",
+          "enabled": true,
+          "position": [
+            8.5,
+            2,
+            -5
+          ],
+          "direction": [
+            0,
+            -1,
+            0
+          ],
+          "color": "#ffac80",
+          "intensity": 1,
+          "range": 6.1,
+          "angle": 45,
+          "exponent": 2,
+          "groundColor": "#333333",
+          "shadows": {
+            "enabled": true,
+            "darkness": 0.3,
+            "resolution": 512
+          }
+        }
+      ]
+    }
+  },
+  "enemySpawns": [],
+  "waves": [],
+  "events": [],
+  "interactions": []
 }

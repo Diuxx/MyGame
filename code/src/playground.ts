@@ -98,10 +98,10 @@ export async function startPlayground(
     onEncounterEvent: hud.event,
     onWorldInteraction: hud.announce,
   });
-  const initialMap = await maps.load("playground");
-  if (!initialMap) throw new Error("Chargement de la map Playground interrompu.");
+  const initialMap = await maps.load("prototype-inn");
+  if (!initialMap) throw new Error("Chargement de la map du Playground interrompu.");
   const initialSpawn = initialMap.definition.spawnPoints.find((spawn) => spawn.type === "player");
-  if (!initialSpawn) throw new Error("La map Playground ne définit aucun spawn du héros.");
+  if (!initialSpawn) throw new Error("La map du Playground ne définit aucun spawn du héros.");
   character.root.position.set(...initialSpawn.position);
   character.root.rotation.y = degreesToRadians(initialSpawn.rotationY);
   cameraControls.follow(initialSpawn.position[0], initialSpawn.position[2]);

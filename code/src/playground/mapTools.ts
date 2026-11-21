@@ -26,11 +26,11 @@ export function bindMapTools(
   let pending = false;
 
   const labels: Record<string, string> = {
-    playground: "Playground — Arène blockout",
+    playground: "Arène blockout",
     dojo: "Cour du dojo", forest: "Clairière",
     "prototype-forest": "Prototype — Forêt",
     "prototype-arena": "Prototype — Arène",
-    "prototype-inn": "Prototype — Auberge blanche",
+    "prototype-inn": "Playground — Auberge blanche",
     "nature-showcase": "Nature — Forêt stylisée",
   };
   for (const id of AVAILABLE_MAPS) selection.add(new Option(labels[id] ?? id, id));
@@ -90,7 +90,7 @@ export function bindMapTools(
     try {
       const loaded = await transitions.loadManual("playground");
       status.textContent = loaded
-        ? "Map Playground restaurée."
+        ? "Arène blockout restaurée."
         : "Retour impossible. Vérifier le message dans le HUD.";
     } finally {
       pending = false;

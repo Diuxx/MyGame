@@ -28,7 +28,10 @@ test("the populated Playground still exposes the reusable whitebox catalogue", a
     assert.ok(playground.assets.prefabs?.["wall-dark"], "dark modular wall should be reusable");
     assert.ok(playground.assets.prefabs?.["lamp-wall-blockout"], "light fixture should be reusable");
     const inn = await loadMapData("prototype-inn");
-    assert.ok(inn.map.prefabs && inn.map.prefabs.length > 0);
+    assert.equal(inn.map.prefabs?.length, 62);
+    assert.deepEqual(inn.map.spawnPoints[0], {
+      id: "entrance", type: "player", position: [0, 0, 13], rotationY: 180,
+    });
     assert.equal(inn.assets.prefabs, playground.assets.prefabs, "definitions should be shared");
     assert.equal(fetched.filter((path) => path.endsWith("blockout-prefabs.json")).length, 1);
   } finally {

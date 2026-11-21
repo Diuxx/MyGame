@@ -2,6 +2,8 @@
 
 This feature uses the map's `lighting` section as the only authored lighting source.
 It does not add the future combat/skill `EffectLighting`.
+For composition principles and a project-specific lighting checklist, see
+[GAME_LIGHTING_THEORY.md](./GAME_LIGHTING_THEORY.md).
 
 ## Design
 
@@ -56,10 +58,12 @@ properties of a light get validated defaults. The parser rejects duplicate IDs,
 invalid vectors/colors, infinite or out-of-range numeric values, unsupported
 shadow resolutions, too many lights and shadows on hemispheric lights.
 
-## Default Playground blockout arena
+## Blockout lighting arena (`playground`)
 
 `public/assets/maps/playground.json` is a **36 × 36 unit** enclosed lighting
 test arena built from reusable geometry, not a textured or imported GLB level.
+The Playground now starts on the `prototype-inn` map; this arena remains
+available in the map selector as **Arène blockout**.
 The ground is a four-panel gray blockout platform, with a simple circular
 center marker. Each of the four boundaries uses nine reusable wall sections,
 with tall far-facing walls and shorter near-camera walls for visibility.

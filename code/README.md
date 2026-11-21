@@ -105,6 +105,19 @@ node code/tools/exportFbx.mjs "chemin/vers/modele.glb" "chemin/vers/modele.fbx"
 Le chemin de sortie est facultatif. Par défaut, le FBX est créé à côté
 du GLB avec le même nom. Choisir un nouveau chemin si un FBX existe déjà.
 
+Pour déconnecter les entrées **Metallic** et **Roughness** d’un FBX déjà
+existant, puis le réexporter, utiliser :
+
+```powershell
+node code/tools/disconnectFbxMetallicRoughness.mjs "chemin/vers/modele.fbx"
+```
+
+Le FBX source reste intact. Par défaut, la copie est créée dans le même
+dossier avec le suffixe `-no-metallic-roughness`. On peut indiquer un chemin
+de sortie différent en second argument. Les sorties déjà présentes sont
+refusées pour éviter tout écrasement. Le script affiche le nombre de liens
+déconnectés pour chaque entrée.
+
 Pour convertir un FBX qui contient une armature et une seule animation
 en clip GLB indépendant, utiliser le même Blender depuis Node.
 

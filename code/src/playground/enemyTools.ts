@@ -86,8 +86,7 @@ export async function startEnemyTools(
     list.add(new Option(`${enemy.definition.name} · ${enemy.id}`, enemy.id));
   }
 
-  // The initial target and goblins now come from playground.json.
-  // This editor still allows additional practice targets on demand.
+  // Map encounters come from the active map; this editor adds practice targets on demand.
   syncSelection();
   list.addEventListener("change", syncSelection, options);
   type.addEventListener("change", syncSelection, options);
