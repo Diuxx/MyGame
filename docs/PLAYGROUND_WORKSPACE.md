@@ -46,6 +46,28 @@ En mode test, le bouton **Debug** ouvre un petit panneau flottant contenant les 
 - L'outil Éclairage conserve sa sélection de lumière locale ; la sélection de Prefab/ennemi/interactions demeure gérée par le World Editor. Les ennemis temporaires de test sont toujours gérés par leurs propres contrôles.
 - Les panneaux d'édition disparaissent en mode **Tester le jeu**. Au retour en édition, l'outil global et l'état des panneaux sont restaurés. Le World Editor continue d'effacer sa sélection lors du changement de mode, conformément au comportement existant.
 
+## Lot 3 — Formulaires et persistance explicite
+
+Les panneaux gardent leurs contrôles et listeners d'origine. Les paramètres fréquents restent directement accessibles tandis que les réglages avancés sont regroupés dans des sections HTML `details` (l'état du champ n'est pas effacé lorsqu'on replie la section).
+
+- **Ennemis de test** : type, PV, défense, dégâts et vitesse en premier ; collisions et régénération dans « Avancé ». Les champs requis cachés sont révélés automatiquement si leur validation échoue. Les instances d'entraînement ne sont pas les ennemis persistants de la map.
+- **Inspecteur** : position/rotation, paramètres de Prefab, puis collisions/comportement avancés et apparence. La sélection et les propriétés continuent d'être contrôlées par le World Editor.
+- **Combat et éclairage** : affichages debug, dégâts forcés et ombres détaillées dans des sections avancées. Les valeurs et leur comportement métier restent inchangés.
+- **Animations et textes flottants** : transitions et réglages détaillés regroupés, avec les actions JSON dans des sections explicites.
+
+| Action dans le Playground | Portée réelle | Comment retrouver les données |
+| --- | --- | --- |
+| Modifier une valeur | Session active immédiatement | Dépend du module ; certaines configurations conservent aussi une surcharge locale |
+| Brouillon de map (auto ou manuel) | `localStorage` de ce navigateur, associé à la map | « Restaurer le brouillon », si compatible avec la source de map ; ne modifie jamais Git |
+| Sauver/restaurer les ennemis d'entraînement | `localStorage` de ce navigateur | « Restaurer localement » ; distinct du JSON de la map |
+| Télécharger la map JSON | Fichier de la map active, y compris l'éclairage appliqué | Télécharger puis intégrer manuellement à `public/assets/maps` |
+| Télécharger une configuration JSON | Fichier propre au module (ANIMATIONS, TARGETING, FLOATING_TEXT, ou ennemis de test) | Importer dans le module ou intégrer manuellement au fichier correspondant dans le dépôt |
+| Importer une configuration JSON | Vérification du format par le module et application locale/en session | Les validations et éventuels avertissements de stockage restent visibles |
+
+**Important :** « Télécharger » demande au navigateur d'enregistrer un fichier, sans pouvoir garantir qu'il a effectivement été conservé par l'utilisateur. Aucun bouton d'export n'écrit directement dans le dépôt. Les aperçus d'assets GLB/textures doivent toujours être copiés et référencés séparément.
+
+Le World Editor crée automatiquement un brouillon pour les actions couvertes par son historique. Pour inclure explicitement d'autres modifications de la map, notamment l'éclairage, utiliser « Enregistrer le brouillon ». Un export JSON est nécessaire pour obtenir un fichier versionnable.
+
 ## Doublons d'interface
 
 Les raccourcis rapides historiques et les champs détaillés correspondaient déjà à un seul état :
@@ -96,10 +118,13 @@ Le registre des modules est vérifié par les tests. Le changement de mode est t
 6. Cliquer sur **Tester le jeu** : vérifier ZQSD, course, attaque, esquive et Target Lock sans recharger la scène.
 7. Activer **Debug** en mode test : vérifier la hitbox du héros, les zones d'attaque et les colliders.
 8. Revenir en édition et vérifier le déplacement libre de la caméra avec les flèches.
-9. Vérifier les import/export JSON des modules d'animation, de ciblage et de Floating Text.
+9. Vérifier les imports/exports JSON des modules d'animation, de ciblage et de Floating Text. Replier/déplier les sections Avancé et confirmer la conservation des valeurs et événements.
 10. Vérifier la navigation sur écran étroit : explorateur, inspecteur et panneau Outils repliables, sans superposition simultanée de ces deux derniers.
 11. Supprimer l'objet sélectionné, changer de map et vérifier que l'inspecteur présente l'état vide sans affichage d'ancienne donnée.
 12. Fermer le panneau Outils, revenir en édition depuis **Tester le jeu**, puis restaurer le dernier domaine et module utilisés.
+13. Modifier un objet et une lumière, enregistrer un brouillon local, exporter la map et confirmer les messages distincts dans le navigateur.
+14. Sauver/restaurer les ennemis d'entraînement localement, puis exporter/importer leur fichier JSON sans affecter la map.
+15. Saisir une valeur invalide dans un champ avancé d'ennemi et vérifier que le groupe s'ouvre pour afficher l'erreur.
 
 Ces tests visuels doivent être exécutés dans un navigateur pour être déclarés réussis.
 
