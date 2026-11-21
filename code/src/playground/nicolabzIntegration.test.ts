@@ -14,6 +14,7 @@ const entry = read("../main.ts");
 const workspace = read("./workspace.ts");
 const iconAdapter = read("./nicolabzIcons.ts");
 const skin = read("./nicolabzWorkspace.css");
+const layout = read("../style.css");
 const favicon = read("../../public/favicon.svg");
 
 test("Nicolabz is pinned to an immutable GitHub commit in both npm manifests", () => {
@@ -92,26 +93,30 @@ test("explorer stays in the rail at every width, with an accessible close button
   assert.ok(skin.includes("display: flex;"));
 });
 
-test("explorer starts hidden, releases the canvas column and toggles without replacing tab nodes", () => {
-  assert.ok(workspace.includes("left.hidden = true;"));
-  assert.ok(workspace.includes("const explorerState = createWorkspaceExplorerState()"));
-  assert.ok(workspace.includes('app.classList.toggle("ws-explorer-open", open)'));
-  assert.ok(workspace.includes('left.hidden = !open'));
-  assert.ok(workspace.includes('explorerToggle.setAttribute("aria-pressed", String(open))'));
-  assert.ok(workspace.includes('explorerState.toggle()'));
-  assert.ok(workspace.includes('explorerState.close()'));
-  assert.ok(workspace.includes('explorerToggle.focus()'));
-  assert.ok(skin.includes("--ws-left-width: 0px"));
-  assert.ok(skin.includes(".ws-left[hidden] { display: none !important; }"));
-  assert.ok(skin.includes(".ws-explorer-open"));
-  assert.ok(skin.includes("max-width: 1020px"));
+test("left menu shares one dock and updates visibility without recreating controls", () => {
+  assert.ok(workspace.includes("leftDock.append(left, toolsDock)"));
+  assert.ok(workspace.includes("leftDock.hidden = true;"));
+  assert.ok(workspace.includes("leftDock.hidden = !panelState.leftMenu"));
+  assert.ok(workspace.includes("left.hidden = !panelState.explorerOpen"));
+  assert.ok(workspace.includes("toolsDock.hidden = !panelState.toolsOpen"));
+  assert.ok(workspace.includes('app.classList.toggle("ws-left-dock-open", !!panelState.leftMenu)'));
+  assert.ok(workspace.includes('panelState.toggleLeftMenu("explorer", isNarrowViewport())'));
+  assert.ok(workspace.includes("panelState.toolsOpen && name === activeArea"));
+  assert.ok(workspace.includes('setLeftMenu(alreadyOpen ? undefined : "tools")'));
+  assert.ok(workspace.includes("explorerToggle.focus()"));
+  const view = workspace.slice(workspace.indexOf("function reflectPanelVisibility()"), workspace.indexOf("function setLeftMenu("));
+  assert.ok(!view.includes("replaceChildren"));
+  assert.ok(!view.includes("setLeftTab("));
+});
 
-  const leftTabs = workspace.slice(workspace.indexOf('function setLeftTab('), workspace.indexOf('function selectedEntries()'));
-  const explorerView = workspace.slice(workspace.indexOf('function reflectExplorerVisibility()'), workspace.indexOf('function setLeftTab('));
-  assert.ok(leftTabs.includes('ws-scene-pane'));
-  assert.ok(leftTabs.includes('ws-catalog-pane'));
-  assert.ok(!explorerView.includes('replaceChildren'));
-  assert.ok(!explorerView.includes('setLeftTab('));
+test("shared dock width is controlled by layout only, never overridden by the theme", () => {
+  assert.match(layout, /--ws-left-width: 0px;/);
+  assert.match(layout, /\.workspace-app\.ws-left-dock-open\s*\{\s*--ws-left-width: 352px;/);
+  assert.ok(layout.includes(".ws-left-dock[hidden], .ws-left-dock > [hidden] { display: none !important; }"));
+  assert.ok(layout.includes("max-width: 1020px"));
+  assert.ok(!skin.includes("--ws-left-width"));
+  assert.ok(!skin.includes("--ws-right-width"));
+  assert.ok(!skin.includes("ws-explorer-open"));
 });
 
 test("workspace startup references existing static DOM IDs", () => {
