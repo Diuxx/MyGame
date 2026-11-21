@@ -306,9 +306,6 @@ input[type=range] { accent-color:#a4c49e; display:block; width:100%; margin:0 0 
 .ws-side-head strong { font-size: 11px; }
 .ws-side-head button { border: 0; background: transparent; color: #acc3b0; font-size: 20px; }
 .ws-side-head .ws-muted { font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ws-left-tabs { display: flex; gap: 6px; padding: 11px 11px 5px; }
-.ws-left-tabs button { flex: 1; background: #263a2f; border: 1px solid #435949; border-radius: 7px; padding: 8px; color: #c3d6c5; }
-.ws-left-tabs button.is-active { background: #c8dfbe; color: #263c2a; border-color: #c8dfbe; font-weight: 650; }
 .ws-left-pane { flex: 1; min-height: 0; overflow-y: auto; padding: 10px 12px; scrollbar-width: thin; }
 .ws-left-pane[hidden] { display: none !important; }
 .ws-left-pane input[type=search] {
@@ -330,10 +327,18 @@ button.ws-scene-entry:hover { background: #2c4235; }
 .ws-left-footer button { padding: 10px; border: 1px solid #52715a; border-radius: 8px; background: #294434; color: #dcefdc; width: 100%; }
 #ws-catalog-pane #worldEditorCatalog { display: block; }
 #ws-catalog-pane .world-editor-catalog { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.ws-module-tabs { display: flex; gap: 5px; padding: 12px; overflow-x: auto; flex: 0 0 auto; scrollbar-width: thin; }
+.ws-left-tabs, .ws-module-tabs {
+  display: flex; flex-wrap: wrap; gap: 0; padding: 0 10px;
+  flex: 0 0 auto; min-width: 0; border-bottom: 1px solid var(--ws-border);
+}
 .ws-module-tabs[hidden] { display: none !important; }
-.ws-module-tabs button { padding: 8px 11px; border: 1px solid #485f4a; border-radius: 7px; white-space: nowrap; background: #283b2e; color: #d1e2d0; }
-.ws-module-tabs button.is-active { background: #bfd9b6; color: #243727; }
+.ws-left-tabs .nz-tab, .ws-module-tabs .nz-tab {
+  flex: 1 1 auto; min-width: 0; max-width: 100%; min-height: 32px;
+  margin: 0; padding: 7px 5px; border: 0; border-bottom: 2px solid transparent;
+  border-radius: 0; white-space: normal; overflow-wrap: anywhere;
+  font-size: 12px; line-height: 1.3;
+}
+.workspace-app .ws-existing-module .module-close[hidden] { display: none !important; }
 .ws-module-host { min-height: 0; flex: 1; overflow-y: auto; scrollbar-width: thin; }
 .ws-module-host .module-window {
   padding: 12px 14px 22px; border: 0; border-radius: 0; box-shadow: none;
@@ -632,3 +637,14 @@ button.ws-scene-entry:hover { background: #2c4235; }
 .lighting-section .grid-toggle { margin: 8px 0; }
 .lighting-section [hidden] { display: none !important; }
 .lighting-section #lightingLightSelect { min-height: 92px; }
+
+/* Hero inspector uses the same module controls as the left dock. */
+.ws-inspector-body .ws-module-host { overflow: visible; }
+.ws-inspector-body .ws-module-host .module-window { padding: 12px 0 16px; }
+.ws-inspector-body .ws-module-host .module-window + .module-window { border-top: 1px solid var(--ws-border); }
+.ws-hero-summary .ws-hero-model {
+  padding: 9px 0; border: 0; border-radius: 0; backdrop-filter: none;
+}
+.ws-hero-summary .ws-hero-model .module-header[hidden] { display: none !important; }
+.ws-hero-summary p { margin: 4px 0; overflow-wrap: anywhere; }
+#ws-hero-tabs { padding-inline: 0; }

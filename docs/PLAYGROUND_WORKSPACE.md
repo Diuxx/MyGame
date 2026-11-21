@@ -9,7 +9,7 @@ L'interface propose :
 - **Barre supérieure** : map active, sélection de map, chargement, FPS, debug et commutateur **Édition / Tester le jeu**.
 - **Barre d'outils** : sélection, déplacement, rotation, échelle, snapping, rotation par incréments, annuler/rétablir, copier/coller/couper/supprimer et export JSON.
 - **Explorateur gauche** : entrée dédiée dans la barre d'icônes, **fermée par défaut**, activable par clic et refermable par un second clic ou par la croix du panneau. À l'ouverture, on retrouve les onglets **Scène** (hiérarchie et recherche) et **Catalogue** (Prefabs, décors, tuiles, ennemis/cibles). Fermé, il libère sa colonne et agrandit le viewport ; sous 1020 px, il s'affiche en panneau flottant.
-- **Inspecteur droit** : propriétés de l'objet sélectionné, indépendantes de la navigation entre modules.
+- **Inspecteur droit** : configuration du héros par défaut, ou propriétés de la sélection ; indépendant de la navigation entre outils globaux sur desktop.
 - **Panneau Outils global** : modules classés par domaine, accessible depuis la barre supérieure ou la navigation latérale. Il peut être fermé sans effacer son contexte.
 - **Barre d'état** : map, nombre d'éléments sélectionnés et mode actif.
 
@@ -28,8 +28,7 @@ La seule source de vérité est le contrôle historique `worldEditorEnabled`. Le
 | Espace | Modules déjà existants |
 | --- | --- |
 | **Monde** | Éditeur de monde, Éclairage, Maps 3D modulaires, Caméra |
-| **Héros** | Animations de déplacement, Animations d'action, Modèle chargé, Commandes |
-| **Combat** | Target Lock, Collisions et hitboxes, Zone d'attaque / Portée |
+| **Inspecteur · Héros** | Résumé du modèle chargé, onglet Animations (déplacements et actions), Combat (ciblage, collisions et hitboxes, portée), Commandes |
 | **Ennemis** | Gestion des ennemis |
 | **Effets** | Floating Text |
 | **Debug** | Commandes existantes d'affichage de hitbox du héros, hurtboxes/colliders ennemis, zone d'attaque, colliders de map, aggro, spawns et grille |
@@ -39,8 +38,8 @@ En mode test, le bouton **Debug** ouvre un petit panneau flottant contenant les 
 ## Inspecteur de sélection et outils globaux (Lot 2)
 
 - L'inspecteur de droite contient les nœuds d'origine `worldEditorSelection`, `worldEditorFields` et les contrôles de hauteur. Les événements de l'éditeur, la sélection multiple et les gizmos Babylon restent inchangés.
-- Sans objet sélectionné, l'inspecteur présente un état vide. Après une suppression ou un changement de map, le World Editor invalide la sélection et l'inspecteur se synchronise.
-- Le panneau latéral gauche est partagé entre **Explorateur** et **Outils** : un seul menu peut être ouvert à la fois. Cliquer sur un autre domaine remplace son contenu ; recliquer sur le domaine actif ou utiliser sa croix le ferme. Sa largeur est réservée uniquement lorsqu'il est visible sur desktop. Les sections Éditeur, Éclairage, Maps, Caméra, Héros, Combat, Ennemis, Effets et Debug y conservent leurs contrôles et leurs listeners.
+- Sans objet sélectionné, l'inspecteur présente la configuration du héros, avec les informations du modèle au-dessus des onglets. L'onglet choisi est mémorisé quand la sélection change. Après une suppression ou un changement de map, le World Editor invalide la sélection et l'inspecteur se synchronise.
+- Le panneau latéral gauche est partagé entre **Explorateur** et **Outils** : un seul menu peut être ouvert à la fois. Cliquer sur un autre domaine remplace son contenu ; recliquer sur le domaine actif ou utiliser sa croix le ferme. Sa largeur est réservée uniquement lorsqu'il est visible sur desktop. Les sections Éditeur, Éclairage, Maps, Caméra, Ennemis, Effets et Debug y conservent leurs contrôles et leurs listeners.
 - Sur desktop, le panneau gauche et l'inspecteur droit peuvent être ouverts simultanément. À 760 px ou moins, le panneau gauche et l'inspecteur mobile sont mutuellement exclusifs.
 - Fermer les outils n'efface pas le dernier module affiché. Le bouton **Outils** ou la navigation latérale le rouvre.
 - L'outil Éclairage conserve sa sélection de lumière locale ; la sélection de Prefab/ennemi/interactions demeure gérée par le World Editor. Les ennemis temporaires de test sont toujours gérés par leurs propres contrôles.
@@ -107,10 +106,10 @@ La recherche de l'explorateur filtre les noms et identifiants. L'onglet Catalogu
 ## Navigation et conservation du contexte
 
 - Chaque espace conserve son dernier module ouvert durant la session du Playground. Cliquer à nouveau sur l'espace actif ne change pas de module.
-- Fermer un panneau ne réinitialise pas son dernier choix. Le même onglet peut le rouvrir, y compris dans les espaces à module unique.
+- Fermer un panneau ne réinitialise pas son dernier choix. Le même domaine peut le rouvrir ; une catégorie à module unique n'affiche pas d'onglet redondant.
 - Sélectionner un objet dans la scène ou dans l'explorateur n'ouvre plus automatiquement Monde → Éditeur. Le bouton **Propriétés** de la barre d'état ouvre l'inspecteur seul, sans changer le module global actif.
 - Le mode **Tester le jeu** masque les outils d'édition sans réinitialiser la navigation. Le retour en édition restaure l'espace et le module précédents.
-- Les raccourcis d'accès aux maps, aux blocs réutilisables et au debug continuent d'ouvrir explicitement leurs outils respectifs.
+- Les raccourcis de Debug vers collisions et attaques désélectionnent explicitement l'objet courant et ouvrent l'onglet Combat dans l'inspecteur. Les raccourcis maps et blocs modulaires conservent leur destination.
 
 **Ne pas recopier les inputs dans une nouvelle interface** : les écouteurs, valeurs et états sont conservés parce que les nœuds d'origine changent uniquement de parent.
 
@@ -144,3 +143,7 @@ Ces tests visuels doivent être exécutés dans un navigateur pour être déclar
 - Les contrôles de debug de la scène sont regroupés, sans fusionner leurs règles métier distinctes.
 
 Le présent document est modifiable. Les références `AGENTS.md`, `docs/PROJECT.md` et `docs/PROJETCT.md` sont immuables et n'ont pas été modifiées.
+
+## Onglets et fermeture des panneaux
+
+Les trois zones à onglets (Explorateur, Outils et inspecteur Héros) utilisent les classes Nicolabz `nz-tab-list` / `nz-tab`, des rôles ARIA tablist/tab/tabpanel, une sélection active soulignée et la navigation clavier gauche/droite/Home/End. Les libellés peuvent revenir à la ligne sans barre de défilement horizontale. Les croix des anciens modules restent dans le DOM mais sont masquées : seul le panneau principal propose une fermeture. Les contrôles de configuration et les fichiers JSON existants restent inchangés.

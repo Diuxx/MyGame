@@ -831,6 +831,7 @@ export function bindWorldEditor(
 
   return {
     get enabled() { return enabled.checked; },
+    clearSelection,
     getSelection(): readonly { kind: SelectionKind; id: string }[] {
       return selectedItems.map(({ kind, id }) => ({ kind, id }));
     },

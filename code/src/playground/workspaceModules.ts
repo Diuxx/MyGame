@@ -13,23 +13,6 @@ export const WORKSPACE_AREAS = [
     ],
   },
   {
-    id: "hero", label: "Héros", symbol: "♙",
-    modules: [
-      { id: "movementModule", label: "Déplacements" },
-      { id: "actionsModule", label: "Actions" },
-      { id: "modelModule", label: "Modèle 3D" },
-      { id: "controlsModule", label: "Commandes" },
-    ],
-  },
-  {
-    id: "combat", label: "Combat", symbol: "⚔",
-    modules: [
-      { id: "targetLockModule", label: "Ciblage" },
-      { id: "collisionsModule", label: "Collisions" },
-      { id: "attackHitboxModule", label: "Attaques et portée" },
-    ],
-  },
-  {
     id: "enemies", label: "Ennemis", symbol: "♜",
     modules: [{ id: "enemiesModule", label: "Gestion des ennemis" }],
   },
@@ -43,6 +26,27 @@ export const WORKSPACE_AREAS = [
 export type WorkspaceArea = typeof WORKSPACE_AREAS[number]["id"];
 export type WorkspaceModuleId = typeof WORKSPACE_AREAS[number]["modules"][number]["id"];
 
+/** The hero is the default inspector context, not a global tool area. */
+export const HERO_TABS = [
+  { id: "animations", label: "Animations", modules: ["movementModule", "actionsModule"] },
+  { id: "combat", label: "Combat", modules: ["targetLockModule", "collisionsModule", "attackHitboxModule"] },
+  { id: "commands", label: "Commandes", modules: ["controlsModule"] },
+] as const;
+export type HeroTab = typeof HERO_TABS[number]["id"];
+export type HeroModuleId = "modelModule" | typeof HERO_TABS[number]["modules"][number];
+export type PlaygroundModuleId = WorkspaceModuleId | HeroModuleId;
+
+export function createHeroInspectorState() {
+  let tab: HeroTab = "animations";
+  let hasSelection = false;
+  return {
+    get tab(): HeroTab { return tab; },
+    get showHero(): boolean { return !hasSelection; },
+    setSelection(count: number): void { hasSelection = count > 0; },
+    selectTab(next: HeroTab): void { tab = next; },
+  };
+}
+
 export function modulesForArea(area: WorkspaceArea): readonly {
   readonly id: WorkspaceModuleId;
   readonly label: string;
@@ -50,8 +54,12 @@ export function modulesForArea(area: WorkspaceArea): readonly {
   return WORKSPACE_AREAS.find((entry) => entry.id === area)?.modules ?? [];
 }
 
-export function allWorkspaceModuleIds(): WorkspaceModuleId[] {
-  return WORKSPACE_AREAS.flatMap((area) => area.modules.map((module) => module.id));
+export function allWorkspaceModuleIds(): PlaygroundModuleId[] {
+  return [
+    ...WORKSPACE_AREAS.flatMap((area) => area.modules.map((module) => module.id)),
+    "modelModule",
+    ...HERO_TABS.flatMap<HeroModuleId>((tab) => tab.modules),
+  ];
 }
 
 /**

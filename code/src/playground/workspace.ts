@@ -5,14 +5,14 @@ import type { MapDefinition } from "../world/maps/types";
 import { requireElement } from "../ui/dom";
 import { createNicolabzIcon, setNicolabzButtonIcon, type NicolabzIconName } from "./nicolabzIcons";
 import type { bindWorldEditor } from "./worldEditor";
-import { WORKSPACE_AREAS, allWorkspaceModuleIds, createWorkspaceNavigation, createWorkspacePanelState, modulesForArea, setWorkspaceEditingState, type WorkspaceArea, type WorkspaceLeftMenu, type WorkspaceModuleId } from "./workspaceModules";
+import { WORKSPACE_AREAS, HERO_TABS, allWorkspaceModuleIds, createHeroInspectorState, createWorkspaceNavigation, createWorkspacePanelState, modulesForArea, setWorkspaceEditingState, type HeroTab, type PlaygroundModuleId, type WorkspaceArea, type WorkspaceLeftMenu, type WorkspaceModuleId } from "./workspaceModules";
 
 type WorldEditor = ReturnType<typeof bindWorldEditor>;
 type MapSystem = ReturnType<typeof createMapSystem>;
 type SelectionKind = "prefab" | "object" | "enemy" | "interaction";
 
 const AREA_ICONS: Record<WorkspaceArea, NicolabzIconName> = {
-  world: "boxes", hero: "user", combat: "shield",
+  world: "boxes",
   enemies: "users-round", effects: "bell", debug: "bug",
 };
 
@@ -115,12 +115,12 @@ export function bindPlaygroundWorkspace(
   const left = surface("section", "ws-left", "ws-left",
     '<div class="ws-side-head"><strong>EXPLORATEUR</strong><span id="ws-map-heading" class="ws-muted">Map active</span>' +
     '<button id="ws-explorer-close" type="button" aria-label="Fermer l’explorateur" title="Fermer l’explorateur">×</button></div>' +
-    '<div class="ws-left-tabs" role="group" aria-label="Exploration de la scène">' +
-    '<button id="ws-scene-tab" class="is-active" type="button" aria-pressed="true">Scène</button>' +
-    '<button id="ws-catalog-tab" type="button" aria-pressed="false">Catalogue</button></div>' +
-    '<div id="ws-scene-pane" class="ws-left-pane"><input id="ws-scene-search" type="search" placeholder="Rechercher un élément…" aria-label="Rechercher un objet dans la scène" />' +
+    '<div id="ws-explorer-tabs" class="ws-left-tabs nz-tab-list" role="tablist" aria-label="Exploration de la scène">' +
+    '<button id="ws-scene-tab" class="nz-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="ws-scene-pane">Scène</button>' +
+    '<button id="ws-catalog-tab" class="nz-tab" type="button" role="tab" aria-selected="false" aria-controls="ws-catalog-pane" tabindex="-1">Catalogue</button></div>' +
+    '<div id="ws-scene-pane" class="ws-left-pane" role="tabpanel" aria-labelledby="ws-scene-tab"><input id="ws-scene-search" type="search" placeholder="Rechercher un élément…" aria-label="Rechercher un objet dans la scène" />' +
     '<div id="ws-scene-tree"></div></div>' +
-    '<div id="ws-catalog-pane" class="ws-left-pane" hidden></div>' +
+    '<div id="ws-catalog-pane" class="ws-left-pane" role="tabpanel" aria-labelledby="ws-catalog-tab" hidden></div>' +
     '<div class="ws-left-footer"><div id="ws-left-footer-map"></div>' +
     '<button id="ws-open-whitebox" type="button">▣ Blocs modulaires</button>' +
     '<button id="ws-open-maps" type="button">▦ Gestion des maps</button></div>');
@@ -129,12 +129,15 @@ export function bindPlaygroundWorkspace(
   const right = surface("aside", "ws-right", "ws-right",
     '<div class="ws-side-head"><strong id="ws-inspector-title">INSPECTEUR</strong><button id="ws-inspector-toggle" type="button" title="Masquer l’inspecteur" aria-label="Masquer l’inspecteur">◧</button></div>' +
     '<div id="ws-inspector-body" class="ws-inspector-body">' +
-    '<p id="ws-inspector-empty" class="ws-inspector-empty">Sélectionne un objet dans la scène ou dans l’explorateur pour afficher ses propriétés.</p></div>');
-  right.setAttribute("aria-label", "Propriétés de la sélection");
+    '<section id="ws-hero-inspector" aria-label="Configuration du héros">' +
+    '<div id="ws-hero-summary" class="ws-hero-summary"></div>' +
+    '<div id="ws-hero-tabs" class="ws-module-tabs nz-tab-list" role="tablist" aria-label="Configuration du héros"></div>' +
+    '<div id="ws-hero-panels" class="ws-module-host"></div></section></div>');
+  right.setAttribute("aria-label", "Inspecteur contextuel");
   const toolsDock = surface("section", "ws-tools", "ws-tools",
     '<div class="ws-side-head"><strong id="ws-tools-title">OUTILS · MONDE</strong>' +
     '<button id="ws-tools-close" type="button" aria-label="Fermer les outils">×</button></div>' +
-    '<nav id="ws-module-tabs" class="ws-module-tabs" aria-label="Outils de la catégorie"></nav>' +
+    '<nav id="ws-module-tabs" class="ws-module-tabs nz-tab-list" role="tablist" aria-label="Outils de la catégorie"></nav>' +
     '<div id="ws-module-host" class="ws-module-host"></div>' +
     '<section id="ws-debug-panel" class="ws-debug-panel" hidden><h3>Visualisation et diagnostic</h3>' +
     '<p>Les affichages rapides réutilisent les contrôles d’origine.</p><div id="ws-debug-controls" class="ws-debug-controls"></div>' +
@@ -173,7 +176,7 @@ export function bindPlaygroundWorkspace(
     ["ws-tools-toggle", "settings", "Outils"],
     ["ws-debug-toggle", "bug", "Debug"],
     ["ws-inspector-open", "square-pen", "Inspecteur"],
-    ["ws-inspector-toggle", "square-pen"],
+    ["ws-inspector-toggle", "x"],
     ["ws-tools-close", "x"],
     ["ws-debug-close", "x"],
     ["ws-edit-mode", "pencil", "Édition"],
@@ -186,7 +189,7 @@ export function bindPlaygroundWorkspace(
   for (const id of [
     "ws-explorer-toggle", "ws-tools-toggle", "ws-debug-toggle",
     "ws-inspector-open", "ws-edit-mode", "ws-test-mode",
-    "ws-scene-tab", "ws-catalog-tab", "ws-open-maps",
+    "ws-open-maps",
   ]) {
     requireElement<HTMLButtonElement>(id).classList.add("nz-button", "nz-button-secondary");
   }
@@ -208,26 +211,95 @@ export function bindPlaygroundWorkspace(
   const navigation = createWorkspaceNavigation();
   const panelState = createWorkspacePanelState();
   const explorerToggle = requireElement<HTMLButtonElement>("ws-explorer-toggle");
-  const modules = new Map<WorkspaceModuleId, HTMLElement>();
+  const modules = new Map<PlaygroundModuleId, HTMLElement>();
+  const heroState = createHeroInspectorState();
   const moduleHost = requireElement<HTMLElement>("ws-module-host");
   for (const id of allWorkspaceModuleIds()) {
     const panel = requireElement<HTMLElement>(id);
     modules.set(id, panel);
     moduleHost.append(panel);
     panel.classList.add("ws-existing-module", "nz-form-panel");
+    // Each enclosing dock owns its single close action. Keep legacy controls
+    // in the DOM for compatibility, but remove them from the visible interface.
     const closeIconButton = panel.querySelector<HTMLButtonElement>(".module-close");
-    if (closeIconButton) setNicolabzButtonIcon(closeIconButton, "x");
+    if (closeIconButton) closeIconButton.hidden = true;
     panel.hidden = true;
-    const closeModule = () => {
-      // Closing an editor tool does not forget the last module for this area.
-      if (navigation.module === id) closeTools();
-    };
-    panel.querySelector<HTMLButtonElement>(".module-close")?.addEventListener("click", closeModule, { signal });
-    panel.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && !event.defaultPrevented &&
-        !(event.target instanceof HTMLSelectElement)) closeModule();
+  }
+
+  const heroInspector = requireElement("ws-hero-inspector");
+  const summary = modules.get("modelModule")!;
+  summary.classList.add("ws-hero-model");
+  summary.querySelector<HTMLElement>(".module-header")!.hidden = true;
+  requireElement("ws-hero-summary").append(summary);
+  summary.hidden = false;
+
+  const heroTabs = requireElement("ws-hero-tabs");
+  const heroPanels = new Map<HeroTab, HTMLElement>();
+  for (const tab of HERO_TABS) {
+    const panel = document.createElement("section");
+    panel.id = "ws-hero-panel-" + tab.id;
+    panel.setAttribute("role", "tabpanel");
+    panel.setAttribute("aria-labelledby", "ws-hero-tab-" + tab.id);
+    for (const id of tab.modules) {
+      const module = modules.get(id)!;
+      panel.append(module);
+      module.hidden = false;
+    }
+    requireElement("ws-hero-panels").append(panel);
+    heroPanels.set(tab.id, panel);
+    const button = document.createElement("button");
+    button.id = "ws-hero-tab-" + tab.id;
+    button.type = "button";
+    button.className = "nz-tab";
+    button.setAttribute("role", "tab");
+    button.setAttribute("aria-controls", panel.id);
+    button.textContent = tab.label;
+    button.addEventListener("click", () => {
+      heroState.selectTab(tab.id);
+      renderHeroTabs();
+    }, { signal });
+    heroTabs.append(button);
+  }
+
+  function renderHeroTabs(): void {
+    for (const [tab, panel] of heroPanels) {
+      const active = heroState.tab === tab;
+      panel.hidden = !active;
+      reflectTab(requireElement<HTMLButtonElement>("ws-hero-tab-" + tab), active);
+    }
+  }
+
+  // Native tab buttons support clicks and Enter/Space; add roving keyboard focus
+  // for arrows, Home and End, independent of the contents of each tab.
+  function reflectTab(button: HTMLButtonElement, active: boolean): void {
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-selected", String(active));
+    button.tabIndex = active ? 0 : -1;
+  }
+
+  function bindTabKeyboard(host: HTMLElement): void {
+    host.addEventListener("keydown", (event) => {
+      if (!(event.target instanceof HTMLButtonElement) || event.target.getAttribute("role") !== "tab") return;
+      const tabs = Array.from(host.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+      const index = tabs.indexOf(event.target);
+      if (index < 0 || tabs.length === 0) return;
+      let next: number;
+      switch (event.key) {
+        case "ArrowRight": next = (index + 1) % tabs.length; break;
+        case "ArrowLeft": next = (index + tabs.length - 1) % tabs.length; break;
+        case "Home": next = 0; break;
+        case "End": next = tabs.length - 1; break;
+        default: return;
+      }
+      event.preventDefault();
+      tabs[next].click();
+      tabs[next].focus();
     }, { signal });
   }
+  for (const host of [heroTabs, requireElement("ws-explorer-tabs"), requireElement("ws-module-tabs")]) {
+    bindTabKeyboard(host);
+  }
+  renderHeroTabs();
 
   const editInput = requireElement<HTMLInputElement>("worldEditorEnabled");
   const oldEditLabel = editInput.closest("label");
@@ -326,7 +398,12 @@ export function bindPlaygroundWorkspace(
         const button = document.createElement("button");
         button.type = "button";
         button.dataset.workspaceModule = item.id;
-        button.classList.add("nz-button", "nz-button-secondary");
+        button.className = "nz-tab";
+        button.id = "ws-tab-" + item.id;
+        button.setAttribute("role", "tab");
+        const panel = modules.get(item.id)!;
+        panel.setAttribute("role", "tabpanel");
+        panel.setAttribute("aria-labelledby", button.id);
         button.textContent = item.label;
         button.setAttribute("aria-controls", item.id);
         button.addEventListener("click", () => showModule(item.id), { signal });
@@ -335,12 +412,16 @@ export function bindPlaygroundWorkspace(
     }
     for (const button of Array.from(tabs.querySelectorAll<HTMLButtonElement>("[data-workspace-module]"))) {
       const selected = navigation.module === button.dataset.workspaceModule;
-      button.classList.toggle("is-active", selected);
-      button.setAttribute("aria-pressed", String(selected));
-      button.setAttribute("aria-expanded", String(selected));
+      reflectTab(button, selected);
     }
-    // A single-module area still needs its tab to reopen a closed panel.
-    tabs.hidden = items.length === 0;
+    tabs.hidden = items.length <= 1;
+    if (items.length === 1) {
+      // A hidden single-tab list must not provide the visible panel's name.
+      const panel = modules.get(items[0].id)!;
+      panel.removeAttribute("role");
+      const heading = panel.querySelector("h2[id]");
+      if (heading) panel.setAttribute("aria-labelledby", heading.id);
+    }
   }
 
   function renderNavigation(): void {
@@ -359,7 +440,10 @@ export function bindPlaygroundWorkspace(
     reflectPanelVisibility();
     const isDebug = activeArea === "debug";
     moduleHost.hidden = isDebug || !activeModule;
-    for (const [id, panel] of modules) panel.hidden = isDebug || activeModule !== id;
+    // Hero modules live in the inspector and are governed by its own tab.
+    for (const [id, panel] of modules) {
+      if (panel.parentElement === moduleHost) panel.hidden = isDebug || activeModule !== id;
+    }
     requireElement("ws-debug-panel").hidden = !isDebug;
     if (isDebug) {
       requireElement("ws-debug-controls").append(...DEBUG_CONTROLS.map((id) =>
@@ -424,8 +508,7 @@ export function bindPlaygroundWorkspace(
     requireElement<HTMLElement>("ws-catalog-pane").hidden = tab !== "catalog";
     for (const [id, value] of [["ws-scene-tab", "scene"], ["ws-catalog-tab", "catalog"]]) {
       const button = requireElement<HTMLButtonElement>(id);
-      button.classList.toggle("is-active", tab === value);
-      button.setAttribute("aria-pressed", String(tab === value));
+      reflectTab(button, tab === value);
     }
     if (tab === "scene") renderSceneTree();
   }
@@ -471,8 +554,11 @@ export function bindPlaygroundWorkspace(
     requireElement("ws-status-selection").textContent = selectionCount
       ? selectionCount + " sélection(s)" : "Aucune sélection";
     requireElement<HTMLButtonElement>("ws-selection-properties").hidden = selectionCount === 0;
-    contextInspector.hidden = selectionCount === 0;
-    requireElement("ws-inspector-empty").hidden = selectionCount > 0;
+    heroState.setSelection(selectionCount);
+    contextInspector.hidden = heroState.showHero;
+    heroInspector.hidden = !heroState.showHero;
+    requireElement("ws-inspector-title").textContent = heroState.showHero ? "INSPECTEUR · HÉROS" : "INSPECTEUR · SÉLECTION";
+    renderHeroTabs();
     if (!map) {
       tree.textContent = "Aucune map chargée.";
       return;
@@ -567,15 +653,23 @@ export function bindPlaygroundWorkspace(
     filter.dispatchEvent(new Event("change"));
     filter.focus();
   }, { signal });
-  for (const [id, area, module] of [
-    ["ws-open-collisions", "combat", "collisionsModule"],
-    ["ws-open-attacks", "combat", "attackHitboxModule"],
-    ["ws-open-map-debug", "world", "mapsModule"],
+  for (const [id, module] of [
+    ["ws-open-collisions", "collisionsModule"],
+    ["ws-open-attacks", "attackHitboxModule"],
   ] as const) {
     requireElement(id).addEventListener("click", () => {
-      openModuleInArea(area, module);
+      // This explicit shortcut requests the hero context, not object properties.
+      editor.clearSelection();
+      heroState.selectTab("combat");
+      panelState.setInspectorOpen(true, isNarrowViewport());
+      renderSceneTree();
+      renderNavigation();
+      modules.get(module)?.scrollIntoView({ block: "nearest" });
     }, { signal });
   }
+  requireElement("ws-open-map-debug").addEventListener("click", () => {
+    openModuleInArea("world", "mapsModule");
+  }, { signal });
   const inspectorToggle = requireElement<HTMLButtonElement>("ws-inspector-toggle");
   const inspectorOpen = requireElement<HTMLButtonElement>("ws-inspector-open");
   function toggleInspector(): void {
