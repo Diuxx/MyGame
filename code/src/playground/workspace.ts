@@ -4,7 +4,7 @@ import type { createMapSystem } from "../world/maps/mapSystem";
 import type { MapDefinition } from "../world/maps/types";
 import { requireElement } from "../ui/dom";
 import type { bindWorldEditor } from "./worldEditor";
-import { WORKSPACE_AREAS, allWorkspaceModuleIds, modulesForArea, setWorkspaceEditingState, type WorkspaceArea, type WorkspaceModuleId } from "./workspaceModules";
+import { WORKSPACE_AREAS, allWorkspaceModuleIds, createWorkspaceNavigation, modulesForArea, setWorkspaceEditingState, type WorkspaceArea, type WorkspaceModuleId } from "./workspaceModules";
 
 type WorldEditor = ReturnType<typeof bindWorldEditor>;
 type MapSystem = ReturnType<typeof createMapSystem>;
@@ -128,7 +128,9 @@ export function bindPlaygroundWorkspace(
   right.setAttribute("aria-label", "Inspecteur et paramètres du Playground");
   const footer = surface("footer", "ws-statusbar", "ws-statusbar",
     '<span id="ws-status-map">Aucune map</span><span class="ws-status-separator">·</span>' +
-    '<span id="ws-status-selection">Aucune sélection</span><span class="ws-status-grow"></span>' +
+    '<span id="ws-status-selection">Aucune sélection</span>' +
+    '<button id="ws-selection-properties" type="button" aria-label="Afficher les propriétés de la sélection" hidden>Propriétés</button>' +
+    '<span class="ws-status-grow"></span>' +
     '<span id="ws-map-feedback" role="status" aria-live="polite"></span>' +
     '<span id="ws-status-mode">Mode édition</span><span class="ws-status-separator">·</span>' +
     '<span>F2 : changer de mode</span>');
@@ -147,6 +149,7 @@ export function bindPlaygroundWorkspace(
   legacySidebar.hidden = true;
   legacyDock.hidden = true;
 
+  const navigation = createWorkspaceNavigation();
   const modules = new Map<WorkspaceModuleId, HTMLElement>();
   const moduleHost = requireElement<HTMLElement>("ws-module-host");
   for (const id of allWorkspaceModuleIds()) {
@@ -156,9 +159,11 @@ export function bindPlaygroundWorkspace(
     panel.classList.add("ws-existing-module");
     panel.hidden = true;
     const closeModule = () => {
-      panel.hidden = true;
-      activeModule = undefined;
-      updateTabs();
+      if (!navigation.closeModule(id)) return;
+      renderNavigation();
+      // Return focus to the launcher after hiding the focused module.
+      requireElement("ws-module-tabs")
+        .querySelector<HTMLButtonElement>(`[data-workspace-module="${id}"]`)?.focus();
     };
     panel.querySelector<HTMLButtonElement>(".module-close")?.addEventListener("click", closeModule, { signal });
     panel.addEventListener("keydown", (event) => {
@@ -230,8 +235,6 @@ export function bindPlaygroundWorkspace(
     debugControls.append(label);
   }
 
-  let activeArea: WorkspaceArea = "world";
-  let activeModule: WorkspaceModuleId | undefined;
   const expandedGroups = new Set(["Architecture", "Mobilier", "Décors", "Ennemis", "Terrain", "Interactions", "architecture", "furniture", "decoration", "entities"]);
 
   const areaButtons = new Map<WorkspaceArea, HTMLButtonElement>();
@@ -251,51 +254,69 @@ export function bindPlaygroundWorkspace(
 
   function updateTabs(): void {
     const tabs = requireElement<HTMLElement>("ws-module-tabs");
-    tabs.replaceChildren();
-    const items = modulesForArea(activeArea);
-    for (const item of items) {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.textContent = item.label;
-      button.classList.toggle("is-active", activeModule === item.id);
-      button.setAttribute("aria-pressed", String(activeModule === item.id));
-      button.addEventListener("click", () => showModule(item.id), { signal });
-      tabs.append(button);
+    const items = modulesForArea(navigation.area);
+    const existing = Array.from(tabs.querySelectorAll<HTMLButtonElement>("[data-workspace-module]"));
+    const sameArea = existing.length === items.length &&
+      existing.every((button, index) => button.dataset.workspaceModule === items[index].id);
+    if (!sameArea) {
+      tabs.replaceChildren();
+      for (const item of items) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.dataset.workspaceModule = item.id;
+        button.textContent = item.label;
+        button.setAttribute("aria-controls", item.id);
+        button.addEventListener("click", () => showModule(item.id), { signal });
+        tabs.append(button);
+      }
     }
-    tabs.hidden = items.length <= 1;
+    for (const button of tabs.querySelectorAll<HTMLButtonElement>("[data-workspace-module]")) {
+      const selected = navigation.module === button.dataset.workspaceModule;
+      button.classList.toggle("is-active", selected);
+      button.setAttribute("aria-pressed", String(selected));
+      button.setAttribute("aria-expanded", String(selected));
+    }
+    // A single-module area still needs its tab to reopen a closed panel.
+    tabs.hidden = items.length === 0;
   }
 
-  function showModule(id: WorkspaceModuleId): void {
-    moduleHost.hidden = false;
-    activeModule = id;
-    for (const [name, panel] of modules) panel.hidden = name !== id;
-    requireElement("ws-debug-panel").hidden = true;
-    const active = modules.get(id);
-    if (active) active.hidden = false;
-    updateTabs();
-  }
+  function renderNavigation(): void {
+    const activeArea = navigation.area;
+    const activeModule = navigation.module;
 
-  function changeArea(area: WorkspaceArea): void {
-    activeArea = area;
     for (const [name, button] of areaButtons) {
-      const selected = name === area;
+      const selected = name === activeArea;
       button.classList.toggle("is-active", selected);
       button.setAttribute("aria-current", selected ? "page" : "false");
     }
     requireElement("ws-inspector-title").textContent =
-      WORKSPACE_AREAS.find((item) => item.id === area)?.label.toUpperCase() ?? "INSPECTEUR";
-    if (area === "debug") {
-      moduleHost.hidden = true;
-      activeModule = undefined;
-      for (const panel of modules.values()) panel.hidden = true;
-      requireElement("ws-debug-panel").hidden = false;
+      WORKSPACE_AREAS.find((item) => item.id === activeArea)?.label.toUpperCase() ?? "INSPECTEUR";
+
+    const isDebug = activeArea === "debug";
+    moduleHost.hidden = isDebug || !activeModule;
+    for (const [id, panel] of modules) panel.hidden = isDebug || activeModule !== id;
+    requireElement("ws-debug-panel").hidden = !isDebug;
+    if (isDebug) {
       requireElement("ws-debug-controls").append(...DEBUG_CONTROLS.map((id) =>
         requireElement<HTMLInputElement>(id).closest("label")!));
-      updateTabs();
-      return;
     }
-    const first = modulesForArea(area)[0];
-    if (first) showModule(first.id);
+    requireElement<HTMLButtonElement>("ws-debug-toggle")
+      .setAttribute("aria-pressed", String(isDebug && editInput.checked));
+    updateTabs();
+  }
+
+  function showModule(id: WorkspaceModuleId): void {
+    if (navigation.showModule(id)) renderNavigation();
+  }
+
+  function changeArea(area: WorkspaceArea): void {
+    if (navigation.changeArea(area)) renderNavigation();
+  }
+
+  function openModuleInArea(area: WorkspaceArea, module: WorkspaceModuleId): void {
+    navigation.changeArea(area);
+    navigation.showModule(module);
+    renderNavigation();
   }
 
   function setLeftTab(tab: "scene" | "catalog"): void {
@@ -346,8 +367,10 @@ export function bindPlaygroundWorkspace(
     requireElement("ws-status-map").textContent = map?.id ?? "Aucune map";
     requireElement("ws-left-footer-map").textContent = map
       ? map.name + " · " + map.id : "Aucune map active";
-    requireElement("ws-status-selection").textContent = selectedEntries().length
-      ? selectedEntries().length + " sélection(s)" : "Aucune sélection";
+    const selectionCount = selectedEntries().length;
+    requireElement("ws-status-selection").textContent = selectionCount
+      ? selectionCount + " sélection(s)" : "Aucune sélection";
+    requireElement<HTMLButtonElement>("ws-selection-properties").hidden = selectionCount === 0;
     if (!map) {
       tree.textContent = "Aucune map chargée.";
       return;
@@ -356,8 +379,6 @@ export function bindPlaygroundWorkspace(
     const onSelect = (kind: SelectionKind, id: string, additive: boolean) => {
       if (!editor.enabled) setEditing(true);
       editor.selectObject(kind, id, additive);
-      changeArea("world");
-      showModule("worldEditorModule");
       renderSceneTree();
     };
     tree.replaceChildren(...groups.map(({ name, entries }) => ({
@@ -369,8 +390,8 @@ export function bindPlaygroundWorkspace(
   }
 
   function setEditing(editing: boolean): void {
-    setWorkspaceEditingState(editInput, editing);
-    reflectMode();
+    // The original change event updates the UI; only refresh manually for a no-op.
+    if (!setWorkspaceEditingState(editInput, editing)) reflectMode();
   }
 
   function reflectMode(): void {
@@ -382,6 +403,8 @@ export function bindPlaygroundWorkspace(
       button.classList.toggle("is-active", active);
     }
     requireElement("ws-status-mode").textContent = editing ? "Mode édition" : "Test du héros";
+    requireElement<HTMLButtonElement>("ws-debug-toggle")
+      .setAttribute("aria-pressed", String(editing && navigation.area === "debug"));
     if (editing) {
       closeDebugDrawer();
       stage.classList.remove("ws-testing");
@@ -418,13 +441,14 @@ export function bindPlaygroundWorkspace(
   requireElement("ws-scene-tab").addEventListener("click", () => setLeftTab("scene"), { signal });
   requireElement("ws-catalog-tab").addEventListener("click", () => setLeftTab("catalog"), { signal });
   requireElement("ws-scene-search").addEventListener("input", renderSceneTree, { signal });
+  requireElement("ws-selection-properties").addEventListener("click", () => {
+    if (selectedEntries().length > 0) openModuleInArea("world", "worldEditorModule");
+  }, { signal });
   requireElement("ws-open-maps").addEventListener("click", () => {
-    changeArea("world");
-    showModule("mapsModule");
+    openModuleInArea("world", "mapsModule");
   }, { signal });
   requireElement("ws-open-whitebox").addEventListener("click", () => {
-    changeArea("world");
-    showModule("worldEditorModule");
+    openModuleInArea("world", "worldEditorModule");
     setLeftTab("catalog");
     prefabGroup?.scrollIntoView({ block: "nearest" });
   }, { signal });
@@ -434,8 +458,7 @@ export function bindPlaygroundWorkspace(
     ["ws-open-map-debug", "world", "mapsModule"],
   ] as const) {
     requireElement(id).addEventListener("click", () => {
-      changeArea(area);
-      showModule(module);
+      openModuleInArea(area, module);
     }, { signal });
   }
   const inspectorToggle = requireElement<HTMLButtonElement>("ws-inspector-toggle");
@@ -486,14 +509,7 @@ export function bindPlaygroundWorkspace(
   for (const id of ["worldEditorStatus", "mapActiveId"]) {
     modelUpdates.observe(requireElement(id), { childList: true, subtree: true, characterData: true });
   }
-  const selectionUpdates = new MutationObserver(() => {
-    renderSceneTree();
-    if (editor.enabled && editor.getSelection().length > 0 &&
-      (activeArea !== "world" || activeModule !== "worldEditorModule")) {
-      changeArea("world");
-      showModule("worldEditorModule");
-    }
-  });
+  const selectionUpdates = new MutationObserver(renderSceneTree);
   selectionUpdates.observe(requireElement("worldEditorSelection"),
     { childList: true, subtree: true, characterData: true });
   const viewportResize = new ResizeObserver(() => scene.getEngine().resize());
@@ -507,7 +523,7 @@ export function bindPlaygroundWorkspace(
     setEditing(!editInput.checked);
   }, { signal });
 
-  changeArea("world");
+  renderNavigation();
   setLeftTab("scene");
   reflectTool();
   setEditing(true);
