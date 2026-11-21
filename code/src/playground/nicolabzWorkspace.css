@@ -1,0 +1,304 @@
+/* Nicolabz is the visual source of truth for the Playground only.
+   Load after style.css; do not restyle the Babylon canvas or the gameplay HUD. */
+.app.workspace-app {
+  --ws-left-width: 266px;
+  --ws-right-width: 306px;
+  --ws-border: var(--color-border);
+  --ws-text-muted: var(--color-text-secondary);
+  --ws-selected: var(--color-surface-muted);
+  background: var(--color-background);
+  color: var(--color-text);
+  font-size: 12px;
+  color-scheme: light;
+}
+
+.workspace-app button,
+.workspace-app select,
+.workspace-app input,
+.workspace-app textarea { font-family: inherit; }
+.workspace-app button:focus-visible,
+.workspace-app input:focus-visible,
+.workspace-app select:focus-visible,
+.workspace-app textarea:focus-visible,
+.workspace-app summary:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.workspace-app .ws-muted,
+.workspace-app .animation-note,
+.workspace-app .field-row,
+.workspace-app .meta p,
+.workspace-app .ws-inspector-empty { color: var(--ws-text-muted); }
+.workspace-app input[type="checkbox"],
+.workspace-app input[type="range"] { accent-color: var(--color-accent); }
+.workspace-app .field-row output { color: var(--color-text); }
+.workspace-app .animation-settings,
+.workspace-app .floating-group-title { border-color: var(--ws-border); }
+.workspace-app .floating-group-title,
+.workspace-app .ws-form-subheading { color: var(--color-text); }
+.workspace-app .animation-option,
+.workspace-app .world-editor-catalog button {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+.workspace-app .animation-option:hover { border-color: var(--color-control-border); }
+.workspace-app .animation-option.active,
+.workspace-app .world-editor-catalog button[aria-pressed="true"] {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-accent-contrast);
+}
+.workspace-app .module-window,
+.workspace-app .ws-module-host .module-window {
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: none;
+}
+.workspace-app .ws-module-host .module-window { background: transparent; }
+.workspace-app .module-header,
+.workspace-app .ws-module-host .module-header { border-color: var(--ws-border); }
+.workspace-app .module-close {
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+  border-color: var(--ws-border);
+}
+
+/* Native Nicolabz variants provide button dimensions and focus states. */
+.workspace-app .nz-button.nz-button-primary,
+.workspace-app .nz-button.nz-button-primary:hover:not(:disabled) {
+  background: var(--color-button);
+  color: var(--color-button-text);
+  border-color: var(--color-button);
+}
+.workspace-app .nz-button.nz-button-secondary,
+.workspace-app .nz-button.nz-button-secondary:hover:not(:disabled) {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-color: var(--color-control-border);
+}
+.workspace-app .nz-button:not(.nz-icon-button) { min-height: var(--control-height); }
+.workspace-app button:disabled { opacity: .55; cursor: not-allowed; }
+.workspace-app button.is-active,
+.workspace-app button[aria-pressed="true"] {
+  border-color: var(--color-accent);
+}
+.workspace-app .secondary:not(.nz-button),
+.workspace-app .ws-debug-shortcuts button,
+.workspace-app .ws-left-footer button {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-color: var(--color-control-border);
+}
+.workspace-app .secondary:not(.nz-button):hover:not(:disabled),
+.workspace-app .ws-debug-shortcuts button:hover,
+.workspace-app .ws-left-footer button:hover {
+  background: var(--color-surface-muted);
+}
+.workspace-app .ws-danger-action {
+  border-color: var(--color-error) !important;
+  color: var(--color-error) !important;
+  background: var(--color-surface) !important;
+}
+.workspace-app .ws-danger-action:hover:not(:disabled) {
+  background: var(--color-surface-muted) !important;
+}
+.workspace-app .nz-icon { flex: 0 0 auto; vertical-align: middle; }
+.workspace-app .ws-area-icon .nz-icon { width: 20px; height: 20px; }
+.workspace-app .ws-tool-buttons .nz-icon,
+.workspace-app .ws-action-button .nz-icon { width: 16px; height: 16px; }
+
+/* Workspace chrome stays compact without changing the canvas column sizes. */
+.workspace-app .ws-top,
+.workspace-app .ws-toolbar,
+.workspace-app .ws-rail,
+.workspace-app .ws-left,
+.workspace-app .ws-right,
+.workspace-app .ws-tools,
+.workspace-app .ws-statusbar { border-color: var(--ws-border); color: var(--color-text); }
+.workspace-app .ws-top { background: var(--color-surface); }
+.workspace-app .ws-logo {
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  border-radius: var(--radius-sm);
+}
+.workspace-app .ws-identity small,
+.workspace-app .ws-map-picker > label,
+.workspace-app .ws-breadcrumb,
+.workspace-app #ws-top-fps,
+.workspace-app .ws-top .render-fps { color: var(--ws-text-muted); }
+.workspace-app .ws-map-picker select,
+.workspace-app .ws-snap-tools select {
+  background: var(--color-background);
+  color: var(--color-text);
+  border-color: var(--color-control-border);
+}
+.workspace-app .ws-map-picker button,
+.workspace-app .ws-header-control {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-color: var(--color-control-border);
+  border-radius: var(--radius-sm);
+}
+.workspace-app .ws-header-control:hover,
+.workspace-app .ws-map-picker button:hover { background: var(--color-surface-muted); }
+.workspace-app .ws-mode-switch {
+  background: var(--color-surface-muted);
+  border-color: var(--ws-border);
+}
+.workspace-app .ws-mode-switch button { color: var(--color-text-secondary); }
+.workspace-app .ws-mode-switch button.is-active {
+  background: var(--color-button);
+  color: var(--color-button-text);
+}
+.workspace-app .ws-toolbar,
+.workspace-app .ws-rail { background: var(--color-surface-muted); }
+.workspace-app .ws-tool-buttons button,
+.workspace-app .ws-action-button { color: var(--color-text); }
+.workspace-app .ws-tool-buttons button:hover,
+.workspace-app .ws-action-button:hover {
+  background: var(--color-surface);
+  border-color: var(--color-control-border);
+}
+.workspace-app .ws-tool-buttons button.is-active {
+  background: var(--color-button);
+  color: var(--color-button-text);
+  border-color: var(--color-button);
+}
+.workspace-app .ws-toolbar-separator { background: var(--ws-border); }
+.workspace-app .ws-snap-tools label { color: var(--color-text); }
+.workspace-app #ws-export-tools button {
+  background: var(--color-button);
+  color: var(--color-button-text);
+  border-color: var(--color-button);
+}
+.workspace-app #ws-export-feedback { color: var(--ws-text-muted); }
+
+.workspace-app .ws-area-button { color: var(--ws-text-muted); }
+.workspace-app .ws-area-button:hover { background: var(--color-surface); color: var(--color-text); }
+.workspace-app .ws-area-button.is-active {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-color: var(--color-control-border);
+}
+.workspace-app .ws-left,
+.workspace-app .ws-right,
+.workspace-app .ws-tools { background: var(--color-surface); }
+.workspace-app .ws-side-head,
+.workspace-app .ws-tools .ws-side-head { background: var(--color-surface); border-color: var(--ws-border); }
+.workspace-app .ws-side-head button { color: var(--color-text-secondary); }
+.workspace-app .ws-side-head .ws-muted { color: var(--ws-text-muted); }
+.workspace-app .ws-left-tabs button,
+.workspace-app .ws-module-tabs button {
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+  border-color: var(--ws-border);
+}
+.workspace-app .ws-left-tabs button.is-active,
+.workspace-app .ws-module-tabs button.is-active {
+  background: var(--color-button);
+  color: var(--color-button-text);
+  border-color: var(--color-button);
+}
+.workspace-app .ws-left-pane input[type=search] {
+  background: var(--color-background);
+  border-color: var(--color-control-border);
+  color: var(--color-text);
+}
+.workspace-app .ws-scene-group summary,
+.workspace-app .ws-scene-icon { color: var(--ws-text-muted); }
+.workspace-app .ws-scene-entry { color: var(--color-text); }
+.workspace-app button.ws-scene-entry:hover { background: var(--color-surface-muted); }
+.workspace-app .ws-scene-entry.is-selected {
+  background: var(--ws-selected);
+  border-color: var(--color-accent);
+  box-shadow: inset 3px 0 0 var(--color-accent);
+}
+.workspace-app .ws-left-footer { border-color: var(--ws-border); }
+.workspace-app #ws-open-whitebox {
+  background: var(--color-button);
+  color: var(--color-button-text);
+  border-color: var(--color-button);
+}
+.workspace-app .ws-module-host .module-window details,
+.workspace-app .ws-module-host .module-window .ws-form-section {
+  border-color: var(--ws-border);
+  background: var(--color-surface);
+}
+.workspace-app .ws-module-host .module-window details > summary,
+.workspace-app .ws-form-section > summary { color: var(--color-text); }
+.workspace-app .ws-debug-panel p { color: var(--ws-text-muted); }
+.workspace-app .ws-statusbar {
+  background: var(--color-surface);
+  color: var(--ws-text-muted);
+}
+.workspace-app .ws-statusbar #ws-selection-properties {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-color: var(--color-control-border);
+}
+.workspace-app .ws-statusbar #ws-selection-properties:hover { background: var(--color-surface-muted); }
+.workspace-app .ws-debug-drawer {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-color: var(--ws-border);
+  box-shadow: 0 8px 24px #17191c24;
+}
+.workspace-app .ws-drawer-heading button,
+.workspace-app #ws-debug-test-host label { color: var(--color-text); }
+.workspace-app .ws-tools { box-shadow: 10px 5px 28px #17191c24; }
+.workspace-app .ws-context-inspector { border-color: var(--ws-border); }
+.workspace-app .ws-context-inspector #worldEditorSelection {
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+  border-color: var(--ws-border);
+}
+.workspace-app .ws-context-inspector .world-editor-height-label {
+  background: var(--color-surface);
+  border-color: var(--color-control-border);
+}
+.workspace-app .ws-context-inspector .world-editor-height-label:hover { background: var(--color-surface-muted); }
+.workspace-app .ws-context-inspector .world-editor-height-icon { color: var(--color-text); }
+
+/* Form visuals adopt Nicolabz tokens; IDs, input values and listeners are unchanged. */
+.workspace-app .nz-form-panel label,
+.workspace-app .ws-inspector-body label { color: var(--color-text); }
+.workspace-app .nz-form-panel input:not([type=checkbox]):not([type=radio]):not([type=range]),
+.workspace-app .nz-form-panel select,
+.workspace-app .nz-form-panel textarea,
+.workspace-app .ws-inspector-body input:not([type=checkbox]):not([type=radio]):not([type=range]),
+.workspace-app .ws-inspector-body select {
+  background: var(--color-background);
+  border: 1px solid var(--color-control-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  min-width: 0;
+  max-width: 100%;
+}
+.workspace-app .nz-form-panel input[aria-invalid="true"],
+.workspace-app .ws-inspector-body input[aria-invalid="true"] { border-color: var(--color-error); }
+.workspace-app .nz-form-panel input:disabled,
+.workspace-app .nz-form-panel select:disabled { opacity: .55; }
+.workspace-app .grid-toggle { color: var(--color-text); }
+.workspace-app .ws-form-section,
+.workspace-app .ws-persistence-group {
+  background: var(--color-surface-muted);
+  border-color: var(--ws-border);
+  border-radius: var(--radius-sm);
+}
+.workspace-app .ws-persistence-group h3 { color: var(--color-text); }
+.workspace-app .lighting-section,
+.workspace-app .ws-inspector-body fieldset { border-color: var(--ws-border); }
+.workspace-app .lighting-section legend { color: var(--color-text); }
+.workspace-app #worldEditorStatus,
+.workspace-app #floatingTextStatus,
+.workspace-app #enemyStatus,
+.workspace-app #mapStatus { color: var(--color-text-secondary); }
+.workspace-app .action-timeline-track { background: var(--color-surface-muted); }
+.workspace-app .action-timeline-label { color: var(--color-text-secondary); }
+.workspace-app .action-timeline-cursor { background: var(--color-text); }
+@media (max-width: 760px) {
+  .workspace-app .ws-tools,
+  .workspace-app .ws-right,
+  .workspace-app .ws-left { box-shadow: 0 8px 24px #17191c24; }
+}
