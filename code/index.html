@@ -301,9 +301,9 @@
           </form>
           <div class="enemy-fields">
             <button id="enemyReset" class="secondary nz-button nz-button-secondary" type="button" disabled>Rétablir les PV</button>
-            <button id="enemyRemove" class="secondary nz-button nz-button-secondary" type="button" disabled>Retirer</button>
+            <button id="enemyRemove" class="secondary nz-button nz-button-secondary ws-danger-action" type="button" disabled>Retirer</button>
           </div>
-          <button id="enemyRemoveAll" class="secondary nz-button nz-button-secondary wide" type="button">Retirer tous les ennemis</button>
+          <button id="enemyRemoveAll" class="secondary nz-button nz-button-secondary ws-danger-action wide" type="button">Retirer tous les ennemis</button>
           <section class="ws-persistence-group" aria-label="Enregistrement local des ennemis de test">
             <h3>Enregistrement local · ce navigateur</h3>
             <p class="animation-note">Conserve les instances d'entraînement dans ce navigateur. Ne modifie ni la map ni le dépôt Git.</p>
@@ -383,7 +383,7 @@
           <label class="grid-toggle"><input id="mapShowAggro" type="checkbox" /> Afficher les zones d'aggro des ennemis</label>
            <label class="grid-toggle"><input id="mapShowZonePoints" type="checkbox" /> Afficher les spawns de zone</label>
            <p class="animation-note">Map active : <strong id="mapActiveId">prototype-inn</strong></p>
-          <button id="mapResetProgress" class="secondary nz-button nz-button-secondary wide" type="button">Réinitialiser les ennemis et boss</button>
+          <button id="mapResetProgress" class="secondary nz-button nz-button-secondary ws-danger-action wide" type="button">Réinitialiser les ennemis et boss</button>
           <p id="mapEnemyCount" class="animation-note"></p>
           <p class="animation-note">Les modèles GLB manquants sont remplacés par leur forme de collision avec leur nom. Les maps se trouvent dans public/assets/maps.</p>
           <p id="mapStatus" class="animation-note" role="status"></p>
@@ -449,7 +449,7 @@
               <div class="enemy-fields">
                 <button id="worldEditorSaveDraft" class="secondary nz-button nz-button-secondary" type="button">Enregistrer le brouillon</button>
                 <button id="worldEditorRestoreDraft" class="secondary nz-button nz-button-secondary" type="button">Restaurer le brouillon</button>
-                <button id="worldEditorRemoveDraft" class="secondary nz-button nz-button-secondary" type="button">Effacer le brouillon</button>
+                <button id="worldEditorRemoveDraft" class="secondary nz-button nz-button-secondary ws-danger-action" type="button">Effacer le brouillon</button>
               </div>
             </details>
           <p class="animation-note">Choisis un élément du catalogue, puis clique sur le terrain pour le poser. Maintiens le clic sur un élément pour le déplacer. En mode édition, utilise les flèches ↑ ↓ ← → pour déplacer la caméra. Quitter le mode recentre sur le héros.</p>
@@ -511,7 +511,7 @@
               </label>
               <div class="enemy-fields">
                 <button id="worldEditorDuplicatePrefab" type="button" class="secondary nz-button nz-button-secondary">Dupliquer ce bloc</button>
-                <button id="worldEditorDeletePrefab" type="button" class="secondary nz-button nz-button-secondary">Supprimer ce bloc</button>
+                <button id="worldEditorDeletePrefab" type="button" class="secondary nz-button nz-button-secondary ws-danger-action">Supprimer ce bloc</button>
               </div>
             </fieldset>
             <details class="ws-form-section nz-accordion" id="worldEditorAdvancedFields">
