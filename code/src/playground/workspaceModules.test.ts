@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { WORKSPACE_AREAS, allWorkspaceModuleIds, createWorkspaceNavigation, createWorkspacePanelState, modulesForArea, setWorkspaceEditingState } from "./workspaceModules.ts";
+import { WORKSPACE_AREAS, HERO_TABS, createHeroInspectorState, allWorkspaceModuleIds, createWorkspaceNavigation, createWorkspacePanelState, modulesForArea, setWorkspaceEditingState } from "./workspaceModules.ts";
 
 test("every existing Playground module belongs to exactly one workspace", () => {
   const ids = allWorkspaceModuleIds();
@@ -15,9 +15,9 @@ test("every existing Playground module belongs to exactly one workspace", () => 
 
 test("world editing and gameplay diagnostics remain available", () => {
   assert.deepEqual(WORKSPACE_AREAS.map((entry) => entry.id),
-    ["world", "hero", "combat", "enemies", "effects", "debug"]);
+    ["world", "enemies", "effects", "debug"]);
   assert.equal(modulesForArea("world")[0].id, "worldEditorModule");
-  assert.equal(modulesForArea("combat").length, 3);
+  assert.deepEqual(HERO_TABS.map(tab => tab.id), ["animations", "combat", "commands"]);
   assert.deepEqual(modulesForArea("debug"), []);
 });
 
@@ -43,16 +43,11 @@ test("switching areas restores each area's last module", () => {
   const navigation = createWorkspaceNavigation();
   assert.equal(navigation.area, "world");
   assert.equal(navigation.module, "worldEditorModule");
-
   assert.equal(navigation.showModule("lightingModule"), true);
-  assert.equal(navigation.changeArea("combat"), true);
-  assert.equal(navigation.module, "targetLockModule");
-  assert.equal(navigation.showModule("collisionsModule"), true);
-
+  assert.equal(navigation.changeArea("enemies"), true);
+  assert.equal(navigation.module, "enemiesModule");
   assert.equal(navigation.changeArea("world"), true);
   assert.equal(navigation.module, "lightingModule");
-  assert.equal(navigation.changeArea("combat"), true);
-  assert.equal(navigation.module, "collisionsModule");
 });
 
 test("reselecting the current area does not reset or reopen a module", () => {
@@ -69,7 +64,7 @@ test("reselecting the current area does not reset or reopen a module", () => {
   assert.equal(navigation.showModule("cameraModule"), true);
   assert.equal(navigation.module, "cameraModule");
   assert.equal(navigation.closeModule("cameraModule"), true);
-  navigation.changeArea("hero");
+  navigation.changeArea("enemies");
   navigation.changeArea("world");
   assert.equal(navigation.module, "cameraModule");
 });
@@ -87,19 +82,19 @@ test("closing stale modules does not affect navigation; Debug preserves other ar
 
   navigation.changeArea("world");
   assert.equal(navigation.module, "mapsModule");
-  assert.throws(() => navigation.showModule("collisionsModule"), /n'appartient pas/);
+  assert.throws(() => navigation.showModule("enemiesModule"), /n'appartient pas/);
 });
 
 test("changing gameplay mode does not reset navigation state", () => {
   const navigation = createWorkspaceNavigation();
-  navigation.changeArea("combat");
-  navigation.showModule("attackHitboxModule");
+  navigation.changeArea("world");
+  navigation.showModule("cameraModule");
   const input = { checked: true, dispatchEvent: (_event: Event) => true };
 
   assert.equal(setWorkspaceEditingState(input, false), true);
   assert.equal(setWorkspaceEditingState(input, true), true);
-  assert.equal(navigation.area, "combat");
-  assert.equal(navigation.module, "attackHitboxModule");
+  assert.equal(navigation.area, "world");
+  assert.equal(navigation.module, "cameraModule");
 });
 
 test("global tools can be opened without hiding desktop selection properties", () => {
@@ -147,14 +142,14 @@ test("opening contextual properties does not change active tools or selection", 
   const panels = createWorkspacePanelState();
   const selection = [{ kind: "prefab", id: "wall-01" }];
 
-  navigation.changeArea("combat");
-  navigation.showModule("collisionsModule");
+  navigation.changeArea("world");
+  navigation.showModule("lightingModule");
   panels.setLeftMenu("tools", false);
   panels.setInspectorOpen(true, false);
 
   assert.deepEqual(selection, [{ kind: "prefab", id: "wall-01" }]);
-  assert.equal(navigation.area, "combat");
-  assert.equal(navigation.module, "collisionsModule");
+  assert.equal(navigation.area, "world");
+  assert.equal(navigation.module, "lightingModule");
   assert.equal(panels.toolsOpen, true);
   assert.equal(panels.inspectorOpen(false), true);
 });
@@ -204,13 +199,13 @@ test("active explorer toggle and explicit close release the left dock", () => {
 test("switching left views preserves current tool area and module", () => {
   const panels = createWorkspacePanelState();
   const navigation = createWorkspaceNavigation();
-  navigation.changeArea("combat");
-  navigation.showModule("collisionsModule");
+  navigation.changeArea("world");
+  navigation.showModule("lightingModule");
   panels.setLeftMenu("tools", false);
   panels.setLeftMenu("explorer", false);
   panels.setLeftMenu("tools", false);
-  assert.equal(navigation.area, "combat");
-  assert.equal(navigation.module, "collisionsModule");
+  assert.equal(navigation.area, "world");
+  assert.equal(navigation.module, "lightingModule");
 });
 
 test("mobile inspector and either left view are mutually exclusive", () => {
@@ -224,4 +219,38 @@ test("mobile inspector and either left view are mutually exclusive", () => {
     assert.equal(panels.leftMenu, undefined);
     assert.equal(panels.inspectorOpen(true), true);
   }
+});
+
+test("no selection displays hero and selecting any scene element displays its properties", () => {
+  const inspector = createHeroInspectorState();
+  assert.equal(inspector.showHero, true);
+  assert.equal(inspector.tab, "animations");
+  inspector.setSelection(1);
+  assert.equal(inspector.showHero, false);
+  inspector.setSelection(2);
+  assert.equal(inspector.showHero, false);
+  inspector.setSelection(0);
+  assert.equal(inspector.showHero, true);
+});
+
+test("hero inspector remembers combat or commands after selection and deselection", () => {
+  const inspector = createHeroInspectorState();
+  const navigation = createWorkspaceNavigation();
+  navigation.showModule("lightingModule");
+  inspector.selectTab("combat");
+  inspector.setSelection(1);
+  inspector.setSelection(0);
+  assert.equal(inspector.tab, "combat");
+  inspector.selectTab("commands");
+  inspector.setSelection(1);
+  inspector.setSelection(0);
+  assert.equal(inspector.tab, "commands");
+  assert.equal(navigation.module, "lightingModule");
+});
+
+test("all hero and combat modules are grouped in three tabs plus the model summary", () => {
+  assert.deepEqual(HERO_TABS[0].modules, ["movementModule", "actionsModule"]);
+  assert.deepEqual(HERO_TABS[1].modules, ["targetLockModule", "collisionsModule", "attackHitboxModule"]);
+  assert.deepEqual(HERO_TABS[2].modules, ["controlsModule"]);
+  assert.ok(!WORKSPACE_AREAS.some(area => area.modules.some(module => String(module.id) === "modelModule")));
 });
