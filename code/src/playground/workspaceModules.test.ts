@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { WORKSPACE_AREAS, allWorkspaceModuleIds, modulesForArea, setWorkspaceEditingState } from "./workspaceModules.ts";
+import { WORKSPACE_AREAS, allWorkspaceModuleIds, createWorkspaceNavigation, modulesForArea, setWorkspaceEditingState } from "./workspaceModules.ts";
 
 test("every existing Playground module belongs to exactly one workspace", () => {
   const ids = allWorkspaceModuleIds();
@@ -37,4 +37,67 @@ test("workspace mode switch dispatches exactly one native editor change", () => 
   assert.equal(setWorkspaceEditingState(input, true), false);
   assert.equal(setWorkspaceEditingState(input, false), true);
   assert.deepEqual(changes, [true, false]);
+});
+
+test("switching areas restores each area's last module", () => {
+  const navigation = createWorkspaceNavigation();
+  assert.equal(navigation.area, "world");
+  assert.equal(navigation.module, "worldEditorModule");
+
+  assert.equal(navigation.showModule("lightingModule"), true);
+  assert.equal(navigation.changeArea("combat"), true);
+  assert.equal(navigation.module, "targetLockModule");
+  assert.equal(navigation.showModule("collisionsModule"), true);
+
+  assert.equal(navigation.changeArea("world"), true);
+  assert.equal(navigation.module, "lightingModule");
+  assert.equal(navigation.changeArea("combat"), true);
+  assert.equal(navigation.module, "collisionsModule");
+});
+
+test("reselecting the current area does not reset or reopen a module", () => {
+  const navigation = createWorkspaceNavigation();
+  navigation.showModule("cameraModule");
+
+  assert.equal(navigation.changeArea("world"), false);
+  assert.equal(navigation.module, "cameraModule");
+  assert.equal(navigation.closeModule("cameraModule"), true);
+  assert.equal(navigation.module, undefined);
+  assert.equal(navigation.changeArea("world"), false);
+  assert.equal(navigation.module, undefined);
+
+  assert.equal(navigation.showModule("cameraModule"), true);
+  assert.equal(navigation.module, "cameraModule");
+  assert.equal(navigation.closeModule("cameraModule"), true);
+  navigation.changeArea("hero");
+  navigation.changeArea("world");
+  assert.equal(navigation.module, "cameraModule");
+});
+
+test("closing stale modules does not affect navigation; Debug preserves other areas", () => {
+  const navigation = createWorkspaceNavigation();
+  navigation.showModule("mapsModule");
+  assert.equal(navigation.closeModule("worldEditorModule"), false);
+  assert.equal(navigation.module, "mapsModule");
+
+  navigation.changeArea("debug");
+  assert.equal(navigation.module, undefined);
+  assert.equal(navigation.changeArea("debug"), false);
+  assert.throws(() => navigation.showModule("cameraModule"), /n'appartient pas/);
+
+  navigation.changeArea("world");
+  assert.equal(navigation.module, "mapsModule");
+  assert.throws(() => navigation.showModule("collisionsModule"), /n'appartient pas/);
+});
+
+test("changing gameplay mode does not reset navigation state", () => {
+  const navigation = createWorkspaceNavigation();
+  navigation.changeArea("combat");
+  navigation.showModule("attackHitboxModule");
+  const input = { checked: true, dispatchEvent: (_event: Event) => true };
+
+  assert.equal(setWorkspaceEditingState(input, false), true);
+  assert.equal(setWorkspaceEditingState(input, true), true);
+  assert.equal(navigation.area, "combat");
+  assert.equal(navigation.module, "attackHitboxModule");
 });
