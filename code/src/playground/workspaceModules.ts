@@ -128,6 +128,27 @@ export function createWorkspacePanelState() {
 }
 
 /**
+ * Explorer visibility does not change the selected workspace area or tab.
+ * Keep this state independent of the global tools and object inspector.
+ */
+export function createWorkspaceExplorerState() {
+  let open = false;
+
+  return {
+    get open(): boolean { return open; },
+
+    toggle(): boolean {
+      open = !open;
+      return open;
+    },
+
+    close(): void {
+      open = false;
+    },
+  };
+}
+
+/**
  * The existing editor checkbox is the single authority for editing state.
  * Dispatching change goes through the original camera, combat and input hooks.
  */
