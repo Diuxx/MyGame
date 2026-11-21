@@ -172,7 +172,7 @@ input[type=range] { accent-color:#a4c49e; display:block; width:100%; margin:0 0 
 
 /* Workspace UI: retained Babylon canvas and original inputs, new presentation only. */
 .app.workspace-app {
-  --ws-left-width: 266px;
+  --ws-left-width: 0px;
   --ws-right-width: 306px;
   position: relative;
   display: grid;
@@ -243,7 +243,6 @@ input[type=range] { accent-color:#a4c49e; display:block; width:100%; margin:0 0 
 .ws-mode-switch { display: flex; gap: 3px; border: 1px solid #466454; border-radius: 9px; padding: 3px; background: #263a30; white-space: nowrap; }
 .ws-mode-switch button { padding: 8px 11px; border: none; background: transparent; color: #adc7b1; border-radius: 6px; font-weight: 650; }
 .ws-mode-switch button.is-active { background: #c8dfbe; color: #1f3226; }
-.ws-explorer-toggle { display: none; }
 .ws-toolbar {
   grid-column: 1 / -1; grid-row: 2; z-index: 7;
   display: flex; align-items: center; gap: 11px; min-width: 0;
@@ -392,14 +391,13 @@ button.ws-scene-entry:hover { background: #2c4235; }
 .workspace-app.ws-inspector-collapsed { --ws-right-width: 0px; }
 .workspace-app.ws-inspector-collapsed .ws-right { display: none; }
 @media (max-width: 1250px) {
-  .app.workspace-app { --ws-left-width: 235px; --ws-right-width: 283px; }
+  .app.workspace-app { --ws-left-width: 0px; --ws-right-width: 283px; }
   .ws-breadcrumb { display: none; }
   .ws-top { gap: 9px; padding: 0 10px; }
   .ws-toolbar { padding-left: 12px; }
 }
 @media (max-width: 1020px) {
   .app.workspace-app:not([data-workspace-mode="test"]) { --ws-left-width: 0px; grid-template-columns: 60px 0 minmax(0, 1fr) var(--ws-right-width); }
-  .ws-explorer-toggle { display: inline-block; }
   .workspace-app .ws-left { display: none; position: absolute; z-index: 10; left: 60px; top: 106px; bottom: 29px; width: 270px; box-shadow: 10px 3px 24px #0006; }
   .workspace-app.ws-explorer-open .ws-left { display: flex; }
   .ws-area-button { min-height: 50px; }
@@ -419,7 +417,6 @@ button.ws-scene-entry:hover { background: #2c4235; }
   .ws-statusbar { font-size: 9px; gap: 6px; }
   .ws-rail { padding: 6px 3px; }
   .ws-area-label { font-size: 9px; }
-  .ws-explorer-toggle { display: inline-block; }
 }
 @media (max-width: 760px) {
   #ws-inspector-toggle { font-size: 20px; }
@@ -497,7 +494,6 @@ button.ws-scene-entry:hover { background: #2c4235; }
 @media (max-width: 760px) {
   .workspace-app .ws-inspector-open { display: inline-block; }
   .workspace-app .ws-identity { display: none; }
-  .workspace-app .ws-explorer-toggle { display: inline-block; }
 }
 
 .workspace-app .ws-relocated-source { display: none !important; }
