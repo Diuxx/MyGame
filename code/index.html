@@ -246,19 +246,25 @@
           <output id="enemyHealth"></output>
           <form id="enemyForm">
             <fieldset id="enemyFields">
+              <legend>Profil et statistiques</legend>
               <label>Type<select id="enemyType"></select></label>
               <div class="enemy-fields">
                 <label>PV max<input id="enemyMaxHealth" type="number" min="1" step="any" required /></label>
                 <label>Défense<input id="enemyDefense" type="number" min="0" step="any" required /></label>
                 <label>Dégâts<input id="enemyAttack" type="number" min="0" step="any" required /></label>
                 <label>Vitesse<input id="enemySpeed" type="number" min="0" step="any" required /></label>
-                <label>Rayon solide<input id="enemyCollisionRadius" type="number" min="0.1" max="10" step="0.05" required /></label>
-                <label>Délai (s)<input id="enemyRegenDelay" type="number" min="0" step="any" required /></label>
-                <label>Régén. (PV/s)<input id="enemyRegenRate" type="number" min="0" step="any" required /></label>
               </div>
               <label class="grid-toggle"><input id="enemyImmortal" type="checkbox" /> Immortel</label>
-              <label class="grid-toggle"><input id="enemySolid" type="checkbox" /> Bloque les déplacements</label>
-              <label class="grid-toggle"><input id="enemyRegen" type="checkbox" /> Régénération</label>
+              <details id="enemyAdvancedSettings" class="ws-form-section">
+                <summary>Avancé · Collisions et régénération</summary>
+                <label class="grid-toggle"><input id="enemySolid" type="checkbox" /> Bloque les déplacements</label>
+                <label class="grid-toggle"><input id="enemyRegen" type="checkbox" /> Régénération</label>
+                <div class="enemy-fields">
+                  <label>Rayon solide<input id="enemyCollisionRadius" type="number" min="0.1" max="10" step="0.05" required /></label>
+                  <label>Délai (s)<input id="enemyRegenDelay" type="number" min="0" step="any" required /></label>
+                  <label>Régén. (PV/s)<input id="enemyRegenRate" type="number" min="0" step="any" required /></label>
+                </div>
+              </details>
             </fieldset>
             <button id="enemySubmit" class="secondary wide" type="submit">Créer un ennemi</button>
           </form>
@@ -267,13 +273,23 @@
             <button id="enemyRemove" class="secondary" type="button" disabled>Retirer</button>
           </div>
           <button id="enemyRemoveAll" class="secondary wide" type="button">Retirer tous les ennemis</button>
-          <div class="enemy-fields">
-            <button id="enemySave" class="secondary" type="button">Sauvegarder</button>
-            <button id="enemyLoad" class="secondary" type="button">Charger</button>
-            <button id="enemyExport" class="secondary" type="button">Exporter JSON</button>
-            <button id="enemyImport" class="secondary" type="button">Importer JSON</button>
-          </div>
-          <input id="enemyImportFile" type="file" accept=".json,application/json" hidden />
+          <section class="ws-persistence-group" aria-label="Enregistrement local des ennemis de test">
+            <h3>Enregistrement local · ce navigateur</h3>
+            <p class="animation-note">Conserve les instances d'entraînement dans ce navigateur. Ne modifie ni la map ni le dépôt Git.</p>
+            <div class="enemy-fields">
+              <button id="enemySave" class="secondary" type="button">Sauver localement</button>
+              <button id="enemyLoad" class="secondary" type="button">Restaurer localement</button>
+            </div>
+          </section>
+          <section class="ws-persistence-group" aria-label="Fichier de configuration des ennemis de test">
+            <h3>Fichier JSON · ennemis de test</h3>
+            <p class="animation-note">Télécharge ou importe uniquement les instances d'entraînement de ce module, pas le JSON de la map.</p>
+            <div class="enemy-fields">
+              <button id="enemyExport" class="secondary" type="button">Télécharger JSON</button>
+              <button id="enemyImport" class="secondary" type="button">Importer un JSON</button>
+            </div>
+            <input id="enemyImportFile" type="file" accept=".json,application/json" hidden />
+          </section>
           <button id="simulateHeroHit" class="secondary wide" type="button">Simuler un coup reçu</button>
           <button id="simulateHeroDeath" class="secondary wide" type="button">Simuler la mort</button>
           <p id="enemyStatus" role="status"></p>
@@ -390,12 +406,13 @@
               <label>Nouveau layer<input id="worldEditorNewLayer" type="text" maxlength="80" placeholder="ex : architecture_2" /></label>
               <button id="worldEditorAddLayer" class="secondary" type="button">Ajouter le layer</button>
             </details>
-            <details><summary>Sauvegarde de brouillon</summary>
-              <p id="worldEditorDraftState" class="animation-note">Aucune modification.</p>
+            <details class="ws-form-section"><summary>Brouillon local · ce navigateur</summary>
+              <p class="animation-note">Le brouillon est enregistré automatiquement après les modifications. Il reste dans ce navigateur, par map ; il ne remplace pas le fichier du projet.</p>
+              <p id="worldEditorDraftState" class="animation-note" role="status">Aucune modification.</p>
               <div class="enemy-fields">
-                <button id="worldEditorSaveDraft" class="secondary" type="button">Sauver brouillon</button>
-                <button id="worldEditorRestoreDraft" class="secondary" type="button">Restaurer</button>
-                <button id="worldEditorRemoveDraft" class="secondary" type="button">Supprimer le brouillon</button>
+                <button id="worldEditorSaveDraft" class="secondary" type="button">Enregistrer le brouillon</button>
+                <button id="worldEditorRestoreDraft" class="secondary" type="button">Restaurer le brouillon</button>
+                <button id="worldEditorRemoveDraft" class="secondary" type="button">Effacer le brouillon</button>
               </div>
             </details>
           <p class="animation-note">Choisis un élément du catalogue, puis clique sur le terrain pour le poser. Maintiens le clic sur un élément pour le déplacer. En mode édition, utilise les flèches ↑ ↓ ← → pour déplacer la caméra. Quitter le mode recentre sur le héros.</p>
@@ -431,6 +448,7 @@
              </label>
            </div>
           <div id="worldEditorFields" hidden>
+            <h3 class="ws-form-subheading">Position et rotation</h3>
             <div class="enemy-fields">
               <label>X<input id="worldEditorX" type="number" step="0.1" /></label>
               <label>Y<input id="worldEditorY" type="number" step="0.1" /></label>
@@ -438,6 +456,7 @@
               <label id="worldEditorRotationField">Rotation Y (degrés)<input id="worldEditorRotation" type="number" step="5" /></label>
             </div>
             <fieldset id="worldEditorPrefabFields" hidden>
+              <legend>Bloc réutilisable</legend>
               <p class="animation-note">Bloc réutilisable : édition de l'instance uniquement, la définition est partagée.</p>
               <label>Échelle uniforme<input id="worldEditorPrefabScale" type="number" min="0.25" max="4" step="0.05" value="1" /></label>
               <div class="enemy-fields">
@@ -458,7 +477,10 @@
                 <button id="worldEditorDeletePrefab" type="button" class="secondary">Supprimer ce bloc</button>
               </div>
             </fieldset>
-            <fieldset id="worldEditorObjectFields">
+            <details class="ws-form-section" id="worldEditorAdvancedFields">
+              <summary>Avancé · Collisions et comportement</summary>
+              <fieldset id="worldEditorObjectFields">
+                <legend>Collisions du décor</legend>
               <p class="animation-note">Premier collider de l'objet (les suivants sont conservés)</p>
               <div class="enemy-fields">
                 <label>Largeur<input id="worldEditorColliderWidth" type="number" min="0.01" max="100" step="0.1" /></label>
@@ -484,6 +506,7 @@
               </fieldset>
             </fieldset>
             <fieldset id="worldEditorEnemyFields">
+              <legend>Détection, collision et IA de l'ennemi</legend>
               <div class="enemy-fields">
                 <label>Vitesse<input id="worldEditorSpeed" type="number" min="0" max="20" step="0.1" /></label>
                 <label>Rayon solide<input id="worldEditorCollisionRadius" type="number" min="0.1" max="10" step="0.05" /></label>
@@ -493,7 +516,9 @@
                 <label>Distance retour<input id="worldEditorLeash" type="number" min="0.3" max="40" step="0.1" /></label>
               </div>
             </fieldset>
+            </details>
             <div id="worldEditorVisualFields">
+              <h3 class="ws-form-subheading">Apparence</h3>
               <p class="animation-note">Apparence : couleur et échelle, modèle GLB et texture PNG/JPG/WebP au choix.</p>
               <div class="enemy-fields">
                 <label>Échelle<input id="worldEditorScale" type="number" min="0.05" max="10" step="0.05" value="1" /></label>
@@ -504,8 +529,8 @@
               <button id="worldEditorApplyVisual" class="secondary wide" type="button">Appliquer l'apparence</button>
             </div>
           </div>
-          <button id="worldEditorExport" class="secondary wide" type="button">Exporter map JSON</button>
-          <p class="animation-note">Les fichiers locaux sont seulement prévisualisés. Copier leurs octets dans public/assets/models/editor ou public/assets/textures/editor puis intégrer le JSON exporté au dépôt.</p>
+          <button id="worldEditorExport" class="secondary wide" type="button">Télécharger la map JSON</button>
+          <p class="animation-note">L'export télécharge une copie de la map : il ne l'enregistre pas automatiquement dans le dépôt. Les fichiers locaux sont seulement prévisualisés. Copier leurs octets dans public/assets/models/editor ou public/assets/textures/editor puis intégrer le JSON exporté au dépôt.</p>
           <p id="worldEditorStatus" class="animation-note" role="status"></p>
         </section>
         <section id="lightingModule" class="module-window enemy-tools" aria-labelledby="lightingHeading" hidden>
