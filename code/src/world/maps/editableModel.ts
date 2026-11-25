@@ -8,6 +8,7 @@ import type { MapModelRegistry } from "./modelRegistry";
 /** One placement owns its GLB instance and preview resources, never the cached GLB source. */
 interface ModelView {
   holder: TransformNode;
+  path: string;
   instance: InstantiatedEntries | null;
   casters: AbstractMesh[];
   originalMaterials: Map<AbstractMesh, Material | null>;
@@ -30,6 +31,8 @@ export function createEditableModel(
   externalClips?: Readonly<Record<string, string>>,
   editorTarget?: MapEditorTarget,
 ) {
+  // Only map scenery opts in; characters retain independent editable meshes.
+  const allowStaticInstancing = editorTarget?.editorKind === "object";
   let current: ModelView | undefined;
   let generation = 0;
   let disposed = false;
@@ -40,7 +43,9 @@ export function createEditableModel(
     view.holder.dispose(false, false);
     view.painted?.dispose();
     view.image?.dispose();
-    if (view.blobUrl) URL.revokeObjectURL(view.blobUrl);
+    if (view.blobUrl && (current === view || current?.blobUrl !== view.blobUrl)) {
+      URL.revokeObjectURL(view.blobUrl);
+    }
   }
 
   /**
@@ -62,8 +67,11 @@ export function createEditableModel(
         }
       }
 
-      for (const [mesh, original] of view.originalMaterials) {
-        mesh.material = nextMaterial ?? original;
+      // Instances inherit their source material; never assign it back to them.
+      if (nextMaterial || view.painted) {
+        for (const [mesh, original] of view.originalMaterials) {
+          mesh.material = nextMaterial ?? original;
+        }
       }
       view.holder.scaling.setAll(visual?.scale ?? 1);
     } catch (error) {
@@ -89,6 +97,7 @@ export function createEditableModel(
     const request = ++generation;
     const next: ModelView = {
       holder: new TransformNode("editable-visual", scene),
+      path: visual?.model ?? defaultPath,
       instance: null,
       casters: [],
       originalMaterials: new Map(),
@@ -98,7 +107,10 @@ export function createEditableModel(
     next.holder.setEnabled(false);
 
     try {
-      next.instance = await registry.instantiate(visual?.model ?? defaultPath, next.holder, externalClips, true);
+      // A custom appearance requires assignable materials. Unpainted scenery
+      // can share the cached source even when position, rotation or scale differ.
+      const cloneMeshes = !allowStaticInstancing || Boolean(visual?.tint || visual?.texture || localTextureUrl);
+      next.instance = await registry.instantiate(next.path, next.holder, externalClips, cloneMeshes);
       if (disposed || request !== generation) {
         release(next);
         return undefined;
@@ -136,10 +148,19 @@ export function createEditableModel(
   return {
     load,
     get animationGroups() { return current?.instance?.animationGroups; },
-    setAppearance(visual?: VisualOverride, localTextureUrl?: string): void {
+    async setAppearance(visual?: VisualOverride, localTextureUrl?: string): Promise<void> {
       if (disposed) throw new Error("Modèle déjà libéré.");
-      if (current) paint(current, visual, localTextureUrl);
-      else if (localTextureUrl) URL.revokeObjectURL(localTextureUrl);
+      if (!current) {
+        if (localTextureUrl) URL.revokeObjectURL(localTextureUrl);
+        return;
+      }
+      if (allowStaticInstancing) {
+        // Prepare the new representation before disposing the previous one.
+        // Removing a material override automatically rejoins the source group.
+        await load({ ...visual, model: current.path }, localTextureUrl);
+        return;
+      }
+      paint(current, visual, localTextureUrl);
     },
     dispose(): void {
       if (disposed) return;
