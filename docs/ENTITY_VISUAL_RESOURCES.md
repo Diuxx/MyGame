@@ -18,7 +18,9 @@ Les règles de combat et l'IA restent indépendantes des ressources Babylon.js.
 
 - Un modèle source est conservé dans le registre, tandis que chaque placement possède une **instance indépendante**.
 - Par défaut, le registre peut instancier les meshes pour limiter les duplications.
-- Pour un **visuel éditable**, utiliser `cloneMeshes = true` : un `InstancedMesh` Babylon.js partage le matériau du mesh source et ne permet pas un aperçu de matériau indépendant. Le clone partage toujours les ressources adaptées avec la source, mais possède son matériau assignable.
+- Les décors GLB statiques (`editorKind: object`) sans teinte ni texture personnalisée utilisent automatiquement les instances Babylon.js du même modèle source. Leur position, rotation, échelle, identifiant et collision restent indépendants.
+- Les décors avec teinte, texture ou aperçu local utilisent un clone : un `InstancedMesh` partage le matériau de son mesh source. Retirer la surcharge visuelle rétablit automatiquement l'instanciation, sans modifier les autres placements. Le remplacement se fait via `load` (ou `setAppearance`, désormais asynchrone).
+- Les ennemis, les visuels sans opt-in décor, les modèles riggés et les sources animées conservent des clones indépendants. Les variantes peintes identiques ne sont pas encore regroupées ; aucun changement du format de map n'est nécessaire.
 - Les groupes d'animations externes sont liés au squelette de chaque instance, puis détruits avec cette instance. Une source GLB ne doit pas être détruite lorsque seul un placement est supprimé.
 - Les remplacements de visuels sont préparés avant le basculement : si le chargement échoue, l'ancien visuel reste actif.
 - Un visuel d'édition préserve les références de ses matériaux d'origine et les restaure lorsque l'aperçu est retiré. Les matériaux PBR de la source ne sont pas modifiés.
@@ -45,4 +47,4 @@ Les tests automatisés `world/maps/editableModel.test.ts` et `enemies/enemyScene
 
 La CI exécute `npm test` et `npm run build`. Une vérification **dans le navigateur** reste nécessaire pour le rendu PBR, les ombres, le remplacement d'assets dans l'éditeur et le fonctionnement des deux modes.
 
-Les clones éditables ont un coût potentiel supérieur aux instances GPU. Ne pas généraliser ce mode à tous les objets sans besoin d'apparence indépendante et sans profilage.
+Les clones éditables ont un coût potentiel supérieur aux instances GPU. Comparer une même map avant/après avec l'inspecteur Babylon.js : nombre d'instances, draw calls, temps de frame et rendu des ombres. Le regroupement des variantes peintes et les Thin Instances restent des optimisations distinctes à valider après profilage.
