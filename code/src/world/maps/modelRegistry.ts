@@ -91,8 +91,11 @@ export class MapModelRegistry {
       const clips = await Promise.all(Object.entries(externalClips).map(async ([name, url]) =>
         ({ name, url, source: await this.getSource(url) })));
       if (this.disposed) throw new Error("Registre libéré pendant le chargement des animations.");
+      // Keep independent animation state for rigged or animated sources.
+      const requiresClone = cloneMeshes || source.skeletons.length > 0 ||
+        source.animationGroups.length > 0 || clips.length > 0;
       placed = source.instantiateModelsToScene(clips.length ? (name) => name : undefined,
-        false, { doNotInstantiate: cloneMeshes });
+        false, { doNotInstantiate: requiresClone });
       if (!placed.rootNodes.length) {
         placed.dispose();
         return null;
